@@ -16,7 +16,7 @@ target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/glad/incl
 add_subdirectory(lib/glfw-3.4)
 
 # ----- GLM (header-only) -----
-target_include_directories(yage PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}lib/glm-1.0.2)
+target_include_directories(yage PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm-1.0.2)
 
 # ----- Linking -----
 target_link_libraries(yage PRIVATE glad glfw)
