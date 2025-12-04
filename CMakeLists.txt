@@ -20,3 +20,7 @@ target_include_directories(yage PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm-1.0.2
 
 # ----- Linking -----
 target_link_libraries(yage PRIVATE glad glfw)
+
+add_executable(gladtest gladtest.cpp)
+target_include_directories(gladtest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm-1.0.2)
+target_link_libraries(gladtest PRIVATE glad glfw)
