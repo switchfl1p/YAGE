@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <iomanip>
+#include "core/Shader.hpp"
 
 int main() {
     if (!glfwInit()) return -1;
@@ -37,6 +38,9 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    Shader shad;
+    shad.helloWorld();
 
     glfwTerminate();
     return 0;

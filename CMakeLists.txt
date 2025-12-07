@@ -6,7 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ----- Executable -----
-add_executable(yage main.cpp)
+add_executable(yage
+main.cpp
+core/Shader.cpp)
+
 
 # ----- GLAD -----
 add_library(glad STATIC lib/glad/src/gl.c)
