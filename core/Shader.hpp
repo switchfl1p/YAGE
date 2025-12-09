@@ -6,6 +6,7 @@ https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf#page=109
 #pragma once
 #include <glad/gl.h>
 #include <string>
+#include <filesystem>
 
 class Shader{
 public:
@@ -14,6 +15,6 @@ public:
 
 private:
     void createShader(GLenum type, const std::string& filename);
-    void findFile();
+    std::filesystem::path findFile(const std::string& filename);
     GLenum getShaderType(const std::string& filename);
 };
