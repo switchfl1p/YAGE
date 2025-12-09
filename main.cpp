@@ -39,6 +39,7 @@ int main() {
         glfwPollEvents();
     }
 
+    //little shader test
     Shader shad;
     shad.helloWorld();
 
