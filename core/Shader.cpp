@@ -4,14 +4,23 @@ https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf#page=109
 */
 
 #include "Shader.hpp"
-#include <filesystem>
+#include <fstream>
+#include <sstream>
 
 namespace fs = std::filesystem;
 
 Shader::Shader(const std::string& filename){
+    //find file needs to throw
     fs::path shader_path = findFile(filename);
     GLenum type = getShaderType(filename);
+    shader_object = glCreateShader(type);
+    std::string shader_data = getShaderData(shader_path);
 
+    //string formatting for expected parameters
+    const GLchar* dataPtr = shader_data.c_str();
+    //nullptr = null-terminated, function figures lenght out 
+    glShaderSource(shader_object, 1, &dataPtr, nullptr);
+    glCompileShader(shader_object);
 }
 
 GLenum Shader::getShaderType(const std::string& filename){
@@ -36,7 +45,7 @@ GLenum Shader::getShaderType(const std::string& filename){
 std::filesystem::path Shader::findFile(const std::string& filename){
     fs::path cwd = fs::current_path();
 
-    //check /shaders/
+    //check ./shaders/
     fs::path candidate1 = cwd / "shaders" / filename;
     if(fs::exists(candidate1)){
         return candidate1;
@@ -51,6 +60,15 @@ std::filesystem::path Shader::findFile(const std::string& filename){
     return {};
 }
 
-void createShader(GLenum type, const std::string& filename){
+std::string Shader::getShaderData(const std::filesystem::path& filepath){
+    std::ifstream file(filepath);
     
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open shader file: " + filepath.string());
+    }
+    
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    
+    return buffer.str();
 }

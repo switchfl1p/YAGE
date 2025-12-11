@@ -14,8 +14,9 @@ public:
     ~Shader();
 
 private:
-    void createShader(GLenum type, const std::string& filename);
     std::filesystem::path findFile(const std::string& filename);
     GLenum getShaderType(const std::string& filename);
-    GLuint shaderID;
+    std::string getShaderData(const std::filesystem::path& filepath);
+
+    GLuint shader_object;
 };
