@@ -23,6 +23,14 @@ Shader::Shader(const std::string& filename){
     glCompileShader(shader_object);
 }
 
+Shader::~Shader(){
+
+}
+
+GLuint Shader::getShaderUint(){
+    return shader_object;
+}
+
 GLenum Shader::getShaderType(const std::string& filename){
     std::string extension;
     GLenum type;

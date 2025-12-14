@@ -2,8 +2,27 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
-#include <iomanip>
-#include "core/Shader.hpp"
+#include <Shader.hpp>
+#include <Program.hpp>
+#include <vector>
+
+void init(){
+    std::vector<GLuint> shaders;
+    Shader vertex_shader("FragPosition.vert");
+    Shader fragment_shader("FragPosition.frag");
+    shaders.push_back(vertex_shader.getShaderUint());
+    shaders.push_back(fragment_shader.getShaderUint());
+
+    Program theProgram(shaders);
+}
+
+const float vertexPositions[] = {
+	0.2f, 0.75f, 0.0f, 1.0f,
+	0.75f, -0.1f, 0.0f, 1.0f,
+	-0.75f, -0.75f, 0.3f, 1.0f,
+};
+
+glm::mat4 test(1.0f);
 
 int main() {
     if (!glfwInit()) return -1;
@@ -14,9 +33,6 @@ int main() {
         return -1;
     }
 
-    int platform = glfwGetPlatform();
-    std::cout << platform << "\n";
-
     glfwMakeContextCurrent(window);
 
     // LOAD GLAD
@@ -26,22 +42,13 @@ int main() {
         return -1;
     }
 
-    // ----- GLM test -----
-    glm::vec3 a(1.0f, 2.0f, 3.0f);
-    glm::vec3 b(4.0f, 5.0f, 6.0f);
-    glm::vec3 c = a + b;
-    std::cout << std::fixed << std::setprecision(1);
-    std::cout << "GLM vector sum: (" << c.x << ", " << c.y << ", " << c.z << ")\n";
+    init();
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    //little shader test
-    Shader shad;
-    shad.helloWorld();
 
     glfwTerminate();
     return 0;

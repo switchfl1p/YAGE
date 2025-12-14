@@ -12,6 +12,7 @@ class Shader{
 public:
     Shader(const std::string& filename);
     ~Shader();
+    GLuint getShaderUint();
 
 private:
     std::filesystem::path findFile(const std::string& filename);
