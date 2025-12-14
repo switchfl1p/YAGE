@@ -5,6 +5,8 @@ project(YAGE)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only")
+
 # ----- Executable -----
 add_executable(yage
 main.cpp
@@ -18,7 +20,7 @@ add_library(glad STATIC lib/glad/src/gl.c)
 target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/glad/include)
 
 # ----- GLFW -----
-add_subdirectory(lib/glfw-3.4)
+add_subdirectory(lib/GLFW)
 
 # ----- GLM (header-only) -----
 target_include_directories(yage PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm)
