@@ -5,7 +5,7 @@ https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf#page=109
 
 #include "Shader.hpp"
 #include <fstream>
-#include <sstream>
+#include <iostream>
 
 namespace fs = std::filesystem;
 
@@ -17,14 +17,34 @@ Shader::Shader(const std::string& filename){
     std::string shader_data = getShaderData(shader_path);
 
     //string formatting for expected parameters
-    const GLchar* dataPtr = shader_data.c_str();
+    const GLchar* data_ptr = shader_data.c_str();
     //nullptr = null-terminated, function figures lenght out 
-    glShaderSource(shader_object, 1, &dataPtr, nullptr);
+    glShaderSource(shader_object, 1, &data_ptr, nullptr);
     glCompileShader(shader_object);
+
+    GLint status;
+    glGetShaderiv(shader_object, GL_COMPILE_STATUS, &status);
+
+    if(status == GL_FALSE){
+        GLint info_log_length;
+        glGetShaderiv(shader_object, GL_INFO_LOG_LENGTH, &info_log_length);
+
+        GLchar *str_info_log = new GLchar[info_log_length + 1];
+        glGetShaderInfoLog(shader_object, info_log_length, NULL, str_info_log);
+
+        std::string shader_type_str;
+		switch(type)
+		{
+		case GL_VERTEX_SHADER: shader_type_str = "vertex"; break;
+		case GL_FRAGMENT_SHADER: shader_type_str = "fragment"; break;
+		}
+        
+        std::cerr << "Compile failure in " << shader_type_str << " shader:\n" << str_info_log << "\n";
+    }
 }
 
 Shader::~Shader(){
-
+    glDeleteShader(shader_object);
 }
 
 GLuint Shader::getShaderUint(){
