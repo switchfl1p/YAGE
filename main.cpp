@@ -67,6 +67,13 @@ void display(GLFWwindow* window){
     glfwPollEvents();
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void key_callback();
+
 int main() {
     if(!glfwInit()){
         std::cerr << "Failed to initialize GLFW\n";
@@ -87,6 +94,9 @@ int main() {
         return -1;
     }
 
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //glfwSetKeyCallback(window, key_callback);
+    
     init();
 
     while (!glfwWindowShouldClose(window)) {
@@ -96,3 +106,4 @@ int main() {
     glfwTerminate();
     return 0;
 }
+
