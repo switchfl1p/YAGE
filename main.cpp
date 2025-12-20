@@ -11,6 +11,7 @@
 GLuint program_uint;
 GLuint position_buffer_object;
 GLuint vao;
+GLint window_size_uniform;
 
 const float vertex_positions[] = {
 	0.2f, 0.75f, 0.0f, 1.0f,
@@ -27,6 +28,8 @@ void initalizeProgram(){
 
     Program theProgram(shaders);
     program_uint = theProgram.getProgramUint();
+
+    window_size_uniform = glGetUniformLocation(program_uint, "windowSize");
 }
 
 void initalizeVertexBuffer(){
@@ -39,42 +42,55 @@ void initalizeVertexBuffer(){
 
 void init(){
     initalizeProgram();
+    initalizeVertexBuffer();
+
+    glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 }
 
-void reshape(int w, int h){
-    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-}
+void display(GLFWwindow* window){
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-void display();
-void keyboard();
+    glUseProgram(program_uint);
+    glUniform1f(window_size_uniform, 500.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, position_buffer_object);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glDisableVertexAttribArray(0);
+	glUseProgram(0);
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+}
 
 int main() {
-    if (!glfwInit()) return -1;
-
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window) {
-        glfwTerminate();
+    if(!glfwInit()){
+        std::cerr << "Failed to initialize GLFW\n";
         return -1;
     }
 
+    GLFWwindow* window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    if (!window){
+        std::cerr << "Failed to create GLFW window\n";
+        glfwTerminate();
+        return -1;
+    }
     glfwMakeContextCurrent(window);
 
-    // LOAD GLAD
-    if (gladLoadGL(glfwGetProcAddress) == 0) {
-        std::cout << "Failed to initalize GLAD\n";
+    if (gladLoadGL(glfwGetProcAddress) == 0){
+        std::cerr << "Failed to initalize GLAD\n";
         glfwTerminate();
         return -1;
     }
 
     init();
 
-    //program not deleted
-    glUseProgram(program_uint);
-
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        display(window);
     }
 
     glfwTerminate();
