@@ -5,7 +5,7 @@
 void init();
 void display(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void key_callback();
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 int main(){
     if(!glfwInit()){
@@ -13,7 +13,7 @@ int main(){
         return -1;
     }
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(640, 480, "YAGE", NULL, NULL);
     if (!window){
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -28,7 +28,7 @@ int main(){
     }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    //glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, key_callback);
     
     init();
 

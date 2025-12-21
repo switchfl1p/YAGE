@@ -92,7 +92,7 @@ std::string Shader::getShaderData(const std::filesystem::path& filepath){
     std::ifstream file(filepath);
     
     if (!file.is_open()) {
-        throw std::runtime_error("Failed to open shader file: " + filepath.string());
+        throw std::runtime_error("Failed to open shader file. Possible wrong filepath.");
     }
     
     std::stringstream buffer;
