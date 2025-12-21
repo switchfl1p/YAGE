@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(yage
 main.cpp
 core/Shader.cpp
-core/Program.cpp)
+core/Program.cpp
+core/Renderer.cpp)
 
 target_include_directories(yage PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
