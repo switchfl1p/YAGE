@@ -8,5 +8,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 #Core library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core)
-
+#Scene files
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
