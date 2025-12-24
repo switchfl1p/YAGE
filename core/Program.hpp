@@ -5,10 +5,10 @@
 
 class Program{
     public:
-    Program(const std::vector<GLuint>& shaders);
-    ~Program();
-    GLuint getProgramUint();
+        Program(const std::vector<GLuint>& shaders);
+        ~Program();
+        GLuint getProgramUint();
 
     private:
-    GLuint program_object;
+        GLuint program_object;
 };
