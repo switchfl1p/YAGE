@@ -1,7 +1,7 @@
 set(CORE_SOURCES
 	Program.cpp
 	Shader.cpp
-	Renderer.cpp
+	renderer.cpp
 )
 
 set(CORE_HEADERS

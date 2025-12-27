@@ -20,13 +20,13 @@ const float vertex_positions[] = {
 
 void initalizeProgram(){
     std::vector<GLuint> shaders;
-    Shader vertex_shader("FragPosition.vert");
-    Shader fragment_shader("FragPosition.frag");
+    Shader vertex_shader("frag_position.vert");
+    Shader fragment_shader("frag_position.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
-    Program theProgram(shaders);
-    program_uint = theProgram.getProgramUint();
+    Program the_program(shaders);
+    program_uint = the_program.getProgramUint();
 
     window_size_uniform = glGetUniformLocation(program_uint, "windowSize");
 }

@@ -1,3 +1,5 @@
+/* switchfl1p 2025 */
+
 #pragma once
 
 #include <glad/gl.h>

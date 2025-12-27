@@ -23,4 +23,4 @@ foreach(folder ${ALL_FOLDERS})
     endif()
 endforeach()
 
-add_scene("HelloTriangle" "HelloTriangle" "HelloTriangle.cpp")
+add_scene("hello_triangle" "hello_triangle" "hello_triangle.cpp")

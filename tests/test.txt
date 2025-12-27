@@ -1,7 +1,7 @@
 Shader Class tests:
 -pass shader file with wrong extension
--pass shader file that doesnt exist
--pass shader file that doesnt compile
+-pass shader file that doesn't exist
+-pass shader file that doesn't compile
 
 Program Class tests:
 -attempt to attach a shader that didn't compile

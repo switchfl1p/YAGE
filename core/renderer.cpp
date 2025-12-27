@@ -1,3 +1,5 @@
+/* switchfl1p 2025 */
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
