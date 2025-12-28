@@ -2,11 +2,13 @@ set(CORE_SOURCES
 	Program.cpp
 	Shader.cpp
 	renderer.cpp
+	MatrixStack.cpp
 )
 
 set(CORE_HEADERS
 	Program.hpp
 	Shader.hpp
+	MatrixStack.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

@@ -117,8 +117,8 @@ GLuint projection_mat_unif;
 
 void initalizeProgram(){
     std::vector<GLuint> shaders;
-    Shader vertex_shader("frag_position.vert");
-    Shader fragment_shader("frag_position.frag");
+    Shader vertex_shader("hello_matrix.vert");
+    Shader fragment_shader("hello_matrix.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
@@ -126,15 +126,14 @@ void initalizeProgram(){
     program_uint = the_program.getProgramUint();
 
     offset_uniform = glGetUniformLocation(program_uint, "offset");
-	projection_mat_unif = glGetUniformLocation(program_uint, "perspectiveMatrix");
+	projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
 
     MatrixStack persp_mat;
-    persp_mat.perspective(45.0f, (500.0f/400.0f), 0.5f, 3.0f);
+    persp_mat.perspective_t(45.0f, (640.0f/480.0f), 0.5f, 3.0f);
 
     glUseProgram(program_uint);
-	glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(persp_mat.top()));
+	glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(persp_mat.top_m()));
 	glUseProgram(0);
-
 }
 
 GLuint vertex_buffer_object;
@@ -166,6 +165,22 @@ void display(GLFWwindow* window){
 
     glUseProgram(program_uint);
     glUniform2f(offset_uniform, 0.5f, 0.5f);
+
+    size_t color_data = sizeof(vertex_data) / 2;
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)color_data);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glUseProgram(0);
+
+	glfwSwapBuffers(window);
+    glfwPollEvents();
 
 }
 

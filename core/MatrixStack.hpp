@@ -10,11 +10,11 @@ class MatrixStack{
         MatrixStack();
         ~MatrixStack();
         explicit MatrixStack(const glm::mat4 &initial_matrix);
-        void push();
-        void pop();
-        const glm::mat4& top() const;
+        void push_m();
+        void pop_m();
+        const glm::mat4& top_m() const;
         
-        void perspective(float deg_FOV, float aspect_ratio, float z_near, float z_far);
+        void perspective_t(float deg_FOV, float aspect_ratio, float z_near, float z_far);
         
 
     private:

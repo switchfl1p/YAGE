@@ -3,24 +3,33 @@ function(add_scene base_dir tgt_name)
     list(TRANSFORM sources PREPEND "${base_dir}/")
     add_executable(${tgt_name} ${sources})
     target_link_libraries(${tgt_name} PRIVATE core)
-endfunction()
-
-# Copy all shaders from all folders
-file(GLOB ALL_FOLDERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*")
-foreach(folder ${ALL_FOLDERS})
-    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${folder} AND 
-       EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${folder}/shaders)
-        file(GLOB shader_files ${CMAKE_CURRENT_SOURCE_DIR}/${folder}/shaders/*)
-        if(shader_files)
-            add_custom_target(copy_all_shaders ALL
-                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/shaders
-                COMMAND ${CMAKE_COMMAND} -E copy
-                    ${shader_files}
-                    ${CMAKE_BINARY_DIR}/shaders/
-                COMMENT "Copying shaders from ${folder}"
+    
+    # Copy shaders for THIS specific scene
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${base_dir}/shaders)
+        file(GLOB scene_shaders ${CMAKE_CURRENT_SOURCE_DIR}/${base_dir}/shaders/*)
+        if(scene_shaders)
+            # Create target directory
+            add_custom_command(
+                TARGET ${tgt_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory 
+                    $<TARGET_FILE_DIR:${tgt_name}>/shaders
+                COMMENT "Creating shader directory for ${tgt_name}"
             )
+            
+            # Copy each shader
+            foreach(shader ${scene_shaders})
+                get_filename_component(shader_name ${shader} NAME)
+                add_custom_command(
+                    TARGET ${tgt_name} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        ${shader}
+                        $<TARGET_FILE_DIR:${tgt_name}>/shaders/${shader_name}
+                    COMMENT "Copying ${shader_name} for ${tgt_name}"
+                )
+            endforeach()
         endif()
     endif()
-endforeach()
+endfunction()
 
 add_scene("hello_triangle" "hello_triangle" "hello_triangle.cpp")
+add_scene("hello_matrix_stack" "hello_matrix_stack" "hello_matrix_stack.cpp")
