@@ -1,18 +1,23 @@
 // test_scene.cpp
-// Auto-generated on 31/12/2025 15:52:44
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <vector>
+
+#include <Shader.hpp>
+#include <Program.hpp>
 
 void initalizeProgram(){
     // Initialize shaders and programs here
     // Example shader loading:
-    // std::vector<GLuint> shaders;
-    // Shader vertex_shader("hello_matrix.vert");
-    // Shader fragment_shader("hello_matrix.frag");
-    // shaders.push_back(vertex_shader.getShaderUint());
-    // shaders.push_back(fragment_shader.getShaderUint());
-    //Program the_program(shaders);
-    //program_uint = the_program.getProgramUint();
+
+    std::vector<GLuint> shaders;
+    Shader vertex_shader("test_scene.vert");
+    Shader fragment_shader("test_scene.frag");
+    shaders.push_back(vertex_shader.getShaderUint());
+    shaders.push_back(fragment_shader.getShaderUint());
+
+    Program the_program(shaders);
+    program_uint = the_program.getProgramUint();
 }
 
 GLuint vertex_buffer_object;
@@ -20,17 +25,20 @@ GLuint vao;
 
 void initalizeVertexBuffer(){
     // Example usage:
-    // glGenBuffers(1, &vertex_buffer_object);
-	// glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
-	// glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glGenBuffers(1, &vertex_buffer_object);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void init() {
     initalizeProgram();
     initalizeVertexBuffer();
+
     glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+    
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
