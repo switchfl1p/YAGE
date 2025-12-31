@@ -164,7 +164,7 @@ void display(GLFWwindow* window){
 	glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program_uint);
-    glUniform2f(offset_uniform, 0.5f, 0.5f);
+    glUniform2f(offset_uniform, 0.45f, -0.45f);
 
     size_t color_data = sizeof(vertex_data) / 2;
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);

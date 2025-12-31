@@ -23,20 +23,17 @@ def create_scene(scene_name, executable_name=None):
     # Create .cpp file
     cpp_template = f'''// {scene_name}.cpp
 // Auto-generated on {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
-
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 void initalizeProgram(){{
     // Initialize shaders and programs here
-
     // Example shader loading:
     // std::vector<GLuint> shaders;
     // Shader vertex_shader("hello_matrix.vert");
     // Shader fragment_shader("hello_matrix.frag");
     // shaders.push_back(vertex_shader.getShaderUint());
     // shaders.push_back(fragment_shader.getShaderUint());
-
     //Program the_program(shaders);
     //program_uint = the_program.getProgramUint();
 }}
@@ -47,7 +44,6 @@ GLuint vao;
 void initalizeVertexBuffer(){{
     // Example usage:
     // glGenBuffers(1, &vertex_buffer_object);
-
 	// glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
 	// glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
 	// glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -56,10 +52,8 @@ void initalizeVertexBuffer(){{
 void init() {{
     initalizeProgram();
     initalizeVertexBuffer();
-
     glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
@@ -86,6 +80,32 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }}
 '''
     
+    # Define shader templates
+    vertex_shader = f'''#version 330 core
+
+layout (location = 0) in vec3 aPos;
+
+void main()
+{{
+    gl_Position = vec4(aPos, 1.0);
+}}
+'''
+
+    fragment_shader = f'''#version 330 core
+
+out vec4 FragColor;
+
+void main()
+{{
+    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+}}
+'''
+    
+    # Write the cpp file
+    cpp_file = base_path / f"{scene_name_safe}.cpp"
+    cpp_file.write_text(cpp_template)
+    
+    # Write shader files
     (shaders_path / f"{scene_name_safe}.vert").write_text(vertex_shader)
     (shaders_path / f"{scene_name_safe}.frag").write_text(fragment_shader)
     
