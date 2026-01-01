@@ -1,5 +1,6 @@
 /* switchfl1p 2025 */
 
+#include "glm/trigonometric.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -129,7 +130,7 @@ void initalizeProgram(){
 	projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
 
     MatrixStack persp_mat;
-    persp_mat.perspective_t(45.0f, (640.0f/480.0f), 0.5f, 3.0f);
+    persp_mat.perspective_t(glm::radians(45.0f), (640.0f/480.0f), 0.5f, 3.0f);
 
     glUseProgram(program_uint);
 	glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(persp_mat.top_m()));
@@ -181,7 +182,6 @@ void display(GLFWwindow* window){
 
 	glfwSwapBuffers(window);
     glfwPollEvents();
-
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)

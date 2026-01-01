@@ -16,7 +16,7 @@ cd ..
 ln -s build/compile_commands.json .
 ```
 
-There is a helpful python script for generating the folder structure and boilerplate code required for a new scene. Run in project root:
+There is a helpful python script for generating the boilerplate required for a new scene:
 
 ```bash
 # Basic usage, executable has same name as source file

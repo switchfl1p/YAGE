@@ -8,8 +8,9 @@
 class MatrixStack{
     public:
         MatrixStack();
-        ~MatrixStack();
+        ~MatrixStack(); 
         explicit MatrixStack(const glm::mat4 &initial_matrix);
+        
         void push_m();
         void pop_m();
         const glm::mat4& top_m() const;
