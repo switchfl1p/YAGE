@@ -9,106 +9,103 @@
 #include <Shader.hpp>
 #include <Program.hpp>
 
-const float vertex_data[] = {
-	 0.25f,  0.25f, -1.25f, 1.0f,
-	 0.25f, -0.25f, -1.25f, 1.0f,
-	-0.25f,  0.25f, -1.25f, 1.0f,
 
-	 0.25f, -0.25f, -1.25f, 1.0f,
-	-0.25f, -0.25f, -1.25f, 1.0f,
-	-0.25f,  0.25f, -1.25f, 1.0f,
+// Cube Vertex Data with Colors (Separate Position and Color Sections)
+// 8 vertices total (one per corner)
+// Format: All positions first, then all colors
 
-	 0.25f,  0.25f, -2.75f, 1.0f,
-	-0.25f,  0.25f, -2.75f, 1.0f,
-	 0.25f, -0.25f, -2.75f, 1.0f,
+float vertex_data[] = {
+    // Positions (24 vertices * 3 floats = 72 floats)
+    
+    // Front face (4 vertices)
+    -1.0f, -1.0f,  1.0f,  // 0
+     1.0f, -1.0f,  1.0f,  // 1
+     1.0f,  1.0f,  1.0f,  // 2
+    -1.0f,  1.0f,  1.0f,  // 3
+    
+    // Back face (4 vertices)
+     1.0f, -1.0f, -1.0f,  // 4
+    -1.0f, -1.0f, -1.0f,  // 5
+    -1.0f,  1.0f, -1.0f,  // 6
+     1.0f,  1.0f, -1.0f,  // 7
+    
+    // Top face (4 vertices)
+    -1.0f,  1.0f,  1.0f,  // 8
+     1.0f,  1.0f,  1.0f,  // 9
+     1.0f,  1.0f, -1.0f,  // 10
+    -1.0f,  1.0f, -1.0f,  // 11
+    
+    // Bottom face (4 vertices)
+    -1.0f, -1.0f, -1.0f,  // 12
+     1.0f, -1.0f, -1.0f,  // 13
+     1.0f, -1.0f,  1.0f,  // 14
+    -1.0f, -1.0f,  1.0f,  // 15
+    
+    // Right face (4 vertices)
+     1.0f, -1.0f,  1.0f,  // 16
+     1.0f, -1.0f, -1.0f,  // 17
+     1.0f,  1.0f, -1.0f,  // 18
+     1.0f,  1.0f,  1.0f,  // 19
+    
+    // Left face (4 vertices)
+    -1.0f, -1.0f, -1.0f,  // 20
+    -1.0f, -1.0f,  1.0f,  // 21
+    -1.0f,  1.0f,  1.0f,  // 22
+    -1.0f,  1.0f, -1.0f,  // 23
+    
+    // Colors (24 vertices * 4 floats RGBA = 96 floats)
+    
+    // Front face - Red
+    1.0f, 0.0f, 0.0f, 1.0f,
+    1.0f, 0.0f, 0.0f, 1.0f,
+    1.0f, 0.0f, 0.0f, 1.0f,
+    1.0f, 0.0f, 0.0f, 1.0f,
+    
+    // Back face - Green
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    
+    // Top face - Blue
+    0.0f, 0.0f, 1.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+    
+    // Bottom face - Yellow
+    1.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 1.0f, 0.0f, 1.0f,
+    
+    // Right face - Magenta
+    1.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 1.0f,
+    
+    // Left face - Cyan
+    0.0f, 1.0f, 1.0f, 1.0f,
+    0.0f, 1.0f, 1.0f, 1.0f,
+    0.0f, 1.0f, 1.0f, 1.0f,
+    0.0f, 1.0f, 1.0f, 1.0f,
+};
 
-	 0.25f, -0.25f, -2.75f, 1.0f,
-	-0.25f,  0.25f, -2.75f, 1.0f,
-	-0.25f, -0.25f, -2.75f, 1.0f,
-
-	-0.25f,  0.25f, -1.25f, 1.0f,
-	-0.25f, -0.25f, -1.25f, 1.0f,
-	-0.25f, -0.25f, -2.75f, 1.0f,
-
-	-0.25f,  0.25f, -1.25f, 1.0f,
-	-0.25f, -0.25f, -2.75f, 1.0f,
-	-0.25f,  0.25f, -2.75f, 1.0f,
-
-	 0.25f,  0.25f, -1.25f, 1.0f,
-	 0.25f, -0.25f, -2.75f, 1.0f,
-	 0.25f, -0.25f, -1.25f, 1.0f,
-
-	 0.25f,  0.25f, -1.25f, 1.0f,
-	 0.25f,  0.25f, -2.75f, 1.0f,
-	 0.25f, -0.25f, -2.75f, 1.0f,
-
-	 0.25f,  0.25f, -2.75f, 1.0f,
-	 0.25f,  0.25f, -1.25f, 1.0f,
-	-0.25f,  0.25f, -1.25f, 1.0f,
-
-	 0.25f,  0.25f, -2.75f, 1.0f,
-	-0.25f,  0.25f, -1.25f, 1.0f,
-	-0.25f,  0.25f, -2.75f, 1.0f,
-
-	 0.25f, -0.25f, -2.75f, 1.0f,
-	-0.25f, -0.25f, -1.25f, 1.0f,
-	 0.25f, -0.25f, -1.25f, 1.0f,
-
-	 0.25f, -0.25f, -2.75f, 1.0f,
-	-0.25f, -0.25f, -2.75f, 1.0f,
-	-0.25f, -0.25f, -1.25f, 1.0f,
-
-
-
-
-	0.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-
-	0.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-
-	0.8f, 0.8f, 0.8f, 1.0f,
-	0.8f, 0.8f, 0.8f, 1.0f,
-	0.8f, 0.8f, 0.8f, 1.0f,
-
-	0.8f, 0.8f, 0.8f, 1.0f,
-	0.8f, 0.8f, 0.8f, 1.0f,
-	0.8f, 0.8f, 0.8f, 1.0f,
-
-	0.0f, 1.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 0.0f, 1.0f,
-
-	0.0f, 1.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 0.0f, 1.0f,
-
-	0.5f, 0.5f, 0.0f, 1.0f,
-	0.5f, 0.5f, 0.0f, 1.0f,
-	0.5f, 0.5f, 0.0f, 1.0f,
-
-	0.5f, 0.5f, 0.0f, 1.0f,
-	0.5f, 0.5f, 0.0f, 1.0f,
-	0.5f, 0.5f, 0.0f, 1.0f,
-
-	1.0f, 0.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-
-	1.0f, 0.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-
-	0.0f, 1.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f, 1.0f,
-
-	0.0f, 1.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f, 1.0f,
-
+// Index data for drawing triangles
+unsigned short index_data[] = {
+    // Front face
+    0, 1, 2,   0, 2, 3,
+    // Back face
+    4, 5, 6,   4, 6, 7,
+    // Top face
+    8, 9, 10,  8, 10, 11,
+    // Bottom face
+    12, 13, 14, 12, 14, 15,
+    // Right face
+    16, 17, 18, 16, 18, 19,
+    // Left face
+    20, 21, 22, 20, 22, 23,
 };
 
 GLuint program_uint;
@@ -136,7 +133,7 @@ void initalizeProgram(){
     glm::mat4 model_mat(1);
 
     camera_mat_unif = glGetUniformLocation(program_uint, "camera_matrix");
-    glm::vec3 camera_pos = glm::vec3(-1.0f, 1.5f, 3.0f);
+    glm::vec3 camera_pos = glm::vec3(-6.0f, 4.5f, 6.0f);
     glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::mat4 camera_mat = glm::lookAt(camera_pos, camera_target, camera_up);
@@ -152,29 +149,50 @@ void initalizeProgram(){
 }
 
 GLuint vertex_buffer_object;
+GLuint index_buffer_object;
 GLuint vao;
 
 void initalizeVertexBuffer(){
     // Example usage:
 
+    //VBO
     glGenBuffers(1, &vertex_buffer_object);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    //IBO
+    glGenBuffers(1, &index_buffer_object);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_data), index_data, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void initializeVertexArrayObjects(){
+    glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+    size_t color_offset = 24 * 3 * sizeof(float);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)color_offset);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
+	glBindVertexArray(0);
 }
 
 void init() {
     initalizeProgram();
     initalizeVertexBuffer();
-
-    glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+    initializeVertexArrayObjects();
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
+
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
 }
 
 void display(GLFWwindow* window) {
@@ -187,17 +205,10 @@ void display(GLFWwindow* window) {
 
     glUseProgram(program_uint);
 
-    size_t color_data = sizeof(vertex_data) / 2;
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)color_data);
+    glBindVertexArray(vao);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+	glBindVertexArray(0);
 	glUseProgram(0);
 
 	glfwSwapBuffers(window);
