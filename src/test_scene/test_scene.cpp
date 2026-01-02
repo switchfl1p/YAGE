@@ -9,7 +9,6 @@
 #include <Shader.hpp>
 #include <Program.hpp>
 
-
 // Cube Vertex Data with Colors (Separate Position and Color Sections)
 // 8 vertices total (one per corner)
 // Format: All positions first, then all colors
