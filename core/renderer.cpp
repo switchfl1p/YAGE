@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-void init();
+void init(GLFWwindow* window);
 void display(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -32,7 +32,7 @@ int main(){
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     
-    init();
+    init(window);
 
     while (!glfwWindowShouldClose(window)) {
         display(window);

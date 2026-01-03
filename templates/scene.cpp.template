@@ -1,4 +1,3 @@
-// camera_dev.cpp
 #include "glm/ext/matrix_clip_space.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -115,13 +114,16 @@ GLuint projection_mat_unif;
 
 glm::mat4 perspective_mat;
 
-void initalizeProgram(){
+void initalizeProgram(GLFWwindow* window){
     // Initialize shaders and programs here
     // Example shader loading:
 
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
     std::vector<GLuint> shaders;
-    Shader vertex_shader("test_scene.vert");
-    Shader fragment_shader("test_scene.frag");
+    Shader vertex_shader("{scene_name_safe}.vert");
+    Shader fragment_shader("{scene_name_safe}.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
@@ -132,7 +134,7 @@ void initalizeProgram(){
     camera_mat_unif = glGetUniformLocation(program_uint, "camera_matrix");
     projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
 
-    perspective_mat = glm::perspective(glm::radians(45.0f), (640.0f/480.0f), 0.1f, 100.0f);  
+    perspective_mat = glm::perspective(glm::radians(45.0f), float(width)/float(height), 0.1f, 100.0f);  
     glm::mat4 model_mat(1);
 
     glUseProgram(program_uint);
@@ -176,8 +178,8 @@ void initializeVertexArrayObjects(){
 	glBindVertexArray(0);
 }
 
-void init() {
-    initalizeProgram();
+void init(GLFWwindow* window) {
+    initalizeProgram(window);
     initalizeVertexBuffer();
     initializeVertexArrayObjects();
     
@@ -228,3 +230,4 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
+

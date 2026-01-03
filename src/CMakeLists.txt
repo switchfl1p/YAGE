@@ -31,11 +31,4 @@ function(add_scene base_dir tgt_name)
     endif()
 endfunction()
 
-add_scene("hello_triangle" "hello_triangle" "hello_triangle.cpp")
-add_scene("hello_matrix_stack" "hello_matrix_stack" "hello_matrix_stack.cpp")
-
-add_scene("test_scene" "test_scene" "test_scene.cpp")
-
-add_scene("camera_dev" "camera_dev" "camera_dev.cpp")
-
-add_scene("gen_test" "gen_test" "gen_test.cpp")
+add_scene("rotating_camera" "rotating_camera" "rotating_camera.cpp")

@@ -1,4 +1,3 @@
-// test_scene.cpp
 #include "glm/ext/matrix_clip_space.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -115,13 +114,16 @@ GLuint projection_mat_unif;
 
 glm::mat4 perspective_mat;
 
-void initalizeProgram(){
+void initalizeProgram(GLFWwindow* window){
     // Initialize shaders and programs here
     // Example shader loading:
 
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
     std::vector<GLuint> shaders;
-    Shader vertex_shader("test_scene.vert");
-    Shader fragment_shader("test_scene.frag");
+    Shader vertex_shader("rotating_camera.vert");
+    Shader fragment_shader("rotating_camera.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
@@ -129,20 +131,14 @@ void initalizeProgram(){
     program_uint = the_program.getProgramUint();
 
     model_mat_unif = glGetUniformLocation(program_uint, "model_matrix");
-    glm::mat4 model_mat(1);
-
     camera_mat_unif = glGetUniformLocation(program_uint, "camera_matrix");
-    glm::vec3 camera_pos = glm::vec3(-6.0f, 4.5f, 6.0f);
-    glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::mat4 camera_mat = glm::lookAt(camera_pos, camera_target, camera_up);
-
     projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
-    perspective_mat = glm::perspective(glm::radians(45.0f), (640.0f/480.0f), 0.1f, 100.0f);  
+
+    perspective_mat = glm::perspective(glm::radians(45.0f), float(width)/float(height), 0.1f, 100.0f);  
+    glm::mat4 model_mat(1);
 
     glUseProgram(program_uint);
     glUniformMatrix4fv(model_mat_unif, 1, GL_FALSE, glm::value_ptr(model_mat));
-    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(camera_mat));
 	glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(perspective_mat));
 	glUseProgram(0);
 }
@@ -182,8 +178,8 @@ void initializeVertexArrayObjects(){
 	glBindVertexArray(0);
 }
 
-void init() {
-    initalizeProgram();
+void init(GLFWwindow* window) {
+    initalizeProgram(window);
     initalizeVertexBuffer();
     initializeVertexArrayObjects();
     
@@ -204,6 +200,13 @@ void display(GLFWwindow* window) {
 
     glUseProgram(program_uint);
 
+    const float radius = 10.0f;
+    float camX = sin(glfwGetTime()) * radius;
+    float camZ = cos(glfwGetTime()) * radius;
+    glm::mat4 view;
+    view = glm::lookAt(glm::vec3(camX, 3.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+
+    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(view));
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
@@ -227,3 +230,4 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
+
