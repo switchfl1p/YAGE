@@ -37,3 +37,5 @@ add_scene("hello_matrix_stack" "hello_matrix_stack" "hello_matrix_stack.cpp")
 add_scene("test_scene" "test_scene" "test_scene.cpp")
 
 add_scene("camera_dev" "camera_dev" "camera_dev.cpp")
+
+add_scene("gen_test" "gen_test" "gen_test.cpp")

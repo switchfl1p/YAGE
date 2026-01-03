@@ -24,6 +24,9 @@ There is a helpful python script for generating the boilerplate required for a n
 
 # With custom executable name
 ./scene_gen.py scene_name -e executable_name
+
+# With custom templates folder
+./scene_gen.py scene_name -t template_folder
 ```
 
 
