@@ -32,3 +32,5 @@ function(add_scene base_dir tgt_name)
 endfunction()
 
 add_scene("rotating_camera" "rotating_camera" "rotating_camera.cpp")
+
+add_scene("controlled_camera" "controlled_camera" "controlled_camera.cpp")
