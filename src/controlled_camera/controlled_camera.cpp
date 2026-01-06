@@ -120,18 +120,17 @@ class Camera{
         glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
         glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+        glm::mat4 view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
+
         void updateView(){
             view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
         }
 
         void updateCameraSpeed(){
-            camera_speed = 30.0f * delta_time;
+            camera_speed = 10.0f * delta_time;
         }
         
-        glm::mat4 view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
-
         void cameraControllsCallback(GLFWwindow* window){
-
             updateCameraSpeed();
 
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -146,6 +145,23 @@ class Camera{
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
                 camera_pos += glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
         }
+
+        float yaw = -90.0f;
+        float pitch = 0.0f;
+
+        glm::vec3 direction;
+
+        void updateDirection(){
+            direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+            direction.y = sin(glm::radians(pitch));
+            direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+            camera_front = glm::normalize(direction);
+        }
+
+        float last_x = 320, last_y = 240;
+
+        bool first_mouse = true;
+
 };
 
 Camera cam;
@@ -157,12 +173,14 @@ GLuint camera_mat_unif;
 GLuint projection_mat_unif;
 
 glm::mat4 perspective_mat;
+int width, height;
+
+float fov = 45.0f;
 
 void initalizeProgram(GLFWwindow* window){
     // Initialize shaders and programs here
     // Example shader loading:
 
-    int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
     std::vector<GLuint> shaders;
@@ -178,12 +196,10 @@ void initalizeProgram(GLFWwindow* window){
     camera_mat_unif = glGetUniformLocation(program_uint, "camera_matrix");
     projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
 
-    perspective_mat = glm::perspective(glm::radians(45.0f), float(width)/float(height), 0.1f, 100.0f);  
     glm::mat4 model_mat(1);
 
     glUseProgram(program_uint);
     glUniformMatrix4fv(model_mat_unif, 1, GL_FALSE, glm::value_ptr(model_mat));
-	glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(perspective_mat));
 	glUseProgram(0);
 }
 
@@ -222,10 +238,12 @@ void initializeVertexArrayObjects(){
 	glBindVertexArray(0);
 }
 
-void init(GLFWwindow* window) {
+void init(GLFWwindow* window){
     initalizeProgram(window);
     initalizeVertexBuffer();
     initializeVertexArrayObjects();
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -234,13 +252,15 @@ void init(GLFWwindow* window) {
 	glCullFace(GL_BACK);
 }
 
-void display(GLFWwindow* window) {
+void display(GLFWwindow* window){
     // Rendering code here
     // Called every frame
 
     float current_frame = glfwGetTime();
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
+
+    cam.cameraControllsCallback(window);
     
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -249,6 +269,9 @@ void display(GLFWwindow* window) {
     glUseProgram(program_uint);
     
     cam.updateView();
+
+    perspective_mat = glm::perspective(glm::radians(fov), float(width)/float(height), 0.1f, 100.0f);
+    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(perspective_mat));
 
     glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.view));
     glBindVertexArray(vao);
@@ -261,7 +284,7 @@ void display(GLFWwindow* window) {
     glfwPollEvents();
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     perspective_mat = glm::perspective(glm::radians(45.0f), float(width)/float(height), 0.1f, 100.0f);
     glUseProgram(program_uint);
     glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(perspective_mat));
@@ -270,10 +293,44 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    cam.cameraControllsCallback(window);
 }
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+    if(cam.first_mouse){
+        cam.last_x = xpos;
+        cam.last_y = ypos;
+        cam.first_mouse = false;
+    }
+
+    float x_offset = xpos - cam.last_x;
+    float y_offset = cam.last_y - ypos;
+    cam.last_x = xpos;
+    cam.last_y = ypos;
+
+    float sensitivity = 0.05f;
+    x_offset *= sensitivity;
+    y_offset *= sensitivity;
+
+    cam.yaw += x_offset;
+    cam.pitch += y_offset;
+
+    if(cam.pitch > 89.0f)
+        cam.pitch = 89.0f;
+    if(cam.pitch < -89.0f)
+        cam.pitch = -89.0f;
+
+    cam.updateDirection();
+}
+
+void scroll_callback(GLFWwindow* window, double x_offset, double y_offset)
+{
+    fov -= (float)y_offset * 2.0;
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 45.0f)
+        fov = 45.0f; 
+}
