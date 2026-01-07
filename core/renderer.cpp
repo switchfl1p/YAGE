@@ -17,7 +17,7 @@ int main(){
         return -1;
     }
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "YAGE", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "YAGE", NULL, NULL);
     if (!window){
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();

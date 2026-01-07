@@ -144,6 +144,12 @@ class Camera{
 
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
                 camera_pos += glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
+
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+                camera_pos += camera_speed * camera_up;
+
+            if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+                camera_pos -= camera_speed * camera_up;
         }
 
         float yaw = -90.0f;
@@ -311,7 +317,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
     cam.last_x = xpos;
     cam.last_y = ypos;
 
-    float sensitivity = 0.05f;
+    float sensitivity = 0.025f;
     x_offset *= sensitivity;
     y_offset *= sensitivity;
 
