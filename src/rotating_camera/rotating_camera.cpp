@@ -1,7 +1,5 @@
-#include "glm/ext/matrix_clip_space.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
 
@@ -229,5 +227,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+}
+
+void scroll_callback(GLFWwindow* window, double x_offset, double y_offset)
+{
 }
 
