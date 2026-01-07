@@ -1,7 +1,5 @@
-#include "glm/ext/matrix_clip_space.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
 
@@ -109,6 +107,8 @@ unsigned short index_data[] = {
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
+float fov = 45.0f;
+
 class Camera{
     public:
         Camera(){}
@@ -152,6 +152,43 @@ class Camera{
                 camera_pos -= camera_speed * camera_up;
         }
 
+        void mouseCameraCallback(GLFWwindow* window, double xpos, double ypos){
+            if(first_mouse){
+                last_x = xpos;
+                last_y = ypos;
+                first_mouse = false;
+            }
+
+            float x_offset = xpos - last_x;
+            float y_offset = last_y - ypos;
+            last_x = xpos;
+            last_y = ypos;
+
+            float sensitivity = 0.025f;
+            x_offset *= sensitivity;
+            y_offset *= sensitivity;
+
+            yaw += x_offset;
+            pitch += y_offset;
+
+            if(pitch > 89.0f)
+                pitch = 89.0f;
+            if(pitch < -89.0f)
+                pitch = -89.0f;
+
+            updateDirection();
+        }
+
+        void mouseZoomCallback(GLFWwindow* window, double x_offset, double y_offset)
+        {
+            fov -= (float)y_offset * 2.0;
+            if (fov < 1.0f)
+                fov = 1.0f;
+            if (fov > 45.0f)
+                fov = 45.0f; 
+        }
+
+
         float yaw = -90.0f;
         float pitch = 0.0f;
 
@@ -180,8 +217,6 @@ GLuint projection_mat_unif;
 
 glm::mat4 perspective_mat;
 int width, height;
-
-float fov = 45.0f;
 
 void initalizeProgram(GLFWwindow* window){
     // Initialize shaders and programs here
@@ -306,37 +341,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-    if(cam.first_mouse){
-        cam.last_x = xpos;
-        cam.last_y = ypos;
-        cam.first_mouse = false;
-    }
-
-    float x_offset = xpos - cam.last_x;
-    float y_offset = cam.last_y - ypos;
-    cam.last_x = xpos;
-    cam.last_y = ypos;
-
-    float sensitivity = 0.025f;
-    x_offset *= sensitivity;
-    y_offset *= sensitivity;
-
-    cam.yaw += x_offset;
-    cam.pitch += y_offset;
-
-    if(cam.pitch > 89.0f)
-        cam.pitch = 89.0f;
-    if(cam.pitch < -89.0f)
-        cam.pitch = -89.0f;
-
-    cam.updateDirection();
+    cam.mouseCameraCallback(window, xpos, ypos);
 }
 
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    fov -= (float)y_offset * 2.0;
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f; 
+    cam.mouseZoomCallback(window, x_offset, y_offset);
 }
