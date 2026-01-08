@@ -3,15 +3,14 @@
 #pragma once
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
-#include <GLFW/glfw3.h>
 
 class Camera{
     public:
         ~Camera();
 
-        void processKeyboardInput(GLFWwindow* window, float delta_time);
+        /* void processKeyboardInput(GLFWwindow* window, float delta_time);
         void mouseCameraCallback(GLFWwindow* window, double x_pos, double y_pos);
-        void mouseZoomCallback(GLFWwindow* window, double x_offset, double y_offset);
+        void mouseZoomCallback(GLFWwindow* window, double x_offset, double y_offset); */
 
         void updateDirection();
         void updateViewMat();
@@ -22,7 +21,6 @@ class Camera{
 
         class Builder{
             public:
-                Builder(int* w, int* h);
                 Builder& setCameraPos(glm::vec3 pos);
                 Builder& setCameraFront(glm::vec3 front);
                 Builder& setCameraUp(glm::vec3 up);
@@ -34,6 +32,8 @@ class Camera{
                 Builder& setPerspectiveFoV(float desired_fov);
                 Builder& setPerspZNear(float p_zN);
                 Builder& setPerspZFar(float p_zF);
+                Builder& setWidth(int w);
+                Builder& setHeight(int h);
 
                 Camera build();
             private:
@@ -50,16 +50,16 @@ class Camera{
                 float persp_zNear_b = 0.1f;
                 float persp_zFar_b = 100.0f;
 
-                int* width_b;
-                int* height_b;
+                int width_b = 500;
+                int height_b = 400;
         };
 
     private:
         Camera(glm::vec3 pos, glm::vec3 front, glm::vec3 up, float yaw, float pitch, float speed, 
-            float z_sens, float m_sens, float fov, int* w_width, int* w_height, float p_zNear, float p_zFar);
+            float z_sens, float m_sens, float fov, int w_width, int w_height, float p_zNear, float p_zFar);
         
-        int* window_width;
-        int* window_height;
+        int window_width;
+        int window_height;
 
         glm::vec3 camera_pos;
         glm::vec3 camera_front;

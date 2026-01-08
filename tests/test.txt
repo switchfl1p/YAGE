@@ -5,3 +5,12 @@ Shader Class tests:
 
 Program Class tests:
 -attempt to attach a shader that didn't compile
+
+from root:
+
+g++ -std=c++17 -o tests/test tests/main.cpp core/Camera.cpp -I./lib/glm -I./core
+
+from tests:
+
+g++ -std=c++17 -o test main.cpp ../core/Camera.cpp -I../lib/glm -I../core
+

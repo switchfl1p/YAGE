@@ -3,6 +3,8 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <Camera.hpp>
 
+Camera::~Camera(){}
+
 Camera::Builder& Camera::Builder::setCameraPos(glm::vec3 pos){
     camera_pos_b = pos;
     return *this;
@@ -59,7 +61,7 @@ Camera::Builder& Camera::Builder::setPerspZFar(float p_zF){
 }
 
 void Camera::updatePerspMat(){
-    perspective_mat = glm::perspective(glm::radians(fov), float(*window_width)/float(*window_height), camera_pers_zNear, camera_pers_zFar);
+    perspective_mat = glm::perspective(glm::radians(fov), float(window_width)/float(window_height), camera_pers_zNear, camera_pers_zFar);
 }
 
 void Camera::updateDirection(){
@@ -82,7 +84,7 @@ glm::mat4 Camera::getViewMat(){
 }
 
 Camera::Camera(glm::vec3 pos, glm::vec3 front, glm::vec3 up, float yaw, float pitch,
-    float speed, float z_sens, float m_sens, float f, int* w_width, int* w_height, float p_zNear, float p_zFar)
+    float speed, float z_sens, float m_sens, float f, int w_width, int w_height, float p_zNear, float p_zFar)
 :   camera_pos(pos),
     camera_front(front),
     camera_up(up),
@@ -94,14 +96,15 @@ Camera::Camera(glm::vec3 pos, glm::vec3 front, glm::vec3 up, float yaw, float pi
     fov(f),
     first_mouse(true),
     camera_pers_zNear(p_zNear),
-    camera_pers_zFar(p_zFar)
+    camera_pers_zFar(p_zFar),
+    window_width(w_width),
+    window_height(w_height)
 {
     updatePerspMat();
     updateDirection();
     updateViewMat();    
 }
 
-Camera::Builder::Builder(int* w, int* h) : width_b(w), height_b(h){}
 
 Camera Camera::Builder::build(){
     return Camera(camera_pos_b, camera_front_b, camera_up_b, camera_yaw_b, camera_pitch_b, camera_speed_b,
