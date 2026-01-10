@@ -15,8 +15,7 @@ void printMat4Pretty(const glm::mat4& mat) {
 }
 
 int main(){
-
-    Camera camera1 = Camera::Builder().build();
+    Camera camera1;
 
     std::cout << "Testing Camera with default values:\n";
     std::cout << "View Matrix:\n";
@@ -39,16 +38,19 @@ int main(){
     float persp_zNear_b = 1.0f;
     float persp_zFar_b = 50.0f;
 
-    Camera camera2 = Camera::Builder()
-        .setCameraPos(camera_pos_b)
-        .setCameraFront(camera_front_b)
-        .setCameraUp(camera_up_b)
-        .setCameraYaw(camera_yaw_b)
-        .setCameraPitch(camera_pitch_b)
-        .setPerspectiveFoV(fov_b)
-        .setPerspZNear(persp_zNear_b)
-        .setPerspZFar(persp_zFar_b)
-        .build();
+    Camera camera2;
+
+    camera2.position = camera_pos_b;
+    camera2.front = camera_front_b;
+    camera2.up = camera_up_b;
+
+    camera2.yaw = camera_yaw_b;
+    camera2.pitch = camera_pitch_b;
+    camera2.fov = fov_b;
+    camera2.persp_zNear = persp_zNear_b;
+    camera2.persp_zFar = persp_zFar_b;
+
+    camera2.updateCamera();
     
     std::cout << "Testing Camera with custom values:\n";
     std::cout << "View Matrix:\n";
