@@ -11,16 +11,15 @@ Camera::Camera(){
 Camera::~Camera(){}
 
 void Camera::updateCamera(){
-    updateDirection();
     updateViewMat();
     updatePerspMat();
 }
 
-glm::mat4 Camera::getViewMat(){
+glm::mat4 Camera::getViewMat() const{
     return view_mat;
 }
 
-glm::mat4 Camera::getPerspMat(){
+glm::mat4 Camera::getPerspMat() const{
     return perspective_mat;
 }
 
@@ -32,9 +31,10 @@ void Camera::updateDirection(){
 }
 
 void Camera::updateViewMat(){
+    updateDirection();
     view_mat = glm::lookAt(position, position + front, up);
 }
 
 void Camera::updatePerspMat(){
-    perspective_mat = glm::perspective(glm::radians(fov), float(window_width)/float(window_height), persp_zNear, persp_zFar);
+    perspective_mat = glm::perspective(glm::radians(fov), float(viewport_w)/float(viewport_h), persp_zNear, persp_zFar);
 }

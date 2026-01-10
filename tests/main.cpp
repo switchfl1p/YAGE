@@ -1,3 +1,5 @@
+/* switchfl1p 2025-2026 */
+
 #include "Camera.hpp"
 #include <iostream>
 #include <iomanip>
@@ -32,11 +34,18 @@ int main(){
     glm::vec3 camera_front_b = glm::vec3(-1.0f, 0.0f, 0.0f);
     glm::vec3 camera_up_b = glm::vec3(0.0f, 1.0f, 0.0f);
 
+
     float camera_yaw_b = -45.0f;
     float camera_pitch_b = 5.0f;
     float fov_b = 25.0f;
     float persp_zNear_b = 1.0f;
     float persp_zFar_b = 50.0f;
+
+    int width = 25;
+    int height = 25;
+
+    int w = 2;
+    int* wp = &w;
 
     Camera camera2;
 
@@ -49,6 +58,8 @@ int main(){
     camera2.fov = fov_b;
     camera2.persp_zNear = persp_zNear_b;
     camera2.persp_zFar = persp_zFar_b;
+    camera2.viewport_w = width;
+    camera2.viewport_h = height;
 
     camera2.updateCamera();
     
