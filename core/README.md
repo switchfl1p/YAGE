@@ -5,7 +5,7 @@ Camera handles only the data and methods necessary to perform view and perspecti
 
 Usage:
 
-```
+```c++
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controler = nullptr;
 
