@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
+#include <memory>
 
 #include <Shader.hpp>
 #include <Program.hpp>
@@ -106,25 +107,15 @@ unsigned short index_data[] = {
     20, 21, 22, 20, 22, 23,
 };
 
-float delta_time = 0.0f;
-float last_frame = 0.0f;
-
-Camera cam;
-CameraController cam_controler(cam);
-
 GLuint program_uint;
 
 GLuint model_mat_unif;
 GLuint camera_mat_unif;
 GLuint projection_mat_unif;
 
-int width, height;
-
 void initalizeProgram(GLFWwindow* window){
     // Initialize shaders and programs here
     // Example shader loading:
-
-    glfwGetFramebufferSize(window, &width, &height);
 
     std::vector<GLuint> shaders;
     Shader vertex_shader("controlled_camera.vert");
@@ -181,12 +172,25 @@ void initializeVertexArrayObjects(){
 	glBindVertexArray(0);
 }
 
+int width;
+int height;
+
+std::unique_ptr<Camera> cam = nullptr;
+std::unique_ptr<CameraController> cam_controler = nullptr;
+
+void initalizeCameras(GLFWwindow* window){
+    glfwGetFramebufferSize(window, &width, &height);
+    cam = std::make_unique<Camera>(width,height);
+    cam_controler = std::make_unique<CameraController>(*cam);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+}
+
 void init(GLFWwindow* window){
     initalizeProgram(window);
     initalizeVertexBuffer();
     initializeVertexArrayObjects();
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+    initalizeCameras(window);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -194,6 +198,9 @@ void init(GLFWwindow* window){
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 }
+
+float delta_time = 0.0f;
+float last_frame = 0.0f;
 
 void display(GLFWwindow* window){
     // Rendering code here
@@ -207,14 +214,14 @@ void display(GLFWwindow* window){
 	glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    cam_controler.processCameraInput(window, delta_time);
-    cam.updateViewMat();
-    cam.updatePerspMat();
+    cam_controler->processCameraInput(window, delta_time);
+    cam->updateViewMat();
+    cam->updatePerspMat();
 
     glUseProgram(program_uint);
     
-    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.getPerspMat()));
-    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.getViewMat()));
+    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getPerspMat()));
+    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getViewMat()));
 
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
@@ -227,13 +234,16 @@ void display(GLFWwindow* window){
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-    cam.updatePerspMat();
+    cam->viewport_w = width;
+    cam->viewport_h = height;
+    cam->updatePerspMat();
+
     glUseProgram(program_uint);
-    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.getPerspMat()));
+    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getPerspMat()));
     glUseProgram(0);
 
     glViewport(0, 0, width, height);
-    //glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window, &width, &height);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
@@ -243,10 +253,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
-    cam_controler.mouseCameraController(window, x_pos, y_pos);
+    cam_controler->mouseCameraController(window, x_pos, y_pos);
 }
 
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    cam_controler.mouseZoomController(window, x_offset, y_offset);
+    cam_controler->mouseZoomController(window, x_offset, y_offset);
 }

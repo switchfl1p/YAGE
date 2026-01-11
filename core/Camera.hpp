@@ -5,7 +5,7 @@
 
 class Camera{
     public:
-        Camera();
+        Camera(int viewport_width, int viewport_height);
         ~Camera();
 
         glm::mat4 getPerspMat() const;

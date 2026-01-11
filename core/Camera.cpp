@@ -3,8 +3,16 @@
 #include <Camera.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
+#include <iostream>
 
-Camera::Camera(){
+Camera::Camera(int viewport_width, int viewport_height)
+    :viewport_w(viewport_width),
+    viewport_h(viewport_height)
+{
+    if (viewport_h == 0) {
+        std::cerr << "Warning: viewport height is 0!" << std::endl;
+        viewport_h = 1;  // Prevent division by zero
+    }
     updateCamera();
 }
 
