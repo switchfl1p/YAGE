@@ -5,6 +5,8 @@
 
 #include <Shader.hpp>
 #include <Program.hpp>
+#include <Camera.hpp>
+#include <CameraController.hpp>
 
 // Cube Vertex Data with Colors (Separate Position and Color Sections)
 // 8 vertices total (one per corner)
@@ -107,106 +109,8 @@ unsigned short index_data[] = {
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
-float fov = 45.0f;
-
-class Camera{
-    public:
-        Camera(){}
-        ~Camera(){}
-
-        float camera_speed = 30.0f;
-
-        glm::vec3 camera_pos = glm::vec3(0.0f, 1.5f, 10.0f);
-        glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
-        glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-        glm::mat4 view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
-
-        void updateView(){
-            view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
-        }
-
-        void updateCameraSpeed(){
-            camera_speed = 10.0f * delta_time;
-        }
-        
-        void cameraControllsCallback(GLFWwindow* window){
-            updateCameraSpeed();
-
-            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-                camera_pos += camera_speed * camera_front;
-
-            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-                camera_pos -= camera_speed * camera_front;
-
-            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-                camera_pos -= glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
-
-            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-                camera_pos += glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
-
-            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-                camera_pos += camera_speed * camera_up;
-
-            if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-                camera_pos -= camera_speed * camera_up;
-        }
-
-        void mouseCameraCallback(GLFWwindow* window, double xpos, double ypos){
-            if(first_mouse){
-                last_x = xpos;
-                last_y = ypos;
-                first_mouse = false;
-            }
-
-            float x_offset = xpos - last_x;
-            float y_offset = last_y - ypos;
-            last_x = xpos;
-            last_y = ypos;
-
-            float sensitivity = 0.025f;
-            x_offset *= sensitivity;
-            y_offset *= sensitivity;
-
-            yaw += x_offset;
-            pitch += y_offset;
-
-            if(pitch > 89.0f)
-                pitch = 89.0f;
-            if(pitch < -89.0f)
-                pitch = -89.0f;
-
-            updateDirection();
-        }
-
-        void mouseZoomCallback(GLFWwindow* window, double x_offset, double y_offset)
-        {
-            fov -= (float)y_offset * 2.0;
-            if (fov < 1.0f)
-                fov = 1.0f;
-            if (fov > 45.0f)
-                fov = 45.0f; 
-        }
-
-        float yaw = -90.0f;
-        float pitch = 0.0f;
-
-        glm::vec3 direction;
-
-        void updateDirection(){
-            direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-            direction.y = sin(glm::radians(pitch));
-            direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-            camera_front = glm::normalize(direction);
-        }
-
-        float last_x = 320, last_y = 240;
-
-        bool first_mouse = true;
-
-};
-
 Camera cam;
+CameraController cam_controler(cam);
 
 GLuint program_uint;
 
@@ -214,7 +118,6 @@ GLuint model_mat_unif;
 GLuint camera_mat_unif;
 GLuint projection_mat_unif;
 
-glm::mat4 perspective_mat;
 int width, height;
 
 void initalizeProgram(GLFWwindow* window){
@@ -299,21 +202,20 @@ void display(GLFWwindow* window){
     float current_frame = glfwGetTime();
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
-
-    cam.cameraControllsCallback(window);
     
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    cam_controler.processCameraInput(window, delta_time);
+    cam.updateViewMat();
+    cam.updatePerspMat();
+
     glUseProgram(program_uint);
     
-    cam.updateView();
+    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.getPerspMat()));
+    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.getViewMat()));
 
-    perspective_mat = glm::perspective(glm::radians(fov), float(width)/float(height), 0.1f, 100.0f);
-    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(perspective_mat));
-
-    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.view));
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
@@ -325,9 +227,9 @@ void display(GLFWwindow* window){
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-    perspective_mat = glm::perspective(fov, float(width)/float(height), 0.1f, 100.0f);
+    cam.updatePerspMat();
     glUseProgram(program_uint);
-    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(perspective_mat));
+    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam.getPerspMat()));
     glUseProgram(0);
 
     glViewport(0, 0, width, height);
@@ -340,11 +242,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-    cam.mouseCameraCallback(window, xpos, ypos);
+void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
+    cam_controler.mouseCameraController(window, x_pos, y_pos);
 }
 
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    cam.mouseZoomCallback(window, x_offset, y_offset);
+    cam_controler.mouseZoomController(window, x_offset, y_offset);
 }

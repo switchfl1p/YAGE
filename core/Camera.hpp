@@ -14,6 +14,7 @@ class Camera{
         void updateCamera();
         void updateViewMat();
         void updatePerspMat();
+        void updateDirection();
 
         glm::vec3 position = glm::vec3(0.0f, 1.5f, 10.0f);
         glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -34,6 +35,4 @@ class Camera{
 
         glm::mat4 view_mat;
         glm::mat4 perspective_mat;
-
-        void updateDirection();
 };

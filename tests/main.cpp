@@ -34,7 +34,6 @@ int main(){
     glm::vec3 camera_front_b = glm::vec3(-1.0f, 0.0f, 0.0f);
     glm::vec3 camera_up_b = glm::vec3(0.0f, 1.0f, 0.0f);
 
-
     float camera_yaw_b = -45.0f;
     float camera_pitch_b = 5.0f;
     float fov_b = 25.0f;
@@ -43,9 +42,6 @@ int main(){
 
     int width = 25;
     int height = 25;
-
-    int w = 2;
-    int* wp = &w;
 
     Camera camera2;
 

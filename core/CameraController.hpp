@@ -5,6 +5,9 @@
 #include <Camera.hpp>
 #include <GLFW/glfw3.h>
 
+/* Currently min fov 1.0, max fov 45.0 
+min pitch -89.0f, max pitch 89.0 */
+
 class CameraController{
     public:
         CameraController(Camera &cam);
@@ -13,6 +16,9 @@ class CameraController{
         float movement_speed = 10.0f;
         float mouse_sens = 0.025f;
         float zoom_sens = 2.0f;
+
+        float last_x = 0;
+        float last_y = 0;
 
         bool first_mouse = true;
         
@@ -24,4 +30,5 @@ class CameraController{
     private:
         Camera &camera;
         void updateCameraSpeed(float delta_time);
+        float movement_distance;
 };
