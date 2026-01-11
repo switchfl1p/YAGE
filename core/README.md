@@ -36,8 +36,7 @@ void display(GLFWwindow* window){
     last_frame = current_frame;
 
     cam_controler->processCameraInput(window, delta_time);
-    cam->updateViewMat();
-    cam->updatePerspMat();    
+    cam->updateCamera();  
     //...
 }
 

@@ -215,8 +215,7 @@ void display(GLFWwindow* window){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     cam_controler->processCameraInput(window, delta_time);
-    cam->updateViewMat();
-    cam->updatePerspMat();
+    cam->updateCamera();
 
     glUseProgram(program_uint);
     
