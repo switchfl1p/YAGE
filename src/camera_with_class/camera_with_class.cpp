@@ -256,7 +256,6 @@ void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
     cam_controler->mouseCameraController(window, x_pos, y_pos);
 }
 
-void scroll_callback(GLFWwindow* window, double x_offset, double y_offset)
-{
+void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
     cam_controler->mouseZoomController(window, x_offset, y_offset);
 }

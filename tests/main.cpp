@@ -1,5 +1,5 @@
 /* switchfl1p 2025-2026 */
-
+/*
 #include "Camera.hpp"
 #include <iostream>
 #include <iomanip>
@@ -70,4 +70,4 @@ int main(){
     printMat4Pretty(camera2.getPerspMat());
     std::cout << "\n";
     
-}
+} */
