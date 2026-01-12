@@ -3,7 +3,6 @@
 #include <Camera.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
-#include <iostream>
 
 Camera::Camera(int viewport_width, int viewport_height)
     :viewport_w(viewport_width),

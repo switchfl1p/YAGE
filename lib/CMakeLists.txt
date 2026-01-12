@@ -9,3 +9,7 @@ target_include_directories(glm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glm)
 # ----- GLFW -----
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/GLFW)
+
+# ----- tinyobjloader (header only) ------
+add_library(tinyobjloader INTERFACE)
+target_include_directories(tinyobjloader INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinyobjloader)

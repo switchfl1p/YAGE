@@ -4,6 +4,7 @@ set(CORE_SOURCES
 	renderer.cpp
 	CameraController.cpp
 	Camera.cpp
+	tinyobj_impl.cpp
 )
 
 set(CORE_HEADERS
@@ -15,4 +16,4 @@ set(CORE_HEADERS
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(core PUBLIC glad glfw glm)
+target_link_libraries(core PUBLIC glad glfw glm tinyobjloader)
