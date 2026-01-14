@@ -4,6 +4,7 @@ set(CORE_SOURCES
 	renderer.cpp
 	CameraController.cpp
 	Camera.cpp
+	tinygltf_impl.cpp
 )
 
 set(CORE_HEADERS

@@ -1,10 +1,10 @@
 #version 330
 
-smooth in vec4 the_color;
-
-out vec4 output_color;
+smooth in vec3 frag_pos;
+out vec4 frag_color;
 
 void main()
 {
-	output_color = the_color;
+	vec3 color = (frag_pos + 1.0) * 0.5;
+	frag_color = vec4(color, 1.0);
 }
