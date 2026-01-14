@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
 #include <memory>
+#include <tiny_gltf.h>
 
 #include <Shader.hpp>
 #include <Program.hpp>
