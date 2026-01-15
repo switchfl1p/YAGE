@@ -1,10 +1,11 @@
 #version 330
 
-smooth in vec3 frag_pos;
-out vec4 frag_color;
+smooth in vec4 interp_color;
+
+out vec4 output_color;
 
 void main()
 {
-	vec3 color = (frag_pos + 1.0) * 0.5;
-	frag_color = vec4(color, 1.0);
+	output_color = interp_color;
 }
+

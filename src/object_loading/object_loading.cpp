@@ -2,7 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
-#include <memory>
 #include <tiny_gltf.h>
 
 #include <Shader.hpp>
@@ -22,12 +21,18 @@ GLuint model_mat_unif;
 GLuint camera_mat_unif;
 GLuint projection_mat_unif;
 
+GLuint light_dir_unif;
+GLuint light_intens_unif;
+GLuint ambient_unif;
+
 int index_count = 0;
+
+glm::mat4 model_mat(1);
 
 void initalizeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
     //Example shader loading:
-
+    
     std::vector<GLuint> shaders;
     Shader vertex_shader("object_loading.vert");
     Shader fragment_shader("object_loading.frag");
@@ -37,11 +42,15 @@ void initalizeProgram(GLFWwindow* window){
     Program the_program(shaders);
     program_uint = the_program.getProgramUint();
 
+    //transform uniforms
     model_mat_unif = glGetUniformLocation(program_uint, "model_matrix");
     camera_mat_unif = glGetUniformLocation(program_uint, "camera_matrix");
     projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
 
-    glm::mat4 model_mat(1);
+    //light uniforms
+    light_dir_unif = glGetUniformLocation(program_uint, "light_dir");
+    light_intens_unif = glGetUniformLocation(program_uint, "light_intensity");
+    ambient_unif = glGetUniformLocation(program_uint, "ambient_intensity");
 
     glUseProgram(program_uint);
     glUniformMatrix4fv(model_mat_unif, 1, GL_FALSE, glm::value_ptr(model_mat));
@@ -52,6 +61,10 @@ GLuint vertex_buffer_object;
 GLuint index_buffer_object;
 GLuint normal_buffer_object;
 GLuint vao;
+
+glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
+glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
 void initalizeVertexBuffer(){
     //Example usage:
@@ -188,12 +201,19 @@ void display(GLFWwindow* window){
     cam_controler->processCameraInput(window, delta_time);
     cam->updateCamera();
 
+    //light
+    glm::vec4 light_direction_cam = cam->getViewMat() * model_mat * light_direction;
+
     //use shaders
     glUseProgram(program_uint);
     
     //send uniforms
     glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getPerspMat()));
     glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getViewMat()));
+
+    glUniform4fv(light_dir_unif, 1, glm::value_ptr(light_direction_cam));
+    glUniform4fv(light_intens_unif, 1, glm::value_ptr(light_intensity));
+    glUniform4fv(ambient_unif, 1, glm::value_ptr(ambient_intensity));
 
     //render triangles
     glBindVertexArray(vao);
