@@ -25,8 +25,8 @@ GLuint projection_mat_unif;
 int index_count = 0;
 
 void initalizeProgram(GLFWwindow* window){
-    // Initialize shaders and programs here
-    // Example shader loading:
+    //Initialize shaders and programs here
+    //Example shader loading:
 
     std::vector<GLuint> shaders;
     Shader vertex_shader("object_loading.vert");
@@ -50,10 +50,11 @@ void initalizeProgram(GLFWwindow* window){
 
 GLuint vertex_buffer_object;
 GLuint index_buffer_object;
+GLuint normal_buffer_object;
 GLuint vao;
 
 void initalizeVertexBuffer(){
-    // Example usage:
+    //Example usage:
 
     bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, filename);
 
@@ -69,11 +70,11 @@ void initalizeVertexBuffer(){
         printf("Failed to parse glTF: %s\n", filename.c_str());
     }
 
-    // Get first mesh (the cube)
+    //Get first mesh (the cube)
     const tinygltf::Mesh &mesh = model.meshes[0];
     const tinygltf::Primitive &primitive = mesh.primitives[0];
 
-    // Get vertex positions
+    //Get vertex positions
     const tinygltf::Accessor &pos_accessor = model.accessors[primitive.attributes.at("POSITION")];
     const tinygltf::BufferView &posView = model.bufferViews[pos_accessor.bufferView];
     const tinygltf::Buffer &pos_buffer = model.buffers[posView.buffer];
@@ -82,6 +83,26 @@ void initalizeVertexBuffer(){
         &pos_buffer.data[posView.byteOffset + pos_accessor.byteOffset]
     );
 
+    int vertex_count = pos_accessor.count;
+
+    //Check if normals exist
+    if (primitive.attributes.find("NORMAL") != primitive.attributes.end()) {
+        const tinygltf::Accessor &norm_accessor = model.accessors[primitive.attributes.at("NORMAL")];
+        const tinygltf::BufferView &norm_view = model.bufferViews[norm_accessor.bufferView];
+        const tinygltf::Buffer &norm_buffer = model.buffers[norm_view.buffer];
+
+        const float *normals = reinterpret_cast<const float*>(
+            &norm_buffer.data[norm_view.byteOffset + norm_accessor.byteOffset]
+        );
+        
+        //NBO
+        glGenBuffers(1, &normal_buffer_object);
+        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
+        glBufferData(GL_ARRAY_BUFFER, vertex_count * 3 * sizeof(float), normals, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    //get indices
     const tinygltf::Accessor &ind_accessor = model.accessors[primitive.indices];
     const tinygltf::BufferView &ind_view = model.bufferViews[ind_accessor.bufferView];
     const tinygltf::Buffer &ind_buffer = model.buffers[ind_view.buffer];
@@ -90,7 +111,6 @@ void initalizeVertexBuffer(){
         &ind_buffer.data[ind_view.byteOffset + ind_accessor.byteOffset]
     );
 
-    int vertex_count = pos_accessor.count; // 32
     index_count = ind_accessor.count;
 
     //VBO
@@ -110,9 +130,16 @@ void initializeVertexArrayObjects(){
     glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
+    //positions at attribute location 0
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
+
+    //normals at attribute location 1
+    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
 	glBindVertexArray(0);
 }
@@ -127,6 +154,7 @@ void initalizeCameras(GLFWwindow* window){
     glfwGetFramebufferSize(window, &width, &height);
     cam = std::make_unique<Camera>(width,height);
     cam_controler = std::make_unique<CameraController>(*cam);
+    cam->position = glm::vec3(0.0f, 1.0f, 5.0f);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
@@ -147,30 +175,31 @@ void init(GLFWwindow* window){
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
+// Called every frame
 void display(GLFWwindow* window){
-    // Rendering code here
-    // Called every frame
+    //set background color
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //camera movement
     float current_frame = glfwGetTime();
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
-    
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     cam_controler->processCameraInput(window, delta_time);
     cam->updateCamera();
 
+    //use shaders
     glUseProgram(program_uint);
     
+    //send uniforms
     glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getPerspMat()));
     glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getViewMat()));
 
+    //render triangles
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
-
 	glBindVertexArray(0);
+
 	glUseProgram(0);
 
 	glfwSwapBuffers(window);
