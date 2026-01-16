@@ -34,8 +34,8 @@ void initalizeProgram(GLFWwindow* window){
     //Example shader loading:
     
     std::vector<GLuint> shaders;
-    Shader vertex_shader("{scene_name_safe}.vert");
-    Shader fragment_shader("{scene_name_safe}.frag");
+    Shader vertex_shader("test.vert");
+    Shader fragment_shader("test.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
