@@ -17,8 +17,9 @@ std::string filename = "meshes/box01.glb";
 
 GLuint program_uint;
 
-GLuint mvp_mat_unif;
-GLuint norm_view_mat_unif;
+GLuint matrices_uniform_block_index;
+GLuint matrices_UBO;
+const int matrices_binding_index = 0;
 
 GLuint light_dir_unif;
 GLuint light_intens_unif;
@@ -45,12 +46,17 @@ void initalizeProgram(GLFWwindow* window){
     Program the_program(shaders);
     program_uint = the_program.getProgramUint();
 
-    //transform uniform
-    mvp_mat_unif = glGetUniformLocation(program_uint, "mvp_mat");
+    //UBO
+    matrices_uniform_block_index = glGetUniformBlockIndex(program_uint, "Matrices");
+    glUniformBlockBinding(program_uint, matrices_uniform_block_index, matrices_binding_index);
+    
+    glGenBuffers(1, &matrices_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //normals transform uniform
-    norm_view_mat_unif = glGetUniformLocation(program_uint, "norm_view_mat");
-
+    glBindBufferRange(GL_UNIFORM_BUFFER, matrices_binding_index, matrices_UBO, 0, sizeof(glm::mat4) * 2);
+    
     //light uniforms
     light_dir_unif = glGetUniformLocation(program_uint, "light_dir");
     light_intens_unif = glGetUniformLocation(program_uint, "light_intensity");
@@ -198,12 +204,9 @@ void display(GLFWwindow* window){
     cam->updateCamera();
     glm::mat4 mvp_mat = cam->getPerspMat() * cam->getViewMat() * model_mat;
 
-    //normals mat3
+    //normals mat
+    //assumes no non-uniform scaling, if so needs inverse transpose
     glm::mat4 mv_mat = cam->getViewMat() * model_mat;
-    glm::mat3 norm_mat = glm::mat3(mv_mat);
-
-    //uncomment in case of non uniform scaling
-    //glm::mat3 norm_mat = glm::mat3(glm::transpose(glm::inverse(mv_mat)));
 
     //light
     glm::vec4 light_direction_cam = cam->getViewMat() * light_direction;
@@ -211,9 +214,11 @@ void display(GLFWwindow* window){
     //use shaders
     glUseProgram(program_uint);
     
-    //send uniforms
-    glUniformMatrix4fv(mvp_mat_unif, 1, GL_FALSE, glm::value_ptr(mvp_mat));
-    glUniformMatrix3fv(norm_view_mat_unif, 1, GL_FALSE, glm::value_ptr(norm_mat));
+    //send to uniform block
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(mvp_mat));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(mv_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(light_dir_unif, 1, glm::value_ptr(light_direction_cam));
     glUniform4fv(light_intens_unif, 1, glm::value_ptr(light_intensity));
