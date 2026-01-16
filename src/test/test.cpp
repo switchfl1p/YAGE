@@ -17,9 +17,8 @@ std::string filename = "meshes/box01.glb";
 
 GLuint program_uint;
 
-GLuint model_mat_unif;
-GLuint camera_mat_unif;
-GLuint projection_mat_unif;
+GLuint mvp_mat_unif;
+GLuint norm_view_mat_unif;
 
 GLuint light_dir_unif;
 GLuint light_intens_unif;
@@ -28,6 +27,10 @@ GLuint ambient_unif;
 int index_count = 0;
 
 glm::mat4 model_mat(1);
+
+glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
+glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
 void initalizeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
@@ -42,29 +45,22 @@ void initalizeProgram(GLFWwindow* window){
     Program the_program(shaders);
     program_uint = the_program.getProgramUint();
 
-    //transform uniforms
-    model_mat_unif = glGetUniformLocation(program_uint, "model_matrix");
-    camera_mat_unif = glGetUniformLocation(program_uint, "camera_matrix");
-    projection_mat_unif = glGetUniformLocation(program_uint, "perspective_matrix");
+    //transform uniform
+    mvp_mat_unif = glGetUniformLocation(program_uint, "mvp_mat");
+
+    //normals transform uniform
+    norm_view_mat_unif = glGetUniformLocation(program_uint, "norm_view_mat");
 
     //light uniforms
     light_dir_unif = glGetUniformLocation(program_uint, "light_dir");
     light_intens_unif = glGetUniformLocation(program_uint, "light_intensity");
     ambient_unif = glGetUniformLocation(program_uint, "ambient_intensity");
-
-    glUseProgram(program_uint);
-    glUniformMatrix4fv(model_mat_unif, 1, GL_FALSE, glm::value_ptr(model_mat));
-	glUseProgram(0);
 }
 
 GLuint vertex_buffer_object;
 GLuint index_buffer_object;
 GLuint normal_buffer_object;
 GLuint vao;
-
-glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
-glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
-glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
 void initalizeVertexBuffer(){
     //Example usage:
@@ -171,7 +167,7 @@ void initalizeCameras(GLFWwindow* window){
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
-
+//
 void init(GLFWwindow* window){
     initalizeProgram(window);
     initalizeVertexBuffer();
@@ -200,16 +196,24 @@ void display(GLFWwindow* window){
     last_frame = current_frame;
     cam_controler->processCameraInput(window, delta_time);
     cam->updateCamera();
+    glm::mat4 mvp_mat = cam->getPerspMat() * cam->getViewMat() * model_mat;
+
+    //normals mat3
+    glm::mat4 mv_mat = cam->getViewMat() * model_mat;
+    glm::mat3 norm_mat = glm::mat3(mv_mat);
+
+    //uncomment in case of non uniform scaling
+    //glm::mat3 norm_mat = glm::mat3(glm::transpose(glm::inverse(mv_mat)));
 
     //light
-    glm::vec4 light_direction_cam = cam->getViewMat() * model_mat * light_direction;
+    glm::vec4 light_direction_cam = cam->getViewMat() * light_direction;
 
     //use shaders
     glUseProgram(program_uint);
     
     //send uniforms
-    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getPerspMat()));
-    glUniformMatrix4fv(camera_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getViewMat()));
+    glUniformMatrix4fv(mvp_mat_unif, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+    glUniformMatrix3fv(norm_view_mat_unif, 1, GL_FALSE, glm::value_ptr(norm_mat));
 
     glUniform4fv(light_dir_unif, 1, glm::value_ptr(light_direction_cam));
     glUniform4fv(light_intens_unif, 1, glm::value_ptr(light_intensity));
@@ -231,12 +235,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     cam->viewport_h = height;
     cam->updatePerspMat();
 
-    glUseProgram(program_uint);
-    glUniformMatrix4fv(projection_mat_unif, 1, GL_FALSE, glm::value_ptr(cam->getPerspMat()));
-    glUseProgram(0);
-
     glViewport(0, 0, width, height);
-    glfwGetFramebufferSize(window, &width, &height);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
