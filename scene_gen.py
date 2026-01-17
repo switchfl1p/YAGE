@@ -3,6 +3,7 @@
 import os
 import sys
 import argparse
+import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -34,11 +35,13 @@ def create_scene(scene_name, executable_name=None, templates_dir="templates"):
     
     base_path = Path("src") / scene_name
     shaders_path = base_path / "shaders"
+    meshes_path = base_path / "meshes"
     templates_path = Path(templates_dir)
     
     # Create directories
     base_path.mkdir(parents=True, exist_ok=True)
     shaders_path.mkdir(parents=True, exist_ok=True)
+    meshes_path.mkdir(parents=True, exist_ok=True)
     
     # Template variables
     variables = {
@@ -65,6 +68,16 @@ def create_scene(scene_name, executable_name=None, templates_dir="templates"):
     (shaders_path / f"{scene_name_safe}.vert").write_text(vertex_shader_content)
     (shaders_path / f"{scene_name_safe}.frag").write_text(fragment_shader_content)
     
+    # Copy mesh template (remove .template extension)
+    mesh_template_src = templates_path / "box01.glb.template"
+    mesh_dest = meshes_path / "box01.glb"
+    
+    if mesh_template_src.exists():
+        shutil.copy2(mesh_template_src, mesh_dest)
+        print(f"✓ Copied mesh template to {mesh_dest}")
+    else:
+        print(f"⚠ Warning: Mesh template not found at {mesh_template_src}")
+    
     # Update CMakeLists.txt
     cmake_path = Path("src") / "CMakeLists.txt"
     if cmake_path.exists():
@@ -77,6 +90,8 @@ def create_scene(scene_name, executable_name=None, templates_dir="templates"):
     print(f"  - Shaders: {shaders_path}/")
     print(f"    * {scene_name_safe}.vert (vertex shader)")
     print(f"    * {scene_name_safe}.frag (fragment shader)")
+    print(f"  - Meshes: {meshes_path}/")
+    print(f"    * box01.glb (default mesh)")
     print(f"  - Executable: {executable_name}")
 
 def main():
