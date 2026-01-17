@@ -8,12 +8,7 @@
 #include <Program.hpp>
 #include <Camera.hpp>
 #include <CameraController.hpp>
-
-tinygltf::Model model;
-tinygltf::TinyGLTF loader;
-std::string err;
-std::string warn;
-std::string filename = "meshes/box01.glb";
+#include <Light.hpp>
 
 GLuint program_uint;
 
@@ -24,14 +19,6 @@ const int matrices_binding_index = 0;
 GLuint light_dir_unif;
 GLuint light_intens_unif;
 GLuint ambient_unif;
-
-int index_count = 0;
-
-glm::mat4 model_mat(1);
-
-glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
-glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
-glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
 void initalizeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
@@ -67,6 +54,14 @@ GLuint vertex_buffer_object;
 GLuint index_buffer_object;
 GLuint normal_buffer_object;
 GLuint vao;
+
+tinygltf::Model model;
+tinygltf::TinyGLTF loader;
+std::string err;
+std::string warn;
+std::string filename = "meshes/box01.glb";
+
+int index_count = 0;
 
 void initalizeVertexBuffer(){
     //Example usage:
@@ -173,7 +168,7 @@ void initalizeCameras(GLFWwindow* window){
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
-//
+
 void init(GLFWwindow* window){
     initalizeProgram(window);
     initalizeVertexBuffer();
@@ -189,6 +184,8 @@ void init(GLFWwindow* window){
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
+glm::mat4 model_mat(1);
+Light light;
 
 // Called every frame
 void display(GLFWwindow* window){
@@ -209,7 +206,7 @@ void display(GLFWwindow* window){
     glm::mat4 mv_mat = cam->getViewMat() * model_mat;
 
     //light
-    glm::vec4 light_direction_cam = cam->getViewMat() * light_direction;
+    glm::vec4 light_direction_cam = cam->getViewMat() * light.light_direction;
 
     //use shaders
     glUseProgram(program_uint);
@@ -221,8 +218,8 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(light_dir_unif, 1, glm::value_ptr(light_direction_cam));
-    glUniform4fv(light_intens_unif, 1, glm::value_ptr(light_intensity));
-    glUniform4fv(ambient_unif, 1, glm::value_ptr(ambient_intensity));
+    glUniform4fv(light_intens_unif, 1, glm::value_ptr(light.light_intensity));
+    glUniform4fv(ambient_unif, 1, glm::value_ptr(light.ambient_intensity));
 
     //render triangles
     glBindVertexArray(vao);
