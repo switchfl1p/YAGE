@@ -5,6 +5,7 @@ set(CORE_SOURCES
 	CameraController.cpp
 	Camera.cpp
 	tinygltf_impl.cpp
+	Light.cpp
 )
 
 set(CORE_HEADERS
@@ -12,6 +13,7 @@ set(CORE_HEADERS
 	Shader.hpp
 	CameraController.hpp
 	Camera.hpp
+	Light.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

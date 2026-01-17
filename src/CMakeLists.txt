@@ -90,4 +90,7 @@ add_scene("rotating_camera" "rotating_camera" "rotating_camera.cpp")
 add_scene("controlled_camera" "controlled_camera" "controlled_camera.cpp")
 add_scene("camera_with_class" "camera_with_class" "camera_with_class.cpp")
 add_scene("object_loading" "object_loading" "object_loading.cpp")
-add_scene("CPU_matrices_and_UBO" "cpu_matrices_and_ubo" "cpu_matrices_and_ubo.cpp")
+
+add_scene("uniform_block" "uniform_block" "uniform_block.cpp")
+
+add_scene("light_class" "light_class" "light_class.cpp")
