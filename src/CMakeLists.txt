@@ -96,3 +96,5 @@ add_scene("uniform_block" "uniform_block" "uniform_block.cpp")
 add_scene("light_class" "light_class" "light_class.cpp")
 
 add_scene("gltf_util_usage" "gltf_util_usage" "gltf_util_usage.cpp")
+
+add_scene("point_light" "point_light" "point_light.cpp")

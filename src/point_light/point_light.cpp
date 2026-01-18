@@ -20,8 +20,6 @@ GLuint light_dir_unif;
 GLuint light_intens_unif;
 GLuint ambient_unif;
 
-glm::mat4 model_mat(1);
-
 int index_count = 0;
 
 glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
@@ -33,8 +31,8 @@ void initializeProgram(GLFWwindow* window){
     //Example shader loading:
     
     std::vector<GLuint> shaders;
-    Shader vertex_shader("{scene_name_safe}.vert");
-    Shader fragment_shader("{scene_name_safe}.frag");
+    Shader vertex_shader("point_light.vert");
+    Shader fragment_shader("point_light.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
@@ -61,7 +59,6 @@ void initializeProgram(GLFWwindow* window){
 GLuint vertex_buffer_object;
 GLuint index_buffer_object;
 GLuint normal_buffer_object;
-GLuint vao;
 
 void initializeBuffers(){
     //Example usage:
@@ -93,23 +90,31 @@ void initializeBuffers(){
     index_count = cube.index_count;
 }
 
+const int NUMBER_OF_CUBES = 1;
+std::vector<GLuint> vaos;
+
 void initializeVertexArrayObjects(){
-    glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+    for(int i = 0; i < NUMBER_OF_CUBES; i++){
+        GLuint vao;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
 
-    //positions at attribute location 0
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
+        //positions at attribute location 0
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
 
-    //normals at attribute location 1
-    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        //normals at attribute location 1
+        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-    //indices
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-	glBindVertexArray(0);
+        //indices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
+        glBindVertexArray(0);
+
+        vaos.push_back(vao);
+    }
 }
 
 int width;
@@ -126,7 +131,7 @@ void initializeCameras(GLFWwindow* window){
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
-//
+
 void init(GLFWwindow* window){
     initializeProgram(window);
     initializeBuffers();
@@ -142,6 +147,8 @@ void init(GLFWwindow* window){
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
+
+glm::mat4 model_mat(1);
 
 // Called every frame
 void display(GLFWwindow* window){
@@ -178,7 +185,7 @@ void display(GLFWwindow* window){
     glUniform4fv(ambient_unif, 1, glm::value_ptr(ambient_intensity));
 
     //render triangles
-    glBindVertexArray(vao);
+    glBindVertexArray(vaos[0]);
 	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
 	glBindVertexArray(0);
 
