@@ -8,7 +8,7 @@
 #include <Program.hpp>
 #include <Camera.hpp>
 #include <CameraController.hpp>
-#include <Light.hpp>
+#include <gltf_util.hpp>
 
 GLuint program_uint;
 
@@ -20,13 +20,21 @@ GLuint light_dir_unif;
 GLuint light_intens_unif;
 GLuint ambient_unif;
 
+glm::mat4 model_mat(1);
+
+int index_count = 0;
+
+glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
+glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
+
 void initalizeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
     //Example shader loading:
     
     std::vector<GLuint> shaders;
-    Shader vertex_shader("light_class.vert");
-    Shader fragment_shader("light_class.frag");
+    Shader vertex_shader("gltf_util_usage.vert");
+    Shader fragment_shader("gltf_util_usage.frag");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
@@ -55,79 +63,34 @@ GLuint index_buffer_object;
 GLuint normal_buffer_object;
 GLuint vao;
 
-tinygltf::Model model;
-tinygltf::TinyGLTF loader;
-std::string err;
-std::string warn;
-std::string filename = "meshes/box01.glb";
-
-int index_count = 0;
-
-void initalizeVertexBuffer(){
+void initalizeBuffers(){
     //Example usage:
 
-    bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, filename);
-
-    if (!warn.empty()) {
-        printf("Warn: %s\n", warn.c_str());
-    }
-
-    if (!err.empty()) {
-        printf("Err: %s\n", err.c_str());
-    }
-
-    if (!ret) {
-        printf("Failed to parse glTF: %s\n", filename.c_str());
-    }
-
-    //Get first mesh (the cube)
-    const tinygltf::Mesh &mesh = model.meshes[0];
-    const tinygltf::Primitive &primitive = mesh.primitives[0];
-
-    //Get vertex positions
-    const tinygltf::Accessor &pos_accessor = model.accessors[primitive.attributes.at("POSITION")];
-    const tinygltf::BufferView &posView = model.bufferViews[pos_accessor.bufferView];
-    const tinygltf::Buffer &pos_buffer = model.buffers[posView.buffer];
-
-    const float *positions = reinterpret_cast<const float*>(&pos_buffer.data[posView.byteOffset + pos_accessor.byteOffset]);
-
-    int vertex_count = pos_accessor.count;
+    gltf_util::Loader loader;
+    gltf_util::Model cube = loader.loadModel("box01.glb");
 
     //Check if normals exist
-    if (primitive.attributes.find("NORMAL") != primitive.attributes.end()) {
-        const tinygltf::Accessor &norm_accessor = model.accessors[primitive.attributes.at("NORMAL")];
-        const tinygltf::BufferView &norm_view = model.bufferViews[norm_accessor.bufferView];
-        const tinygltf::Buffer &norm_buffer = model.buffers[norm_view.buffer];
-
-        const float *normals = reinterpret_cast<const float*>(&norm_buffer.data[norm_view.byteOffset + norm_accessor.byteOffset]);
-        
+    if (!cube.normals.empty()) {
         //NBO
         glGenBuffers(1, &normal_buffer_object);
         glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
-        glBufferData(GL_ARRAY_BUFFER, vertex_count * 3 * sizeof(float), normals, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, cube.vertex_count * 3 * sizeof(float), cube.normals.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
-
-    //get indices
-    const tinygltf::Accessor &ind_accessor = model.accessors[primitive.indices];
-    const tinygltf::BufferView &ind_view = model.bufferViews[ind_accessor.bufferView];
-    const tinygltf::Buffer &ind_buffer = model.buffers[ind_view.buffer];
-    
-    const unsigned short *indices = reinterpret_cast<const unsigned short*>(&ind_buffer.data[ind_view.byteOffset + ind_accessor.byteOffset]);
-
-    index_count = ind_accessor.count;
 
     //VBO
     glGenBuffers(1, &vertex_buffer_object);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-	glBufferData(GL_ARRAY_BUFFER, vertex_count * 3 * sizeof(float), positions, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, cube.vertex_count * 3 * sizeof(float), cube.positions.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     //IBO
     glGenBuffers(1, &index_buffer_object);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned short), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube.index_count * sizeof(unsigned short), cube.indices.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    index_count = cube.index_count;
 }
 
 void initializeVertexArrayObjects(){
@@ -144,6 +107,7 @@ void initializeVertexArrayObjects(){
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+    //indices
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
 	glBindVertexArray(0);
 }
@@ -162,10 +126,10 @@ void initalizeCameras(GLFWwindow* window){
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
-
+//
 void init(GLFWwindow* window){
     initalizeProgram(window);
-    initalizeVertexBuffer();
+    initalizeBuffers();
     initializeVertexArrayObjects();
     initalizeCameras(window);
     
@@ -178,8 +142,6 @@ void init(GLFWwindow* window){
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
-glm::mat4 model_mat(1);
-Light light;
 
 // Called every frame
 void display(GLFWwindow* window){
@@ -200,7 +162,7 @@ void display(GLFWwindow* window){
     glm::mat4 mv_mat = cam->getViewMat() * model_mat;
 
     //light
-    glm::vec4 light_direction_cam = cam->getViewMat() * light.light_direction;
+    glm::vec4 light_direction_cam = cam->getViewMat() * light_direction;
 
     //use shaders
     glUseProgram(program_uint);
@@ -212,8 +174,8 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(light_dir_unif, 1, glm::value_ptr(light_direction_cam));
-    glUniform4fv(light_intens_unif, 1, glm::value_ptr(light.light_intensity));
-    glUniform4fv(ambient_unif, 1, glm::value_ptr(light.ambient_intensity));
+    glUniform4fv(light_intens_unif, 1, glm::value_ptr(light_intensity));
+    glUniform4fv(ambient_unif, 1, glm::value_ptr(ambient_intensity));
 
     //render triangles
     glBindVertexArray(vao);

@@ -2,25 +2,23 @@
 
 #pragma once
 #include <string>
+#include <tiny_gltf.h>
 
 namespace gltf_util{
 
-    class Loader{
-        public:
-            Loader();
-            ~Loader();
+    struct Model{
+            int vertex_count = 0;
+            int index_count = 0;
+
+            std::vector<float> positions;
+            std::vector<float> normals;
+            std::vector<unsigned short> indices;
     };
 
-    class Model{
+    class Loader{
         public:
-            Model(std::string filename, Loader loader);
-            ~Model();
-
-            int vertex_count;
-            int index_count;
-
-            const float *positions;
-            const float *normals;
-            const unsigned short *indices;
+            Model loadModel(std::string filename);
+            
+            tinygltf::TinyGLTF loader;
     };
 }
