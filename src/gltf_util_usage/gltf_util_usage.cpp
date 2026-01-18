@@ -28,7 +28,7 @@ glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
 glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
 glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
-void initalizeProgram(GLFWwindow* window){
+void initializeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
     //Example shader loading:
     
@@ -63,14 +63,14 @@ GLuint index_buffer_object;
 GLuint normal_buffer_object;
 GLuint vao;
 
-void initalizeBuffers(){
+void initializeBuffers(){
     //Example usage:
 
     gltf_util::Loader loader;
     gltf_util::Model cube = loader.loadModel("box01.glb");
 
     //Check if normals exist
-    if (!cube.normals.empty()) {
+    if(!cube.normals.empty()) {
         //NBO
         glGenBuffers(1, &normal_buffer_object);
         glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
@@ -118,7 +118,7 @@ int height;
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controler = nullptr;
 
-void initalizeCameras(GLFWwindow* window){
+void initializeCameras(GLFWwindow* window){
     glfwGetFramebufferSize(window, &width, &height);
     cam = std::make_unique<Camera>(width,height);
     cam_controler = std::make_unique<CameraController>(*cam);
@@ -128,10 +128,10 @@ void initalizeCameras(GLFWwindow* window){
 }
 //
 void init(GLFWwindow* window){
-    initalizeProgram(window);
-    initalizeBuffers();
+    initializeProgram(window);
+    initializeBuffers();
     initializeVertexArrayObjects();
-    initalizeCameras(window);
+    initializeCameras(window);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
