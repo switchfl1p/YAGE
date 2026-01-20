@@ -13,12 +13,12 @@ layout(std140) uniform Matrices
 uniform vec4 light_dir;
 uniform vec4 light_intensity;
 uniform vec4 ambient_intensity;
+uniform vec4 diffuse_color;
 
 smooth out vec4 interp_color;
 
 void main()
 {
-	vec4 diffuse_color = vec4(0.2, 0.2, 1.0, 1.0);
 	gl_Position = mvp_mat * vec4(position, 1.0);
 
 	//Gouraud shading

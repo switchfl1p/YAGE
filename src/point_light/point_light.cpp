@@ -19,12 +19,9 @@ const int matrices_binding_index = 0;
 GLuint light_dir_unif;
 GLuint light_intens_unif;
 GLuint ambient_unif;
+GLuint diffuse_unif;
 
 int index_count = 0;
-
-glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
-glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
-glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
 void initializeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
@@ -54,6 +51,7 @@ void initializeProgram(GLFWwindow* window){
     light_dir_unif = glGetUniformLocation(program_uint, "light_dir");
     light_intens_unif = glGetUniformLocation(program_uint, "light_intensity");
     ambient_unif = glGetUniformLocation(program_uint, "ambient_intensity");
+    diffuse_unif = glGetUniformLocation(program_uint, "diffuse_color");
 }
 
 GLuint vertex_buffer_object;
@@ -90,31 +88,25 @@ void initializeBuffers(){
     index_count = cube.index_count;
 }
 
-const int NUMBER_OF_CUBES = 1;
-std::vector<GLuint> vaos;
+GLuint vao;
 
 void initializeVertexArrayObjects(){
-    for(int i = 0; i < NUMBER_OF_CUBES; i++){
-        GLuint vao;
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-        //positions at attribute location 0
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
+    //positions at attribute location 0
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
 
-        //normals at attribute location 1
-        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    //normals at attribute location 1
+    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        //indices
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-        glBindVertexArray(0);
-
-        vaos.push_back(vao);
-    }
+    //indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
+    glBindVertexArray(0);
 }
 
 int width;
@@ -148,7 +140,17 @@ void init(GLFWwindow* window){
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
-glm::mat4 model_mat(1);
+glm::mat4 cube_model_mat(1);
+
+glm::mat4 point_light_scale_mat = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+glm::mat4 point_light_model_mat;
+
+glm::vec4 cube_diffuse = glm::vec4(0.2, 0.2, 1.0, 1.0);
+glm::vec4 p_light_diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
+glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
 
 // Called every frame
 void display(GLFWwindow* window){
@@ -162,31 +164,56 @@ void display(GLFWwindow* window){
     last_frame = current_frame;
     cam_controler->processCameraInput(window, delta_time);
     cam->updateCamera();
-    glm::mat4 mvp_mat = cam->getPerspMat() * cam->getViewMat() * model_mat;
 
-    //normals mat
-    //assumes no non-uniform scaling, if so needs inverse transpose
-    glm::mat4 mv_mat = cam->getViewMat() * model_mat;
-
-    //light
+    //light direction transform
     glm::vec4 light_direction_cam = cam->getViewMat() * light_direction;
+
+    //model specific transforms
+    glm::mat4 mvp_mat_cube = cam->getPerspMat() * cam->getViewMat() * cube_model_mat;
+    glm::mat4 mv_mat_cube = cam->getViewMat() * cube_model_mat; //assumes no non-uniform scaling, if so needs inverse transpose
 
     //use shaders
     glUseProgram(program_uint);
     
     //send to uniform block
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(mvp_mat));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(mv_mat));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(mvp_mat_cube));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(mv_mat_cube));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(light_dir_unif, 1, glm::value_ptr(light_direction_cam));
     glUniform4fv(light_intens_unif, 1, glm::value_ptr(light_intensity));
     glUniform4fv(ambient_unif, 1, glm::value_ptr(ambient_intensity));
+    glUniform4fv(diffuse_unif, 1, glm::value_ptr(cube_diffuse));
 
-    //render triangles
-    glBindVertexArray(vaos[0]);
+    //render first model
+    glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
+
+    //2nd model specific transforms
+    //simple rotation around y axis
+    float loop_duration = 10.0f;
+    float curr_duration = fmod(current_frame, loop_duration);
+    float angle = (curr_duration / loop_duration) * 2.0f * glm::pi<float>();
+    float radius = 1.5f;
+    float p_light_x = radius * cos(angle);
+    float p_light_z = radius * sin(angle);
+
+    glm::vec3 p_light_translation_vec = glm::vec3(p_light_x, 0.5, p_light_z);
+    point_light_model_mat = glm::translate(glm::mat4(1.0f), p_light_translation_vec) * point_light_scale_mat;
+
+    glm::mat4 mvp_mat_p_light = cam->getPerspMat() * cam->getViewMat() * point_light_model_mat;
+    glm::mat4 mv_mat_p_light = cam->getViewMat() * point_light_model_mat;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(mvp_mat_p_light));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(mv_mat_p_light));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glUniform4fv(diffuse_unif, 1, glm::value_ptr(p_light_diffuse));
+
+    glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
+
 	glBindVertexArray(0);
 
 	glUseProgram(0);
