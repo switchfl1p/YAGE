@@ -137,6 +137,28 @@ void init(GLFWwindow* window){
 	glCullFace(GL_BACK);
 }
 
+bool draw_p_light = true;
+bool rotate_p_light = true;
+float p_light_movement_speed = 1.0f;
+float y_pos = 0.5f;
+float radius = 1.5f;
+
+void processPointLightInput(GLFWwindow* window, float delta_time, float &y_pos, float &radius){
+    float movement_distance = p_light_movement_speed * delta_time;
+
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        y_pos += movement_distance;
+
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
+        y_pos -= movement_distance;
+
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+        radius += movement_distance;
+
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        radius -= movement_distance;
+}
+
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
@@ -151,6 +173,7 @@ glm::vec4 p_light_diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 glm::vec4 light_direction(0.866f, 0.5f, 0.0f, 0.0f);
 glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
 glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
+
 
 // Called every frame
 void display(GLFWwindow* window){
@@ -195,11 +218,13 @@ void display(GLFWwindow* window){
     float loop_duration = 10.0f;
     float curr_duration = fmod(current_frame, loop_duration);
     float angle = (curr_duration / loop_duration) * 2.0f * glm::pi<float>();
-    float radius = 1.5f;
+
+    processPointLightInput(window, delta_time, y_pos, radius);
+
     float p_light_x = radius * cos(angle);
     float p_light_z = radius * sin(angle);
 
-    glm::vec3 p_light_translation_vec = glm::vec3(p_light_x, 0.5, p_light_z);
+    glm::vec3 p_light_translation_vec = glm::vec3(p_light_x, y_pos, p_light_z);
     point_light_model_mat = glm::translate(glm::mat4(1.0f), p_light_translation_vec) * point_light_scale_mat;
 
     glm::mat4 mvp_mat_p_light = cam->getPerspMat() * cam->getViewMat() * point_light_model_mat;
@@ -234,6 +259,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+        draw_p_light = !draw_p_light;
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        rotate_p_light = !rotate_p_light;
 }
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){

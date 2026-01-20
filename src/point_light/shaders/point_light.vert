@@ -23,7 +23,8 @@ void main()
 
 	//Gouraud shading
 	mat3 norm_view_mat_3by3 = mat3(norm_view_mat);
-	vec3 norm_cam_space = normalize(norm_view_mat_3by3 * normal); //transform the normals to view space
+	mat3 norm_matrix = transpose(inverse(norm_view_mat_3by3));
+	vec3 norm_cam_space = normalize(norm_matrix * normal); //transform the normals to view space
 
 	vec3 normalized_light_dir = normalize(vec3(light_dir)); 
 	float cos_ang_incidence = dot(norm_cam_space, normalized_light_dir); //cos of the angle is the dot product
