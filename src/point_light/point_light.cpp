@@ -293,8 +293,9 @@ void display(GLFWwindow* window){
 
     glUseProgram(pl_program_uint);
 
+    static float paused_time = 0.0f;
     float loop_duration = 10.0f;
-    float curr_duration = fmod(current_frame, loop_duration);
+    float curr_duration = fmod(current_frame - paused_time, loop_duration);
 
     if(rotate_p_light){
         angle = (curr_duration / loop_duration) * 2.0f * glm::pi<float>();
@@ -303,6 +304,7 @@ void display(GLFWwindow* window){
         last_angle = angle;
     }
     else{
+        paused_time += delta_time;
         p_light_x = radius * cos(last_angle);
         p_light_z = radius * sin(last_angle);
     }
@@ -312,9 +314,9 @@ void display(GLFWwindow* window){
     glm::vec3 p_light_translation_vec = glm::vec3(p_light_x, y_pos, p_light_z);
 
     point_light_model_mat = glm::translate(glm::mat4(1), p_light_translation_vec) * point_light_scale_mat;
-    
+
     glm::mat4 mvp_mat_p_light = cam->getPerspMat() * cam->getViewMat() * point_light_model_mat;
-    glm::mat4 mv_mat_p_light = cam->getViewMat() * point_light_model_mat;
+    glm::mat4 mv_mat_p_light = cam->getViewMat() * point_light_model_mat; //isnt really used atm
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(mvp_mat_p_light));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(mv_mat_p_light));
@@ -324,7 +326,10 @@ void display(GLFWwindow* window){
     glUniform3fv(light_pos_unif, 1, glm::value_ptr(p_light_translation_vec));
     glUseProgram(pl_program_uint);
 
-    glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
+    if(draw_p_light){
+        glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
+    }
+
 	glBindVertexArray(0);
 
     //============
