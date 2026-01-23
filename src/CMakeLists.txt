@@ -95,4 +95,4 @@ add_scene("light_class" "light_class" "light_class.cpp")
 add_scene("gltf_util_usage" "gltf_util_usage" "gltf_util_usage.cpp")
 add_scene("point_light" "point_light" "point_light.cpp")
 add_scene("per_frag_light" "per_frag_light" "per_frag_light.cpp")
-
+add_scene("refactored_per_frag" "refactored_per_frag" "refactored_per_frag.cpp")
