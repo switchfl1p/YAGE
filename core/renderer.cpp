@@ -32,11 +32,16 @@ int main(){
     }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback); 
     
     init(window);
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    framebuffer_size_callback(window, width, height);
 
     while (!glfwWindowShouldClose(window)) {
         display(window);

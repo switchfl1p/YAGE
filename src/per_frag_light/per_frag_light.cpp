@@ -16,9 +16,12 @@ GLuint pl_program_uint;
 GLuint model_to_camera_mat_unif;
 GLuint camera_to_persp_mat_unif;
 GLuint in_diffuse_color_unif;
-GLuint model_space_light_position_unif;
+GLuint camera_space_light_position_unif;
 GLuint light_intensity_unif;
 GLuint ambient_intensity_unif;
+GLuint clip_to_camera_mat_unif;
+GLuint window_size_unif;
+GLuint light_attenuation_unif;
 
 GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
@@ -26,6 +29,8 @@ const int matrices_binding_index = 0;
 
 glm::vec4 p_light_diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 GLuint p_light_diffuse_unif;
+
+static float light_attenuation = 1.0f;
 
 void initializeProgram(GLFWwindow* window){
     //Initialize shaders and programs here
@@ -43,9 +48,16 @@ void initializeProgram(GLFWwindow* window){
     model_to_camera_mat_unif = glGetUniformLocation(program_uint, "model_to_camera_mat");
     camera_to_persp_mat_unif = glGetUniformLocation(program_uint, "camera_to_persp_mat");
     in_diffuse_color_unif = glGetUniformLocation(program_uint, "in_diffuse_color");
-    model_space_light_position_unif = glGetUniformLocation(program_uint, "model_space_light_position");
+    camera_space_light_position_unif = glGetUniformLocation(program_uint, "camera_space_light_position");
     light_intensity_unif = glGetUniformLocation(program_uint, "light_intensity");
     ambient_intensity_unif = glGetUniformLocation(program_uint, "ambient_intensity");
+    clip_to_camera_mat_unif = glGetUniformLocation(program_uint, "clip_to_camera_mat");
+    window_size_unif = glGetUniformLocation(program_uint, "window_size");
+    light_attenuation_unif = glGetUniformLocation(program_uint, "light_attenuation");
+
+    glUseProgram(program_uint);
+    glUniform1f(light_attenuation_unif, light_attenuation);
+    glUseProgram(0);
 
     //point light object shader, simple diffuse per vertex light
     std::vector<GLuint> pl_shaders;
@@ -225,10 +237,10 @@ void processPointLightInput(GLFWwindow* window, float delta_time, float &y_pos, 
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
         y_pos -= movement_distance;
 
-    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
         radius += movement_distance;
 
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
         radius -= movement_distance;
 }
 
@@ -314,8 +326,11 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //lil quirk
+    glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(p_light_translation_vec, 1.0f);
+
     glUseProgram(program_uint);
-    glUniform3fv(model_space_light_position_unif, 1, glm::value_ptr(p_light_translation_vec));
+    glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
+    
     glUseProgram(pl_program_uint);
 
     if(draw_p_light){
@@ -332,9 +347,6 @@ void display(GLFWwindow* window){
     glm::mat4 plane_model_to_cam_mat = cam->getViewMat() * plane_model_mat;
     
     glUniformMatrix4fv(model_to_camera_mat_unif, 1, false, glm::value_ptr(plane_model_to_cam_mat));
-    //glUniformMatrix4fv(camera_to_persp_mat_unif, 1, false, glm::value_ptr(cam->getPerspMat()));
-    //glUniform4fv(light_intensity_unif, 1, glm::value_ptr(light_intensity));
-    //glUniform4fv(ambient_intensity_unif, 1, glm::value_ptr(ambient_intensity));
     glUniform4fv(in_diffuse_color_unif, 1, glm::value_ptr(plane_diffuse));
 
     glBindVertexArray(plane_vao);
@@ -354,6 +366,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     cam->updatePerspMat();
 
     glViewport(0, 0, width, height);
+
+    glUseProgram(program_uint);
+    glUniformMatrix4fv(clip_to_camera_mat_unif, 1, false, glm::value_ptr(glm::inverse(cam->getPerspMat())));
+    glUniform2i(window_size_unif, width, height);
+    glUseProgram(0);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
