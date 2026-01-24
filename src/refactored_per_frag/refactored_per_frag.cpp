@@ -9,35 +9,26 @@
 #include <Camera.hpp>
 #include <CameraController.hpp>
 #include <gltf_util.hpp>
+#include <Light.hpp>
+#include <Material.hpp>
 
 GLuint program_uint;
-GLuint pl_program_uint;
+GLuint bulb_program_uint;
 
-GLuint model_to_camera_mat_unif;
-GLuint camera_to_persp_mat_unif;
-GLuint in_diffuse_color_unif;
+GLuint material_diffuse_unif;
+GLuint bulb_material_diffuse_unif;
 GLuint camera_space_light_position_unif;
 GLuint light_intensity_unif;
 GLuint ambient_intensity_unif;
 GLuint clip_to_camera_mat_unif;
-GLuint window_size_unif;
 GLuint light_attenuation_unif;
-
+GLuint window_size_unif;
 
 GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
 const int matrices_binding_index = 0;
 
-glm::vec4 p_light_diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-GLuint p_light_diffuse_unif;
-
-static float light_attenuation = 1.0f;
-
-void initializeProgram(GLFWwindow* window){
-    //Initialize shaders and programs here
-    //Example shader loading:
-    
+void initializeProgram(){
     std::vector<GLuint> shaders;
     Shader vertex_shader("on_frag_light.vert");
     Shader fragment_shader("on_frag_light.frag");
@@ -47,19 +38,25 @@ void initializeProgram(GLFWwindow* window){
     Program the_program(shaders);
     program_uint = the_program.getProgramUint();
 
-    model_to_camera_mat_unif = glGetUniformLocation(program_uint, "model_to_camera_mat");
-    camera_to_persp_mat_unif = glGetUniformLocation(program_uint, "camera_to_persp_mat");
-    in_diffuse_color_unif = glGetUniformLocation(program_uint, "in_diffuse_color");
+    //Create UBO and bind to binding index
+    glGenBuffers(1, &matrices_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, matrices_binding_index, matrices_UBO, 0, sizeof(glm::mat4) * 2);
+
+    //bind program uniform block index to binding index
+    matrices_uniform_block_index = glGetUniformBlockIndex(program_uint, "Matrices");
+    glUniformBlockBinding(program_uint, matrices_uniform_block_index, matrices_binding_index);
+
+    //other uniforms
+    material_diffuse_unif = glGetUniformLocation(program_uint, "material_diffuse");
     camera_space_light_position_unif = glGetUniformLocation(program_uint, "camera_space_light_position");
     light_intensity_unif = glGetUniformLocation(program_uint, "light_intensity");
     ambient_intensity_unif = glGetUniformLocation(program_uint, "ambient_intensity");
     clip_to_camera_mat_unif = glGetUniformLocation(program_uint, "clip_to_camera_mat");
     window_size_unif = glGetUniformLocation(program_uint, "window_size");
     light_attenuation_unif = glGetUniformLocation(program_uint, "light_attenuation");
-
-    glUseProgram(program_uint);
-    glUniform1f(light_attenuation_unif, light_attenuation);
-    glUseProgram(0);
 
     //point light object shader, simple diffuse per vertex light
     std::vector<GLuint> pl_shaders;
@@ -69,22 +66,44 @@ void initializeProgram(GLFWwindow* window){
     pl_shaders.push_back(pl_frag_shader.getShaderUint());
 
     Program pl_program(pl_shaders);
-    pl_program_uint = pl_program.getProgramUint();
+    bulb_program_uint = pl_program.getProgramUint();
 
-    matrices_uniform_block_index = glGetUniformBlockIndex(program_uint, "Matrices");
-    glUniformBlockBinding(program_uint, matrices_uniform_block_index, matrices_binding_index);
-    
-    glGenBuffers(1, &matrices_UBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, NULL, GL_STREAM_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    //UBO
+    matrices_uniform_block_index = glGetUniformBlockIndex(bulb_program_uint, "Matrices");
+    glUniformBlockBinding(bulb_program_uint, matrices_uniform_block_index, matrices_binding_index);
 
-    glBindBufferRange(GL_UNIFORM_BUFFER, matrices_binding_index, matrices_UBO, 0, sizeof(glm::mat4) * 2);
+    bulb_material_diffuse_unif = glGetUniformLocation(bulb_program_uint, "material_diffuse");
+}
 
-    p_light_diffuse_unif = glGetUniformLocation(pl_program_uint, "diffuse_color");
+Material point_bulb;
+Material center_cube;
+Material plane;
 
-    glUseProgram(pl_program_uint);
-    glUniform4fv(p_light_diffuse_unif, 1, glm::value_ptr(p_light_diffuse));
+void initializeMaterials(){
+    point_bulb.diffuse_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
+    center_cube.diffuse_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
+    plane.diffuse_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+
+    //send uniform to shaders
+    glUseProgram(bulb_program_uint);
+    glUniform4fv(bulb_material_diffuse_unif, 1, glm::value_ptr(point_bulb.diffuse_color));
+    glUseProgram(0);
+}
+
+AmbientLight ambient_light;
+PointLight point_light;
+
+void initializeLights(){
+    ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+
+    point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    point_light.attenuation = 1.0f;
+
+    //send uniforms to program
+    glUseProgram(program_uint);
+    glUniform4fv(ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
+    glUniform4fv(light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+    glUniform1f(light_attenuation_unif, point_light.attenuation);
     glUseProgram(0);
 }
 
@@ -195,14 +214,13 @@ void initializeVertexArrayObjects(){
     glBindVertexArray(0);
 }
 
-int width;
-int height;
-
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controler = nullptr;
 
 void initializeCameras(GLFWwindow* window){
+    int width, height;
     glfwGetFramebufferSize(window, &width, &height);
+
     cam = std::make_unique<Camera>(width,height);
     cam_controler = std::make_unique<CameraController>(*cam);
     cam->position = glm::vec3(0.0f, 0.5f, 3.5f);
@@ -212,7 +230,9 @@ void initializeCameras(GLFWwindow* window){
 }
 
 void init(GLFWwindow* window){
-    initializeProgram(window);
+    initializeProgram();
+    initializeMaterials();
+    initializeLights();
     initializeBuffers();
     initializeVertexArrayObjects();
     initializeCameras(window);
@@ -246,23 +266,23 @@ void processPointLightInput(GLFWwindow* window, float delta_time, float &y_pos, 
         radius -= movement_distance;
 }
 
-float delta_time = 0.0f;
-float last_frame = 0.0f;
 float last_angle = 0.0f;
 float angle = 0.0f;
 float p_light_x;
 float p_light_z;
 
 glm::mat4 cube_model_mat(1);
-glm::mat4 plane_model_mat = glm::translate(glm::mat4(1), glm::vec3(0.0f,-0.5f,0.0f)) * glm::scale(glm::mat4(1), glm::vec3(50,1,50));
-glm::mat4 point_light_scale_mat = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-glm::mat4 point_light_model_mat;
 
-glm::vec4 cube_diffuse = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
-glm::vec4 plane_diffuse = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+glm::mat4 model_mat(1);
+glm::vec3 plane_translation_component = glm::vec3(0.0f,-0.5f,0.0f);
+glm::vec3 plane_scale_component = glm::vec3(50,1,50);
+glm::mat4 plane_model_mat = glm::translate(model_mat, plane_translation_component) * glm::scale(model_mat, plane_scale_component);
 
-glm::vec4 light_intensity(1.0f, 1.0f, 1.0f, 1.0f);
-glm::vec4 ambient_intensity( 0.1f, 0.1f, 0.1f, 1.0f);
+glm::vec3 bulb_scale_component = glm::vec3(0.1f, 0.1f, 0.1f);
+glm::mat4 bulb_model_mat;
+
+float delta_time = 0.0f;
+float last_frame = 0.0f;
 
 // Called every frame
 void display(GLFWwindow* window){
@@ -281,13 +301,14 @@ void display(GLFWwindow* window){
     //===========
     glUseProgram(program_uint);
 
-    glm::mat4 cube_model_to_cam_mat = cam->getViewMat() * cube_model_mat;
+    glm::mat4 cube_mv_mat = cam->getViewMat() * cube_model_mat;
     
-    glUniformMatrix4fv(model_to_camera_mat_unif, 1, false, glm::value_ptr(cube_model_to_cam_mat));
-    glUniformMatrix4fv(camera_to_persp_mat_unif, 1, false, glm::value_ptr(cam->getPerspMat()));
-    glUniform4fv(light_intensity_unif, 1, glm::value_ptr(light_intensity));
-    glUniform4fv(ambient_intensity_unif, 1, glm::value_ptr(ambient_intensity));
-    glUniform4fv(in_diffuse_color_unif, 1, glm::value_ptr(cube_diffuse));
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cube_mv_mat));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(center_cube.diffuse_color));
 
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
@@ -295,7 +316,7 @@ void display(GLFWwindow* window){
     //==================
     //RENDER POINT LIGHT
     //==================
-    glUseProgram(pl_program_uint);
+    glUseProgram(bulb_program_uint);
 
     static float paused_time = 0.0f;
     float loop_duration = 10.0f;
@@ -315,25 +336,23 @@ void display(GLFWwindow* window){
 
     processPointLightInput(window, delta_time, y_pos, radius);
  
-    glm::vec3 p_light_translation_vec = glm::vec3(p_light_x, y_pos, p_light_z);
+    glm::vec3 bulb_translation_component = glm::vec3(p_light_x, y_pos, p_light_z);
+    point_light.position = bulb_translation_component;
 
-    point_light_model_mat = glm::translate(glm::mat4(1), p_light_translation_vec) * point_light_scale_mat;
+    bulb_model_mat = glm::translate(model_mat, bulb_translation_component) * glm::scale(model_mat, bulb_scale_component);
 
-    glm::mat4 mvp_mat_p_light = cam->getPerspMat() * cam->getViewMat() * point_light_model_mat;
-    glm::mat4 mv_mat_p_light = cam->getViewMat() * point_light_model_mat; //isnt really used atm
+    glm::mat4 bulb_mv_mat = cam->getViewMat() * bulb_model_mat;
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(mvp_mat_p_light));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(mv_mat_p_light));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_mv_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //lil quirk
-    glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(p_light_translation_vec, 1.0f);
+    //send point light position to cube and plane shaders
+    glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
 
     glUseProgram(program_uint);
     glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
-    
-    glUseProgram(pl_program_uint);
+    glUseProgram(bulb_program_uint);
 
     if(draw_p_light){
         glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
@@ -346,10 +365,13 @@ void display(GLFWwindow* window){
     //============
     glUseProgram(program_uint);
 
-    glm::mat4 plane_model_to_cam_mat = cam->getViewMat() * plane_model_mat;
+    glm::mat4 plane_mv_mat = cam->getViewMat() * plane_model_mat;
     
-    glUniformMatrix4fv(model_to_camera_mat_unif, 1, false, glm::value_ptr(plane_model_to_cam_mat));
-    glUniform4fv(in_diffuse_color_unif, 1, glm::value_ptr(plane_diffuse));
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(plane.diffuse_color));
 
     glBindVertexArray(plane_vao);
     glDrawElements(GL_TRIANGLES, plane_index_count, GL_UNSIGNED_SHORT, 0);

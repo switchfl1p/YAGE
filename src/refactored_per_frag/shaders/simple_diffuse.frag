@@ -1,12 +1,12 @@
 #version 330
 
-smooth in vec4 interp_color;
+uniform vec4 material_diffuse;
 
 out vec4 output_color;
 
 void main()
 {
-	output_color = interp_color;
+	output_color = material_diffuse;
 }
 
 

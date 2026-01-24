@@ -1,18 +1,17 @@
 #version 330
 
-in vec4 diffuse_color;
-in vec3 camera_space_normal;
-in vec3 model_space_position;
-
-out vec4 output_color;
-
-uniform vec3 camera_space_light_position;
+uniform vec4 material_diffuse;
 uniform vec4 light_intensity;
 uniform vec4 ambient_intensity;
-
+uniform vec3 camera_space_light_position;
 uniform float light_attenuation;
+
 uniform mat4 clip_to_camera_mat;
 uniform ivec2 window_size;
+
+in vec3 camera_space_normal;
+
+out vec4 output_color;
 
 vec3 calcCameraSpacePosition()
 {
@@ -48,6 +47,5 @@ void main(){
     float cos_ang_incidence = dot(normalize(camera_space_normal), light_dir);
     cos_ang_incidence = clamp(cos_ang_incidence, 0, 1);
 
-    output_color = (diffuse_color * atten_intensity * cos_ang_incidence) + (diffuse_color * ambient_intensity);
-    //output_color = (diffuse_color * atten_intensity * cos_ang_incidence);
+    output_color = (material_diffuse * atten_intensity * cos_ang_incidence) + (material_diffuse * ambient_intensity);
 }
