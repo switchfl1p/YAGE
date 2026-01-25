@@ -11,7 +11,6 @@ min pitch -89.0f, max pitch 89.0 */
 class CameraController{
     public:
         CameraController(Camera &cam);
-        ~CameraController();
 
         float movement_speed = 10.0f;
         float mouse_sens = 0.025f;

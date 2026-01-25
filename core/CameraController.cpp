@@ -5,8 +5,6 @@
 CameraController::CameraController(Camera &cam)
     :camera(cam){}
 
-CameraController::~CameraController(){}
-
 void CameraController::processCameraInput(GLFWwindow* window, float delta_time){
     updateCameraSpeed(delta_time);
 

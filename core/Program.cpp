@@ -31,10 +31,6 @@ Program::Program(const std::vector<GLuint>& shaders){
     }
 }
 
-Program::~Program(){
-
-}
-
 GLuint Program::getProgramUint(){
     return program_object;
 }

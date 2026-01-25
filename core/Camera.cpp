@@ -11,8 +11,6 @@ Camera::Camera(int viewport_width, int viewport_height)
     updateCamera();
 }
 
-Camera::~Camera(){}
-
 void Camera::updateCamera(){
     updateViewMat();
     updatePerspMat();

@@ -262,15 +262,22 @@ float last_frame = 0.0f;
 
 // Called every frame
 void display(GLFWwindow* window){
+    //set bg color and clear depth buffer
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //camera movement
+    //delta time calcs
     float current_frame = glfwGetTime();
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
+
+    //camera movement
     cam_controler->processCameraInput(window, delta_time);
     cam->updateCamera();
+
+    //bulb movement
+    bulb_controller.rotatePointLight(current_frame, delta_time);
+    //bulb_controller.processPointLightInput(window, delta_time);
 
     //===========
     //RENDER CUBE 
@@ -278,40 +285,29 @@ void display(GLFWwindow* window){
     glUseProgram(program_uint);
 
     glm::mat4 cube_mv_mat = cam->getViewMat() * cube_model_mat;
+    glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
     
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cube_mv_mat));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(center_cube.diffuse_color));
+    glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
 
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
 
-    //==================
-    //RENDER POINT LIGHT
-    //==================
+    //===========
+    //RENDER BULB
+    //===========
     glUseProgram(bulb_program_uint);
-
-    bulb_controller.rotatePointLight(current_frame, delta_time);
-    bulb_controller.processPointLightInput(window, delta_time);
 
     bulb_model_mat = glm::translate(model_mat, point_light.position) * glm::scale(model_mat, bulb_scale_component);
 
     glm::mat4 bulb_mv_mat = cam->getViewMat() * bulb_model_mat;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_mv_mat));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //send point light position to cube and plane shaders
-    glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
-
-    glUseProgram(program_uint);
-    glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
-    glUseProgram(bulb_program_uint);
-
+    
     if(bulb_controller.draw_flag){
         glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
     }
@@ -325,7 +321,6 @@ void display(GLFWwindow* window){
 
     glm::mat4 plane_mv_mat = cam->getViewMat() * plane_model_mat;
     
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
@@ -358,10 +353,23 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (key == GLFW_KEY_E && action == GLFW_PRESS)
-        bulb_controller.draw_flag = !bulb_controller.draw_flag;
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
         bulb_controller.rotate_flag = !bulb_controller.rotate_flag;
+
+    if (key == GLFW_KEY_E && action == GLFW_PRESS){
+        bulb_controller.draw_flag = !bulb_controller.draw_flag;
+
+        if(bulb_controller.draw_flag){
+            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+        else{
+            point_light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        }
+
+        glUseProgram(program_uint);
+        glUniform4fv(light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+        glUseProgram(0);
+    }
 }
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
@@ -372,5 +380,20 @@ void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
     cam_controler->mouseZoomController(window, x_offset, y_offset);
 }
 
+void cleanup(){
+    glDeleteProgram(program_uint);
+    glDeleteProgram(bulb_program_uint);
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteVertexArrays(1, &plane_vao);
+
+    glDeleteBuffers(1, &matrices_UBO);
+    glDeleteBuffers(1, &vertex_buffer_object);
+    glDeleteBuffers(1, &index_buffer_object);
+    glDeleteBuffers(1, &normal_buffer_object);
+    glDeleteBuffers(1, &plane_vbo);
+    glDeleteBuffers(1, &plane_ibo);
+    glDeleteBuffers(1, &plane_nbo);
+}
 
 

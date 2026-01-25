@@ -8,7 +8,6 @@
 class Program{
     public:
         Program(const std::vector<GLuint>& shaders);
-        ~Program();
         GLuint getProgramUint();
 
     private:

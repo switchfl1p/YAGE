@@ -10,6 +10,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos);
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset);
+void cleanup();
 
 int main(){
     if(!glfwInit()){
@@ -47,6 +48,8 @@ int main(){
         display(window);
     }
 
+    cleanup();
+    
     glfwTerminate();
     return 0;
 }
