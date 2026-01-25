@@ -4,6 +4,7 @@ set(CORE_SOURCES
 	renderer.cpp
 	CameraController.cpp
 	Camera.cpp
+	LightController.cpp
 	tinygltf_impl.cpp
 	gltf_util.cpp
 )
@@ -15,6 +16,7 @@ set(CORE_HEADERS
 	Camera.hpp
 	Light.hpp
 	Material.hpp
+	LightController.hpp
 	gltf_util.hpp
 )
 

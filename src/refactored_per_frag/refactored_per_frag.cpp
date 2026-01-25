@@ -11,6 +11,7 @@
 #include <gltf_util.hpp>
 #include <Light.hpp>
 #include <Material.hpp>
+#include <LightController.hpp>
 
 GLuint program_uint;
 GLuint bulb_program_uint;
@@ -92,12 +93,14 @@ void initializeMaterials(){
 
 AmbientLight ambient_light;
 PointLight point_light;
+LightController bulb_controller(point_light);
 
 void initializeLights(){
     ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
     point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     point_light.attenuation = 1.0f;
+    point_light.position = glm::vec3(0.0f, 0.5f, 0.0f);
 
     //send uniforms to program
     glUseProgram(program_uint);
@@ -244,33 +247,6 @@ void init(GLFWwindow* window){
 	glCullFace(GL_BACK);
 }
 
-bool draw_p_light = true;
-bool rotate_p_light = true;
-float p_light_movement_speed = 1.0f;
-float y_pos = 0.5f;
-float radius = 1.5f;
-
-void processPointLightInput(GLFWwindow* window, float delta_time, float &y_pos, float &radius){
-    float movement_distance = p_light_movement_speed * delta_time;
-
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        y_pos += movement_distance;
-
-    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
-        y_pos -= movement_distance;
-
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-        radius += movement_distance;
-
-    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
-        radius -= movement_distance;
-}
-
-float last_angle = 0.0f;
-float angle = 0.0f;
-float p_light_x;
-float p_light_z;
-
 glm::mat4 cube_model_mat(1);
 
 glm::mat4 model_mat(1);
@@ -318,28 +294,10 @@ void display(GLFWwindow* window){
     //==================
     glUseProgram(bulb_program_uint);
 
-    static float paused_time = 0.0f;
-    float loop_duration = 10.0f;
-    float curr_duration = fmod(current_frame - paused_time, loop_duration);
+    bulb_controller.rotatePointLight(current_frame, delta_time);
+    bulb_controller.processPointLightInput(window, delta_time);
 
-    if(rotate_p_light){
-        angle = (curr_duration / loop_duration) * 2.0f * glm::pi<float>();
-        p_light_x = radius * cos(angle);
-        p_light_z = radius * sin(angle);
-        last_angle = angle;
-    }
-    else{
-        paused_time += delta_time;
-        p_light_x = radius * cos(last_angle);
-        p_light_z = radius * sin(last_angle);
-    }
-
-    processPointLightInput(window, delta_time, y_pos, radius);
- 
-    glm::vec3 bulb_translation_component = glm::vec3(p_light_x, y_pos, p_light_z);
-    point_light.position = bulb_translation_component;
-
-    bulb_model_mat = glm::translate(model_mat, bulb_translation_component) * glm::scale(model_mat, bulb_scale_component);
+    bulb_model_mat = glm::translate(model_mat, point_light.position) * glm::scale(model_mat, bulb_scale_component);
 
     glm::mat4 bulb_mv_mat = cam->getViewMat() * bulb_model_mat;
 
@@ -354,7 +312,7 @@ void display(GLFWwindow* window){
     glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
     glUseProgram(bulb_program_uint);
 
-    if(draw_p_light){
+    if(bulb_controller.draw_flag){
         glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
     }
 
@@ -401,9 +359,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (key == GLFW_KEY_E && action == GLFW_PRESS)
-        draw_p_light = !draw_p_light;
+        bulb_controller.draw_flag = !bulb_controller.draw_flag;
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
-        rotate_p_light = !rotate_p_light;
+        bulb_controller.rotate_flag = !bulb_controller.rotate_flag;
 }
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
