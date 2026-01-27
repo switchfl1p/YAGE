@@ -11,7 +11,7 @@ CMAKE with clangd support:
 ```bash
 mkdir build
 cd build
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+cmake ..
 cd ..
 ln -s build/compile_commands.json .
 ```
