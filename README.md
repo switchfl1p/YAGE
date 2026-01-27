@@ -1,5 +1,5 @@
 # YAGE
-YAGE is yet another graphics engine written in C++ using OpenGL.
+YAGE is (Y)et (A)nother (G)raphics (E)ngine written in C++ using OpenGL.
 
 glfw dependencies for Fedora:
 ```bash
