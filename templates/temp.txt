@@ -1,2 +1,0 @@
-    Shader vertex_shader("{scene_name_safe}.vert");
-    Shader fragment_shader("{scene_name_safe}.frag");

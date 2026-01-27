@@ -31,8 +31,8 @@ const int matrices_binding_index = 0;
 
 void initializeProgram(){
     std::vector<GLuint> shaders;
-    Shader vertex_shader("on_frag_light.vert");
-    Shader fragment_shader("on_frag_light.frag");
+    Shader vertex_shader("{shader_0}");
+    Shader fragment_shader("{shader_1}");
     shaders.push_back(vertex_shader.getShaderUint());
     shaders.push_back(fragment_shader.getShaderUint());
 
@@ -61,8 +61,8 @@ void initializeProgram(){
 
     //point light object shader, simple diffuse per vertex light
     std::vector<GLuint> pl_shaders;
-    Shader pl_vertex_shader("simple_diffuse.vert");
-    Shader pl_frag_shader("simple_diffuse.frag");
+    Shader pl_vertex_shader("{shader_2}");
+    Shader pl_frag_shader("{shader_3}");
     pl_shaders.push_back(pl_vertex_shader.getShaderUint());
     pl_shaders.push_back(pl_frag_shader.getShaderUint());
 
