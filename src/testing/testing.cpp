@@ -12,6 +12,7 @@
 #include <Light.hpp>
 #include <Material.hpp>
 #include <LightController.hpp>
+#include <Node.hpp>
 
 GLuint program_uint;
 GLuint bulb_program_uint;
@@ -76,19 +77,42 @@ void initializeProgram(){
     bulb_material_diffuse_unif = glGetUniformLocation(bulb_program_uint, "material_diffuse");
 }
 
-Material point_bulb;
-Material center_cube;
-Material plane;
+Node bulb;
+Node center_cube;
+Node plane;
 
-void initializeMaterials(){
-    point_bulb.diffuse_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
-    center_cube.diffuse_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
-    plane.diffuse_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+void initializeNodes(){
+    //Bulb
+    Material bulb_material;
+    bulb_material.diffuse_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
+    bulb.material = bulb_material;
+    Transform bulb_transform;
+    bulb_transform.scale_component = glm::vec3(0.1f, 0.1f, 0.1f);
+    bulb.transform = bulb_transform;
+    bulb.model_filename = "box01.glb";
 
-    //send uniform to shaders
     glUseProgram(bulb_program_uint);
-    glUniform4fv(bulb_material_diffuse_unif, 1, glm::value_ptr(point_bulb.diffuse_color));
+    glUniform4fv(bulb_material_diffuse_unif, 1, glm::value_ptr(bulb.material.diffuse_color));
     glUseProgram(0);
+
+    //Centerpiece
+    Material center_cube_material;
+    center_cube_material.diffuse_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
+    center_cube.material = center_cube_material;
+    Transform center_cube_transform;
+    center_cube.transform = center_cube_transform;
+    center_cube.model_filename = "box01.glb";
+    
+    //Plane
+    Material plane_material;
+    plane_material.diffuse_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+    plane.material = plane_material;
+    Transform plane_transform;
+    plane_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
+    plane_transform.scale_component = glm::vec3(50,1,50);
+    plane_transform.calc_model_mat();
+    plane.transform = plane_transform;
+    plane.model_filename = "plane.glb";
 }
 
 AmbientLight ambient_light;
@@ -234,7 +258,7 @@ void initializeCameras(GLFWwindow* window){
 
 void init(GLFWwindow* window){
     initializeProgram();
-    initializeMaterials();
+    initializeNodes();
     initializeLights();
     initializeBuffers();
     initializeVertexArrayObjects();
@@ -246,16 +270,6 @@ void init(GLFWwindow* window){
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 }
-
-glm::mat4 cube_model_mat(1);
-
-glm::mat4 model_mat(1);
-glm::vec3 plane_translation_component = glm::vec3(0.0f,-0.5f,0.0f);
-glm::vec3 plane_scale_component = glm::vec3(50,1,50);
-glm::mat4 plane_model_mat = glm::translate(model_mat, plane_translation_component) * glm::scale(model_mat, plane_scale_component);
-
-glm::vec3 bulb_scale_component = glm::vec3(0.1f, 0.1f, 0.1f);
-glm::mat4 bulb_model_mat;
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
@@ -284,14 +298,14 @@ void display(GLFWwindow* window){
     //===========
     glUseProgram(program_uint);
 
-    glm::mat4 cube_mv_mat = cam->getViewMat() * cube_model_mat;
+    glm::mat4 cube_mv_mat = cam->getViewMat() * center_cube.transform.model_mat;
     glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
     
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cube_mv_mat));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
 
-    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(center_cube.diffuse_color));
+    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(center_cube.material.diffuse_color));
     glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
 
     glBindVertexArray(vao);
@@ -302,9 +316,10 @@ void display(GLFWwindow* window){
     //===========
     glUseProgram(bulb_program_uint);
 
-    bulb_model_mat = glm::translate(model_mat, point_light.position) * glm::scale(model_mat, bulb_scale_component);
+    bulb.transform.translation_component = point_light.position;
+    bulb.transform.calc_model_mat();
 
-    glm::mat4 bulb_mv_mat = cam->getViewMat() * bulb_model_mat;
+    glm::mat4 bulb_mv_mat = cam->getViewMat() * bulb.transform.model_mat;
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_mv_mat));
     
@@ -319,12 +334,12 @@ void display(GLFWwindow* window){
     //============
     glUseProgram(program_uint);
 
-    glm::mat4 plane_mv_mat = cam->getViewMat() * plane_model_mat;
+    glm::mat4 plane_mv_mat = cam->getViewMat() * plane.transform.model_mat;
     
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(plane.diffuse_color));
+    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
 
     glBindVertexArray(plane_vao);
     glDrawElements(GL_TRIANGLES, plane_index_count, GL_UNSIGNED_SHORT, 0);
