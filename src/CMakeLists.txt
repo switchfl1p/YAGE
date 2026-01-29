@@ -97,3 +97,5 @@ endfunction()
 #add_scene("per_frag_light" "per_frag_light" "per_frag_light.cpp")
 add_scene("refactored_per_frag" "refactored_per_frag" "refactored_per_frag.cpp")
 add_scene("testing" "testing" "testing.cpp")
+
+add_scene("shinies" "shinies" "shinies.cpp")

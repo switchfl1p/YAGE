@@ -61,10 +61,6 @@ gltf_util::Model gltf_util::Loader::loadModel(std::string filename){
     model_m.indices.resize(index_count);
     std::memcpy(model_m.indices.data(), indices, index_count * sizeof(unsigned short));
 
-    /* for(int i = 0; i < index_count; i++) {
-            model_m.indices[i] = indices[i];
-    } */
-
     //get vertex normals
     if(primitive.attributes.find("NORMAL") != primitive.attributes.end()) {
         const tinygltf::Accessor &norm_accessor = model.accessors[primitive.attributes.at("NORMAL")];
