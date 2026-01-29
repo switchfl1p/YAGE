@@ -13,39 +13,21 @@
 #include <Material.hpp>
 #include <LightController.hpp>
 #include <Node.hpp>
+#include <core_util.hpp>
 
-GLuint program_uint;
-GLuint bulb_program_uint;
+core_util::LitProgramData lit_program;
+core_util::UnlitProgramData unlit_program;
 
-GLuint material_diffuse_unif;
-GLuint bulb_material_diffuse_unif;
-GLuint camera_space_light_position_unif;
-GLuint light_intensity_unif;
-GLuint ambient_intensity_unif;
-GLuint clip_to_camera_mat_unif;
-GLuint light_attenuation_unif;
-GLuint window_size_unif;
+void initializeProgram(){
+    lit_program = core_util::loadLitProgram("shinies_0.vert", "shinies_1.frag");
+    unlit_program = core_util::loadUnlitProgram("shinies_2.vert", "shinies_3.frag");
+}
 
 GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
 const int matrices_binding_index = 0;
 
-//need 4 programs
-//specular + diffuse
-//just specular
-//just diffuse
-//no lighting
-
-void initializeProgram(){
-    std::vector<GLuint> shaders;
-    Shader vertex_shader("shinies_0.vert");
-    Shader fragment_shader("shinies_1.frag");
-    shaders.push_back(vertex_shader.getShaderUint());
-    shaders.push_back(fragment_shader.getShaderUint());
-
-    Program the_program(shaders);
-    program_uint = the_program.getProgramUint();
-
+void initializeUBOs(){
     //Create UBO and bind to binding index
     glGenBuffers(1, &matrices_UBO);
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
@@ -54,33 +36,11 @@ void initializeProgram(){
     glBindBufferRange(GL_UNIFORM_BUFFER, matrices_binding_index, matrices_UBO, 0, sizeof(glm::mat4) * 2);
 
     //bind program uniform block index to binding index
-    matrices_uniform_block_index = glGetUniformBlockIndex(program_uint, "Matrices");
-    glUniformBlockBinding(program_uint, matrices_uniform_block_index, matrices_binding_index);
+    matrices_uniform_block_index = glGetUniformBlockIndex(lit_program.program_uint, "Matrices");
+    glUniformBlockBinding(lit_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
 
-    //other uniforms
-    material_diffuse_unif = glGetUniformLocation(program_uint, "material_diffuse");
-    camera_space_light_position_unif = glGetUniformLocation(program_uint, "camera_space_light_position");
-    light_intensity_unif = glGetUniformLocation(program_uint, "light_intensity");
-    ambient_intensity_unif = glGetUniformLocation(program_uint, "ambient_intensity");
-    clip_to_camera_mat_unif = glGetUniformLocation(program_uint, "clip_to_camera_mat");
-    window_size_unif = glGetUniformLocation(program_uint, "window_size");
-    light_attenuation_unif = glGetUniformLocation(program_uint, "light_attenuation");
-
-    //point light object shader, simple diffuse per vertex light
-    std::vector<GLuint> pl_shaders;
-    Shader pl_vertex_shader("shinies_2.vert");
-    Shader pl_frag_shader("shinies_3.frag");
-    pl_shaders.push_back(pl_vertex_shader.getShaderUint());
-    pl_shaders.push_back(pl_frag_shader.getShaderUint());
-
-    Program pl_program(pl_shaders);
-    bulb_program_uint = pl_program.getProgramUint();
-
-    //UBO
-    matrices_uniform_block_index = glGetUniformBlockIndex(bulb_program_uint, "Matrices");
-    glUniformBlockBinding(bulb_program_uint, matrices_uniform_block_index, matrices_binding_index);
-
-    bulb_material_diffuse_unif = glGetUniformLocation(bulb_program_uint, "material_diffuse");
+    matrices_uniform_block_index = glGetUniformBlockIndex(unlit_program.program_uint, "Matrices");
+    glUniformBlockBinding(unlit_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
 }
 
 Node bulb;
@@ -95,10 +55,9 @@ void initializeNodes(){
     Transform bulb_transform;
     bulb_transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
     bulb.transform = bulb_transform;
-    //bulb.model_filename = "box01.glb";
 
-    glUseProgram(bulb_program_uint);
-    glUniform4fv(bulb_material_diffuse_unif, 1, glm::value_ptr(bulb.material.diffuse_color));
+    glUseProgram(unlit_program.program_uint);
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(bulb.material.diffuse_color));
     glUseProgram(0);
 
     //Centerpiece
@@ -109,7 +68,6 @@ void initializeNodes(){
     sphere_transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
     sphere_transform.calc_model_mat();
     sphere.transform = sphere_transform;
-    //sphere.model_filename = "box01.glb";
     
     //Plane
     Material plane_material;
@@ -120,7 +78,6 @@ void initializeNodes(){
     plane_transform.scale_component = glm::vec3(50,1,50);
     plane_transform.calc_model_mat();
     plane.transform = plane_transform;
-    //plane.model_filename = "plane.glb";
 }
 
 AmbientLight ambient_light;
@@ -137,10 +94,10 @@ void initializeLights(){
     bulb_controller.radius = 1.0f;
 
     //send uniforms to program
-    glUseProgram(program_uint);
-    glUniform4fv(ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-    glUniform4fv(light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-    glUniform1f(light_attenuation_unif, point_light.attenuation);
+    glUseProgram(lit_program.program_uint);
+    glUniform4fv(lit_program.ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
+    glUniform4fv(lit_program.light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+    glUniform1f(lit_program.light_attenuation_unif, point_light.attenuation);
     glUseProgram(0);
 }
 
@@ -260,7 +217,7 @@ void initializeCameras(GLFWwindow* window){
 
     cam = std::make_unique<Camera>(width,height);
     cam_controler = std::make_unique<CameraController>(*cam);
-    cam->position = glm::vec3(0.0f, 0.5f, 3.5f);
+    cam->position = glm::vec3(0.0f, 0.0f, 2.5f);
     cam_controler->movement_speed = 3.0f;
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
@@ -268,6 +225,7 @@ void initializeCameras(GLFWwindow* window){
 
 void init(GLFWwindow* window){
     initializeProgram();
+    initializeUBOs();
     initializeNodes();
     initializeLights();
     initializeBuffers();
@@ -306,7 +264,7 @@ void display(GLFWwindow* window){
     //=============
     //RENDER SPHERE 
     //=============
-    glUseProgram(program_uint);
+    glUseProgram(lit_program.program_uint);
 
     glm::mat4 sphere_mv_mat = cam->getViewMat() * sphere.transform.model_mat;
     glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
@@ -315,8 +273,8 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_mv_mat));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
 
-    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(sphere.material.diffuse_color));
-    glUniform3fv(camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
+    glUniform4fv(lit_program.material_diffuse_unif, 1, glm::value_ptr(sphere.material.diffuse_color));
+    glUniform3fv(lit_program.camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
 
     glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
@@ -324,7 +282,7 @@ void display(GLFWwindow* window){
     //===========
     //RENDER BULB
     //===========
-    glUseProgram(bulb_program_uint);
+    glUseProgram(unlit_program.program_uint);
 
     bulb.transform.translation_component = point_light.position;
     bulb.transform.calc_model_mat();
@@ -342,14 +300,14 @@ void display(GLFWwindow* window){
     //============
     //RENDER PLANE 
     //============
-    glUseProgram(program_uint);
+    glUseProgram(lit_program.program_uint);
 
     glm::mat4 plane_mv_mat = cam->getViewMat() * plane.transform.model_mat;
     
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glUniform4fv(material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
+    glUniform4fv(lit_program.material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
 
     glBindVertexArray(plane_vao);
     glDrawElements(GL_TRIANGLES, plane_index_count, GL_UNSIGNED_SHORT, 0);
@@ -369,17 +327,20 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
     glViewport(0, 0, width, height);
 
-    glUseProgram(program_uint);
-    glUniformMatrix4fv(clip_to_camera_mat_unif, 1, false, glm::value_ptr(glm::inverse(cam->getPerspMat())));
-    glUniform2i(window_size_unif, width, height);
+    glUseProgram(lit_program.program_uint);
+    glUniformMatrix4fv(lit_program.clip_to_camera_mat_unif, 1, false, glm::value_ptr(glm::inverse(cam->getPerspMat())));
+    glUniform2i(lit_program.window_size_unif, width, height);
     glUseProgram(0);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         glfwSetWindowShouldClose(window, true);
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    }
+    
+    if (key == GLFW_KEY_R && action == GLFW_PRESS){
         bulb_controller.rotate_flag = !bulb_controller.rotate_flag;
+    }
 
     if (key == GLFW_KEY_E && action == GLFW_PRESS){
         bulb_controller.draw_flag = !bulb_controller.draw_flag;
@@ -391,8 +352,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             point_light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        glUseProgram(program_uint);
-        glUniform4fv(light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+        glUseProgram(lit_program.program_uint);
+        glUniform4fv(lit_program.light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
         glUseProgram(0);
     }
 }
@@ -406,8 +367,8 @@ void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
 }
 
 void cleanup(){
-    glDeleteProgram(program_uint);
-    glDeleteProgram(bulb_program_uint);
+    glDeleteProgram(lit_program.program_uint);
+    glDeleteProgram(unlit_program.program_uint);
 
     glDeleteVertexArrays(1, &vao);
     glDeleteVertexArrays(1, &plane_vao);

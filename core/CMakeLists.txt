@@ -8,6 +8,7 @@ set(CORE_SOURCES
 	Node.cpp
 	tinygltf_impl.cpp
 	gltf_util.cpp
+	core_util.cpp
 )
 
 set(CORE_HEADERS
@@ -20,6 +21,7 @@ set(CORE_HEADERS
 	LightController.hpp
 	Node.hpp
 	gltf_util.hpp
+	core_util.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
