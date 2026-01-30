@@ -10,11 +10,14 @@ layout(std140) uniform Matrices
 };
 
 out vec3 camera_space_normal;
+out vec3 camera_space_position;
 
 void main()
 {
-	gl_Position = persp_mat * mv_mat * vec4(position, 1.0);
+	vec4 temp_cam_space_pos = mv_mat * vec4(position, 1.0);
+	gl_Position = persp_mat * temp_cam_space_pos;
 
 	mat3 normal_mv_mat = mat3(mv_mat);
-	camera_space_normal = normalize(normal_mv_mat * normal);
+	camera_space_normal = normal_mv_mat * normal;
+	camera_space_position = vec3(temp_cam_space_pos);
 }

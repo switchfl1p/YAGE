@@ -17,7 +17,6 @@ set(CORE_HEADERS
 	CameraController.hpp
 	Camera.hpp
 	Light.hpp
-	Material.hpp
 	LightController.hpp
 	Node.hpp
 	gltf_util.hpp

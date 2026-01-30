@@ -10,17 +10,24 @@
 #include <CameraController.hpp>
 #include <gltf_util.hpp>
 #include <Light.hpp>
-#include <Material.hpp>
 #include <LightController.hpp>
 #include <Node.hpp>
 #include <core_util.hpp>
 
-core_util::LitProgramData lit_program;
+core_util::LitProgramData diff_only_program;
+core_util::LitProgramData spec_diff_program;
+core_util::LitProgramData spec_only_program;
 core_util::UnlitProgramData unlit_program;
 
-void initializeProgram(){
-    lit_program = core_util::loadLitProgram("shinies_0.vert", "shinies_1.frag");
+std::vector<core_util::LitProgramData*> lit_programs;
+
+void initializePrograms(){
+    diff_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_1.frag");
+    spec_diff_program = core_util::loadLitProgram("shinies_0.vert", "shinies_4.frag");
     unlit_program = core_util::loadUnlitProgram("shinies_2.vert", "shinies_3.frag");
+
+    lit_programs.push_back(&diff_only_program);
+    lit_programs.push_back(&spec_diff_program);
 }
 
 GLuint matrices_uniform_block_index;
@@ -35,12 +42,15 @@ void initializeUBOs(){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferRange(GL_UNIFORM_BUFFER, matrices_binding_index, matrices_UBO, 0, sizeof(glm::mat4) * 2);
 
-    //bind program uniform block index to binding index
-    matrices_uniform_block_index = glGetUniformBlockIndex(lit_program.program_uint, "Matrices");
-    glUniformBlockBinding(lit_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
+    //handle lit programs
+    for(auto* program : lit_programs){
+        matrices_uniform_block_index = glGetUniformBlockIndex(program->program_uint, "Matrices");
+        glUniformBlockBinding(program->program_uint, matrices_uniform_block_index, matrices_binding_index);
+    }
 
-    matrices_uniform_block_index = glGetUniformBlockIndex(unlit_program.program_uint, "Matrices");
-    glUniformBlockBinding(unlit_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
+    //handle unlit ones
+    matrices_uniform_block_index = glGetUniformBlockIndex(spec_diff_program.program_uint, "Matrices");
+    glUniformBlockBinding(spec_diff_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
 }
 
 Node bulb;
@@ -63,6 +73,7 @@ void initializeNodes(){
     //Centerpiece
     Material sphere_material;
     sphere_material.diffuse_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
+    sphere_material.shininess_factor = 4.0f;
     sphere.material = sphere_material;
     Transform sphere_transform;
     sphere_transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -72,6 +83,7 @@ void initializeNodes(){
     //Plane
     Material plane_material;
     plane_material.diffuse_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+    plane_material.shininess_factor = 4.0f;
     plane.material = plane_material;
     Transform plane_transform;
     plane_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
@@ -93,119 +105,36 @@ void initializeLights(){
 
     bulb_controller.radius = 1.0f;
 
-    //send uniforms to program
-    glUseProgram(lit_program.program_uint);
-    glUniform4fv(lit_program.ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-    glUniform4fv(lit_program.light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-    glUniform1f(lit_program.light_attenuation_unif, point_light.attenuation);
-    glUseProgram(0);
+    //send light values to shaders
+    for(auto* program : lit_programs){
+        glUseProgram(program->program_uint);
+        glUniform4fv(program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
+        glUniform4fv(program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+        glUniform1f(program->light_attenuation_unif, point_light.attenuation);
+        glUseProgram(0);
+    }
 }
 
-GLuint vertex_buffer_object;
-GLuint index_buffer_object;
-GLuint normal_buffer_object;
-
-int index_count = 0;
-
-GLuint plane_vbo;
-GLuint plane_ibo;
-GLuint plane_nbo;
-
-int plane_index_count = 0;
+core_util::ModelData sphere_data;
+core_util::ModelData plane_data;
 
 void initializeBuffers(){
-    //Example usage:
-
     gltf_util::Loader loader;
-    gltf_util::Model sphere = loader.loadModel("sphere.glb");
 
-    //Check if normals exist
-    if(!sphere.normals.empty()) {
-        //NBO
-        glGenBuffers(1, &normal_buffer_object);
-        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
-        glBufferData(GL_ARRAY_BUFFER, sphere.vertex_count * 3 * sizeof(float), sphere.normals.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-
-    //VBO
-    glGenBuffers(1, &vertex_buffer_object);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-	glBufferData(GL_ARRAY_BUFFER, sphere.vertex_count * 3 * sizeof(float), sphere.positions.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    //IBO
-    glGenBuffers(1, &index_buffer_object);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere.index_count * sizeof(unsigned short), sphere.indices.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    index_count = sphere.index_count;
-
+    gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
     gltf_util::Model plane = loader.loadModel("plane.glb");
 
-    if(!plane.normals.empty()) {
-        //NBO
-        glGenBuffers(1, &plane_nbo);
-        glBindBuffer(GL_ARRAY_BUFFER, plane_nbo);
-        glBufferData(GL_ARRAY_BUFFER, plane.vertex_count * 3 * sizeof(float), plane.normals.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-
-    //VBO
-    glGenBuffers(1, &plane_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, plane_vbo);
-	glBufferData(GL_ARRAY_BUFFER, plane.vertex_count * 3 * sizeof(float), plane.positions.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    //IBO
-    glGenBuffers(1, &plane_ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane_ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, plane.index_count * sizeof(unsigned short), plane.indices.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    plane_index_count = plane.index_count;
+    sphere_data = core_util::loadModelData(sphere);
+    plane_data = core_util::loadModelData(plane);
 }
 
-GLuint vao;
-GLuint plane_vao;
+core_util::VAOData sphere_vao;
+core_util::VAOData plane_vao;
 
 void initializeVertexArrayObjects(){
-    //sphere vao
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    //positions at attribute location 0
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
-
-    //normals at attribute location 1
-    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_object);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-    //indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-    glBindVertexArray(0);
-
-    //plane vao
-    glGenVertexArrays(1, &plane_vao);
-    glBindVertexArray(plane_vao);
-
-    //positions at attribute location 0
-    glBindBuffer(GL_ARRAY_BUFFER, plane_vbo);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
-
-    //normals at attribute location 1
-    glBindBuffer(GL_ARRAY_BUFFER, plane_nbo);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-    //indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane_ibo);
-    glBindVertexArray(0);
+    //very opinionated function, expects positions at attribute 0 and normals at 1
+    sphere_vao = core_util::loadVAOData(sphere_data);
+    plane_vao = core_util::loadVAOData(plane_data);
 }
 
 std::unique_ptr<Camera> cam = nullptr;
@@ -224,7 +153,7 @@ void initializeCameras(GLFWwindow* window){
 }
 
 void init(GLFWwindow* window){
-    initializeProgram();
+    initializePrograms();
     initializeUBOs();
     initializeNodes();
     initializeLights();
@@ -264,7 +193,7 @@ void display(GLFWwindow* window){
     //=============
     //RENDER SPHERE 
     //=============
-    glUseProgram(lit_program.program_uint);
+    glUseProgram(spec_diff_program.program_uint);
 
     glm::mat4 sphere_mv_mat = cam->getViewMat() * sphere.transform.model_mat;
     glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
@@ -273,11 +202,12 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_mv_mat));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
 
-    glUniform4fv(lit_program.material_diffuse_unif, 1, glm::value_ptr(sphere.material.diffuse_color));
-    glUniform3fv(lit_program.camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
+    glUniform4fv(spec_diff_program.material_diffuse_unif, 1, glm::value_ptr(sphere.material.diffuse_color));
+    glUniform3fv(spec_diff_program.camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
+    glUniform1f(spec_diff_program.shininess_factor_unif, sphere.material.shininess_factor);
 
-    glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(sphere_vao.vao);
+	glDrawElements(GL_TRIANGLES, sphere_data.index_count, GL_UNSIGNED_SHORT, 0);
 
     //===========
     //RENDER BULB
@@ -292,7 +222,7 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_mv_mat));
     
     if(bulb_controller.draw_flag){
-        glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, 0);
+        glDrawElements(GL_TRIANGLES, sphere_data.index_count, GL_UNSIGNED_SHORT, 0);
     }
 
 	glBindVertexArray(0);
@@ -300,17 +230,18 @@ void display(GLFWwindow* window){
     //============
     //RENDER PLANE 
     //============
-    glUseProgram(lit_program.program_uint);
+    glUseProgram(spec_diff_program.program_uint);
 
     glm::mat4 plane_mv_mat = cam->getViewMat() * plane.transform.model_mat;
     
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glUniform4fv(lit_program.material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
+    glUniform4fv(spec_diff_program.material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
+    glUniform1f(spec_diff_program.shininess_factor_unif, plane.material.shininess_factor);
 
-    glBindVertexArray(plane_vao);
-    glDrawElements(GL_TRIANGLES, plane_index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(plane_vao.vao);
+    glDrawElements(GL_TRIANGLES, plane_data.index_count, GL_UNSIGNED_SHORT, 0);
 
     glBindVertexArray(0);
 
@@ -326,18 +257,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     cam->updatePerspMat();
 
     glViewport(0, 0, width, height);
-
-    glUseProgram(lit_program.program_uint);
-    glUniformMatrix4fv(lit_program.clip_to_camera_mat_unif, 1, false, glm::value_ptr(glm::inverse(cam->getPerspMat())));
-    glUniform2i(lit_program.window_size_unif, width, height);
-    glUseProgram(0);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         glfwSetWindowShouldClose(window, true);
     }
-    
+
     if (key == GLFW_KEY_R && action == GLFW_PRESS){
         bulb_controller.rotate_flag = !bulb_controller.rotate_flag;
     }
@@ -352,8 +278,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             point_light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        glUseProgram(lit_program.program_uint);
-        glUniform4fv(lit_program.light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+        glUseProgram(spec_diff_program.program_uint);
+        glUniform4fv(spec_diff_program.light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
         glUseProgram(0);
     }
 }
@@ -367,19 +293,18 @@ void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
 }
 
 void cleanup(){
-    glDeleteProgram(lit_program.program_uint);
+    for(auto* program : lit_programs){
+        glDeleteProgram(program->program_uint);
+    }
     glDeleteProgram(unlit_program.program_uint);
 
-    glDeleteVertexArrays(1, &vao);
-    glDeleteVertexArrays(1, &plane_vao);
+    core_util::cleanupBuffers(sphere_data);
+    core_util::cleanupBuffers(plane_data);
+    
+    glDeleteVertexArrays(1, &sphere_vao.vao);
+    glDeleteVertexArrays(1, &plane_vao.vao);
 
     glDeleteBuffers(1, &matrices_UBO);
-    glDeleteBuffers(1, &vertex_buffer_object);
-    glDeleteBuffers(1, &index_buffer_object);
-    glDeleteBuffers(1, &normal_buffer_object);
-    glDeleteBuffers(1, &plane_vbo);
-    glDeleteBuffers(1, &plane_ibo);
-    glDeleteBuffers(1, &plane_nbo);
 }
 
 

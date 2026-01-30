@@ -1,9 +1,7 @@
 /* switchfl1p 2025-2026 */
 
 #pragma once
-#include <Material.hpp>
 #include <glm/glm.hpp>
-#include <string>
 
 class Transform{
     public:
@@ -15,9 +13,13 @@ class Transform{
         glm::vec3 scale_component = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 
+struct Material{
+    glm::vec4 diffuse_color;
+    float shininess_factor;
+};
+
 struct Node{
     public:
         Material material;
         Transform transform;
-        std::string model_filename;
 };

@@ -39,10 +39,6 @@ int main(){
     
     init(window);
 
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    framebuffer_size_callback(window, width, height);
-
     while (!glfwWindowShouldClose(window)) {
         display(window);
     }
