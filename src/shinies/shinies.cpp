@@ -19,7 +19,9 @@ core_util::LitProgramData diff_only_program;
 core_util::LitProgramData spec_diff_program;
 core_util::LitProgramData spec_only_program;
 core_util::LitProgramData blinn_program;
-core_util::LitProgramData blinn_spec_only;
+core_util::LitProgramData blinn_spec_only_program;
+core_util::LitProgramData gaussian_program;
+core_util::LitProgramData gaussian_spec_only_program;
 
 core_util::UnlitProgramData unlit_program;
 
@@ -34,17 +36,21 @@ enum LightingModel
     LM_PHONG_SPECULAR_ONLY,
     LM_BLINN_LIGHTING,
     LM_BLINN_SPECULAR_ONLY,
+    LM_GAUSSIAN_LIGHTING,
+    LM_GAUSSIAN_SPECULAR_ONLY,
 
     LM_COUNT,
 };
-static int light_model = LM_BLINN_LIGHTING;
+static int light_model = LM_GAUSSIAN_LIGHTING;
 
 void initializePrograms(){
     diff_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_1.frag");
     spec_diff_program = core_util::loadLitProgram("shinies_0.vert", "shinies_4.frag");
     spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_5.frag");
     blinn_program = core_util::loadLitProgram("shinies_0.vert", "shinies_6.frag");
-    blinn_spec_only = core_util::loadLitProgram("shinies_0.vert", "shinies_7.frag");
+    blinn_spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_7.frag");
+    gaussian_program = core_util::loadLitProgram("shinies_0.vert", "shinies_8.frag");
+    gaussian_spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_9.frag");
 
     unlit_program = core_util::loadUnlitProgram("shinies_2.vert", "shinies_3.frag");
 
@@ -52,7 +58,9 @@ void initializePrograms(){
     lit_programs.push_back(&spec_diff_program);
     lit_programs.push_back(&spec_only_program);
     lit_programs.push_back(&blinn_program);
-    lit_programs.push_back(&blinn_spec_only);
+    lit_programs.push_back(&blinn_spec_only_program);
+    lit_programs.push_back(&gaussian_program);
+    lit_programs.push_back(&gaussian_spec_only_program);
 }
 
 GLuint matrices_uniform_block_index;
@@ -112,7 +120,7 @@ void initializeNodes(){
     plane.material = plane_material;
     Transform plane_transform;
     plane_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
-    plane_transform.scale_component = glm::vec3(50,1,50);
+    //plane_transform.scale_component = glm::vec3(50,1,50);
     plane_transform.calc_model_mat();
     plane.transform = plane_transform;
 }
@@ -147,7 +155,7 @@ void initializeBuffers(){
     gltf_util::Loader loader;
 
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
-    gltf_util::Model plane = loader.loadModel("plane.glb");
+    gltf_util::Model plane = loader.loadModel("plane04.glb");
 
     sphere_data = core_util::loadModelData(sphere);
     plane_data = core_util::loadModelData(plane);
@@ -212,24 +220,43 @@ void display(GLFWwindow* window){
     cam->updateCamera();
 
     //bulb movement
-    bulb_controller.rotatePointLight(current_frame, delta_time);
+    bulb_controller.halfRotatePointLight(current_frame, delta_time);
     bulb_controller.processPointLightInput(window, delta_time);
 
+    //program switching
     switch(light_model){
         case LM_DIFFUSE_AMBIENT:
             current_program = &diff_only_program;
             break;
         case LM_PHONG_LIGHTING:
             current_program = &spec_diff_program;
+            sphere.material.shininess_factor = 32.0f;
+            plane.material.shininess_factor = 32.0f;
             break;
         case LM_PHONG_SPECULAR_ONLY:
             current_program = &spec_only_program;
+            sphere.material.shininess_factor = 32.0f;
+            plane.material.shininess_factor = 32.0f;
             break;
         case LM_BLINN_LIGHTING:
             current_program = &blinn_program;
+            sphere.material.shininess_factor = 64.0f;
+            plane.material.shininess_factor = 64.0f;
             break;
         case LM_BLINN_SPECULAR_ONLY:
-            current_program = &blinn_spec_only;
+            current_program = &blinn_spec_only_program;
+            sphere.material.shininess_factor = 64.0f;
+            plane.material.shininess_factor = 64.0f;
+            break;
+        case LM_GAUSSIAN_LIGHTING:
+            current_program = &gaussian_program;
+            sphere.material.shininess_factor = 0.2f;
+            plane.material.shininess_factor = 0.2f;
+            break;
+        case LM_GAUSSIAN_SPECULAR_ONLY:
+            current_program = &gaussian_spec_only_program;
+            sphere.material.shininess_factor = 0.2f;
+            plane.material.shininess_factor = 0.2f;
             break;
     }
 
@@ -338,6 +365,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         light_model_changed = true;
     }
 
+    if(key == GLFW_KEY_Q && action == GLFW_PRESS){
+        switch(light_model){
+            case LM_PHONG_LIGHTING:
+                light_model = LM_BLINN_LIGHTING;
+                break;
+            case LM_BLINN_LIGHTING:
+                light_model = LM_GAUSSIAN_LIGHTING;
+                break;
+            case LM_GAUSSIAN_LIGHTING:
+                light_model = LM_PHONG_LIGHTING;
+                break;
+        }
+        light_model_changed = true;
+    }
+
     //console logging
     if(rotation_changed){
         bulb_controller.rotate_flag ? std::cout << "Light Rotation: On\n" : std::cout << "Light Rotation: Off\n";
@@ -361,6 +403,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 break;
             case LM_BLINN_SPECULAR_ONLY:
                 std::cout << "Light Model: Blinn-Phong Specular Only\n";
+                break;
+            case LM_GAUSSIAN_LIGHTING:
+                std::cout << "Light Model: Gaussian Lighting\n";
+                break;
+            case LM_GAUSSIAN_SPECULAR_ONLY:
+                std::cout << "Light Model: Gaussian Specular Only\n";
                 break;
         }
     }

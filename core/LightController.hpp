@@ -10,6 +10,7 @@ class LightController{
 
         void processPointLightInput(GLFWwindow* window, float delta_time);
         void rotatePointLight(float current_frame, float delta_time);
+        void halfRotatePointLight(float current_frame, float delta_time);
 
         bool draw_flag = true;
         bool rotate_flag = true;

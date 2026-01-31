@@ -39,3 +39,24 @@ void LightController::rotatePointLight(float current_frame, float delta_time){
         point_light.position.z = radius * sin(last_angle);
     }
 }
+
+void LightController::halfRotatePointLight(float current_frame, float delta_time){
+    static float paused_time = 0.0f;
+    float curr_duration = fmod(current_frame - paused_time, loop_duration);
+    
+    if(rotate_flag){
+        float t = curr_duration / loop_duration;
+        
+        float bounce_t = (t < 0.5f) ? (t * 2.0f) : (2.0f - t * 2.0f);
+        angle = bounce_t * glm::pi<float>();
+        
+        point_light.position.x = radius * cos(angle);
+        point_light.position.z = radius * sin(angle);
+        last_angle = angle;
+    }
+    else{
+        paused_time += delta_time;
+        point_light.position.x = radius * cos(last_angle);
+        point_light.position.z = radius * sin(last_angle);
+    }
+}
