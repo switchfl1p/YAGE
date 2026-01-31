@@ -10,16 +10,16 @@ LightController::LightController(PointLight &light)
 void LightController::processPointLightInput(GLFWwindow* window, float delta_time){
     float movement_distance = movement_speed * delta_time;
 
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
         point_light.position.y += movement_distance;
 
-    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
         point_light.position.y -= movement_distance;
 
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
         radius += movement_distance;
 
-    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
         radius -= movement_distance;
 }
 
