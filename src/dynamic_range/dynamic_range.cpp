@@ -22,8 +22,6 @@ core_util::LitProgramData blinn_program;
 core_util::LitProgramData blinn_spec_only_program;
 core_util::LitProgramData gaussian_program;
 core_util::LitProgramData gaussian_spec_only_program;
-core_util::LitProgramData pbr_program;
-core_util::LitProgramData pbr_specular_only_program;
 
 core_util::UnlitProgramData unlit_program;
 
@@ -40,25 +38,21 @@ enum LightingModel
     LM_BLINN_SPECULAR_ONLY,
     LM_GAUSSIAN_LIGHTING,
     LM_GAUSSIAN_SPECULAR_ONLY,
-    LM_PBR_LIGHTING,
-    LM_PBR_SPECULAR_ONLY,
 
     LM_COUNT,
 };
-static int light_model = LM_PBR_LIGHTING;
+static int light_model = LM_GAUSSIAN_LIGHTING;
 
 void initializePrograms(){
-    diff_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_1.frag");
-    spec_diff_program = core_util::loadLitProgram("shinies_0.vert", "shinies_4.frag");
-    spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_5.frag");
-    blinn_program = core_util::loadLitProgram("shinies_0.vert", "shinies_6.frag");
-    blinn_spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_7.frag");
-    gaussian_program = core_util::loadLitProgram("shinies_0.vert", "shinies_8.frag");
-    gaussian_spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_9.frag");
-    pbr_program = core_util::loadLitProgram("shinies_0.vert", "shinies_10.frag");
-    pbr_specular_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_11.frag");
+    diff_only_program = core_util::loadLitProgram("dr_0.vert", "dr_1.frag");
+    spec_diff_program = core_util::loadLitProgram("dr_0.vert", "dr_4.frag");
+    spec_only_program = core_util::loadLitProgram("dr_0.vert", "dr_5.frag");
+    blinn_program = core_util::loadLitProgram("dr_0.vert", "dr_6.frag");
+    blinn_spec_only_program = core_util::loadLitProgram("dr_0.vert", "dr_7.frag");
+    gaussian_program = core_util::loadLitProgram("dr_0.vert", "dr_8.frag");
+    gaussian_spec_only_program = core_util::loadLitProgram("dr_0.vert", "dr_9.frag");
 
-    unlit_program = core_util::loadUnlitProgram("shinies_2.vert", "shinies_3.frag");
+    unlit_program = core_util::loadUnlitProgram("dr_2.vert", "dr_3.frag");
 
     lit_programs.push_back(&diff_only_program);
     lit_programs.push_back(&spec_diff_program);
@@ -67,8 +61,6 @@ void initializePrograms(){
     lit_programs.push_back(&blinn_spec_only_program);
     lit_programs.push_back(&gaussian_program);
     lit_programs.push_back(&gaussian_spec_only_program);
-    lit_programs.push_back(&pbr_program);
-    lit_programs.push_back(&pbr_specular_only_program);
 }
 
 GLuint matrices_uniform_block_index;
@@ -115,12 +107,7 @@ void initializeNodes(){
     Material sphere_material;
     sphere_material.diffuse_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
     sphere_material.shininess_factor = 64.0f;
-    //pbr
-    sphere_material.base_color = glm::vec4(0.0, 0.0, 1.5, 1.0);
-    sphere_material.metallic = 0.0f;   // plastic/ceramic
-    sphere_material.roughness = 0.30f;  // somewhat shiny
     sphere.material = sphere_material;
-
     Transform sphere_transform;
     sphere_transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
     sphere_transform.calc_model_mat();
@@ -130,13 +117,7 @@ void initializeNodes(){
     Material plane_material;
     plane_material.diffuse_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
     plane_material.shininess_factor = 64.0f;
-
-    //pbr
-    plane_material.base_color = glm::vec4(0.8, 0.8, 0.8, 1.0);
-    plane_material.metallic = 0.0f;
-    plane_material.roughness = 0.7f;  // matte
     plane.material = plane_material;
-
     Transform plane_transform;
     plane_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
     //plane_transform.scale_component = glm::vec3(50,1,50);
@@ -218,8 +199,6 @@ void init(GLFWwindow* window){
 
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-
-    std::cout << "Light Model: PBR\n";
 }
 
 float delta_time = 0.0f;
@@ -279,29 +258,6 @@ void display(GLFWwindow* window){
             sphere.material.shininess_factor = 0.2f;
             plane.material.shininess_factor = 0.2f;
             break;
-        case LM_PBR_LIGHTING:
-            current_program = &pbr_program;
-            ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-            point_light.attenuation = 0.1f;
-
-            glUseProgram(current_program->program_uint);
-            glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-            glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-            glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
-            glUseProgram(0);
-            break;
-        case LM_PBR_SPECULAR_ONLY:
-            current_program = &pbr_specular_only_program;
-            ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-
-            glUseProgram(current_program->program_uint);
-            glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-            glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-            glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
-            glUseProgram(0);
-            break;
     }
 
     //=============
@@ -319,11 +275,6 @@ void display(GLFWwindow* window){
     glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(sphere.material.diffuse_color));
     glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
     glUniform1f(current_program->shininess_factor_unif, sphere.material.shininess_factor);
-
-    //pbr
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(sphere.material.base_color));
-    glUniform1f(current_program->metallic_unif, sphere.material.metallic);
-    glUniform1f(current_program->roughness_unif, sphere.material.roughness);
 
     glBindVertexArray(sphere_vao.vao);
 	glDrawElements(GL_TRIANGLES, sphere_data.index_count, GL_UNSIGNED_SHORT, 0);
@@ -358,10 +309,6 @@ void display(GLFWwindow* window){
 
     glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
     glUniform1f(current_program->shininess_factor_unif, plane.material.shininess_factor);
-
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(plane.material.base_color));
-    glUniform1f(current_program->metallic_unif, plane.material.metallic);
-    glUniform1f(current_program->roughness_unif, plane.material.roughness);
 
     glBindVertexArray(plane_vao.vao);
     glDrawElements(GL_TRIANGLES, plane_data.index_count, GL_UNSIGNED_SHORT, 0);
@@ -427,9 +374,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 light_model = LM_GAUSSIAN_LIGHTING;
                 break;
             case LM_GAUSSIAN_LIGHTING:
-                light_model = LM_PBR_LIGHTING;
-                break;
-            case LM_PBR_LIGHTING:
                 light_model = LM_PHONG_LIGHTING;
                 break;
         }
@@ -465,12 +409,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 break;
             case LM_GAUSSIAN_SPECULAR_ONLY:
                 std::cout << "Light Model: Gaussian Specular Only\n";
-                break;
-            case LM_PBR_LIGHTING:
-                std::cout << "Light Model: PBR Lighting\n";
-                break;
-            case LM_PBR_SPECULAR_ONLY:
-                std::cout << "Light Model: PBR Specular only\n";
                 break;
         }
     }

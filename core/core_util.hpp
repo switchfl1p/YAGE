@@ -17,6 +17,11 @@ namespace core_util{
         GLuint ambient_intensity_unif;
         GLuint light_attenuation_unif;
         GLuint shininess_factor_unif;
+        
+        //pbr
+        GLuint base_color_unif;
+        GLuint metallic_unif;
+        GLuint roughness_unif;
     };
 
     struct UnlitProgramData{

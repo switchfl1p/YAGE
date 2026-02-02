@@ -25,6 +25,11 @@ core_util::LitProgramData core_util::loadLitProgram(const std::string &vert_shad
     data.light_attenuation_unif = glGetUniformLocation(data.program_uint, "light_attenuation");
     data.shininess_factor_unif = glGetUniformLocation(data.program_uint, "shininess_factor");
 
+    //pbr
+    data.base_color_unif = glGetUniformLocation(data.program_uint, "base_color");
+    data.metallic_unif = glGetUniformLocation(data.program_uint, "metallic");
+    data.roughness_unif = glGetUniformLocation(data.program_uint, "roughness");
+
     return data;
 }
 
