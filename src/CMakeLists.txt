@@ -1,11 +1,13 @@
-# Track which meshes have already been set up (global scope)
-set_property(GLOBAL PROPERTY COPIED_MESHES "")
-
 function(add_scene base_dir tgt_name)
     set(sources ${ARGN})
     list(TRANSFORM sources PREPEND "${base_dir}/")
     add_executable(${tgt_name} ${sources})
     target_link_libraries(${tgt_name} PRIVATE core)
+
+    # Place executable in its own subdirectory
+    set_target_properties(${tgt_name} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${tgt_name}
+    )
     
     # Handle shaders
     set(shader_dir ${CMAKE_CURRENT_SOURCE_DIR}/${base_dir}/shaders)
@@ -20,7 +22,7 @@ function(add_scene base_dir tgt_name)
             ${shader_dir}/*.glsl
         )
         if(scene_shaders)
-            set(output_shader_dir ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+            set(output_shader_dir ${CMAKE_CURRENT_BINARY_DIR}/${tgt_name}/shaders)
             
             set(copied_shaders)
             foreach(shader ${scene_shaders})
@@ -55,29 +57,21 @@ function(add_scene base_dir tgt_name)
             ${mesh_dir}/*.stl
         )
         if(scene_meshes)
-            set(output_mesh_dir ${CMAKE_CURRENT_BINARY_DIR}/meshes)
-            
-            get_property(already_copied GLOBAL PROPERTY COPIED_MESHES)
+            set(output_mesh_dir ${CMAKE_CURRENT_BINARY_DIR}/${tgt_name}/meshes)
             
             set(copied_meshes)
             foreach(mesh ${scene_meshes})
                 get_filename_component(mesh_name ${mesh} NAME)
                 set(output_file ${output_mesh_dir}/${mesh_name})
-                
-                # Only add custom command if this mesh hasn't been processed yet
-                if(NOT ${output_file} IN_LIST already_copied)
-                    add_custom_command(
-                        OUTPUT ${output_file}
-                        COMMAND ${CMAKE_COMMAND} -E make_directory ${output_mesh_dir}
-                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                                ${mesh}
-                                ${output_file}
-                        DEPENDS ${mesh}
-                        COMMENT "Copying mesh ${mesh_name}"
-                    )
-                    set_property(GLOBAL APPEND PROPERTY COPIED_MESHES ${output_file})
-                endif()
-                
+                add_custom_command(
+                    OUTPUT ${output_file}
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${output_mesh_dir}
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                            ${mesh}
+                            ${output_file}
+                    DEPENDS ${mesh}
+                    COMMENT "Copying mesh ${mesh_name} for ${tgt_name}"
+                )
                 list(APPEND copied_meshes ${output_file})
             endforeach()
             
@@ -99,4 +93,3 @@ endfunction()
 #add_scene("testing" "testing" "testing.cpp")
 
 add_scene("shinies" "shinies" "shinies.cpp")
-add_scene("dynamic_range" "dynamic_range" "dynamic_range.cpp")
