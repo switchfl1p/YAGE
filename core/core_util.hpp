@@ -36,7 +36,6 @@ namespace core_util{
     struct ModelData{
         GLuint vbo;
         GLuint ibo;
-        GLuint nbo;
         int index_count = 0;
     };
 

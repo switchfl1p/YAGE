@@ -194,7 +194,6 @@ core_util::VAOData sphere_vao;
 core_util::VAOData plane_vao;
 
 void initializeVertexArrayObjects(){
-    //very opinionated function, expects positions at attribute 0 and normals at 1
     sphere_vao = core_util::loadVAOData(sphere_data);
     plane_vao = core_util::loadVAOData(plane_data);
 }

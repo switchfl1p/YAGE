@@ -53,57 +53,54 @@ core_util::UnlitProgramData core_util::loadUnlitProgram(const std::string &vert_
 
 core_util::ModelData core_util::loadModelData(const gltf_util::Model &model){
     core_util::ModelData model_data;
-    
-    if(!model.normals.empty()) {
-        //NBO
-        glGenBuffers(1, &model_data.nbo);
-        glBindBuffer(GL_ARRAY_BUFFER, model_data.nbo);
-        glBufferData(GL_ARRAY_BUFFER, model.vertex_count * 3 * sizeof(float), model.normals.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
 
-    //VBO
+    // VBO
     glGenBuffers(1, &model_data.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, model_data.vbo);
-	glBufferData(GL_ARRAY_BUFFER, model.vertex_count * 3 * sizeof(float), model.positions.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, model_data.vbo);
+    glBufferData(GL_ARRAY_BUFFER, model.vertex_data.size() * sizeof(gltf_util::Vertex), model.vertex_data.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    //IBO
+    // IBO
     glGenBuffers(1, &model_data.ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model_data.ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.index_count * sizeof(unsigned short), model.indices.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model_data.ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.index_count * sizeof(unsigned short), model.indices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     model_data.index_count = model.index_count;
-
     return model_data;
 }
 
 core_util::VAOData core_util::loadVAOData(ModelData &model_data){
     core_util::VAOData data;
-
     glGenVertexArrays(1, &data.vao);
     glBindVertexArray(data.vao);
 
-    //positions at attribute location 0
     glBindBuffer(GL_ARRAY_BUFFER, model_data.vbo);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,0, (void*)0);
 
-    //normals at attribute location 1
-    glBindBuffer(GL_ARRAY_BUFFER, model_data.nbo);
+    //positions at attribute location 0
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(gltf_util::Vertex), (void*)offsetof(gltf_util::Vertex, position));
+
+    //colors at attribute location 1
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(gltf_util::Vertex), (void*)offsetof(gltf_util::Vertex, color));
+
+    //normals at attribute location 2
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(gltf_util::Vertex), (void*)offsetof(gltf_util::Vertex, normal));
+
+    //uvs at attribute location 3
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(gltf_util::Vertex), (void*)offsetof(gltf_util::Vertex, uv));
 
     //indices
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model_data.ibo);
-    glBindVertexArray(0);
 
+    glBindVertexArray(0);
     return data;
 }
 
 void core_util::cleanupBuffers(ModelData &model_data){
     glDeleteBuffers(1, &model_data.vbo);
     glDeleteBuffers(1, &model_data.ibo);
-    glDeleteBuffers(1, &model_data.nbo);
 }
