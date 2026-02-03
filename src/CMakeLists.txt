@@ -93,3 +93,4 @@ endfunction()
 #add_scene("testing" "testing" "testing.cpp")
 
 add_scene("shinies" "shinies" "shinies.cpp")
+add_scene("terrain" "terrain" "terrain.cpp")
