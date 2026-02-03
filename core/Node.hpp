@@ -14,12 +14,13 @@ class Transform{
 };
 
 struct Material{
+    //pbr shaders
     glm::vec4 base_color;
     float metallic = 0.0f;
     float roughness = 0.5f;
     float ao = 1.0f;
 
-    // Non-PBR shaders
+    //Non-PBR shaders
     glm::vec4 diffuse_color;
     float shininess_factor;
 };

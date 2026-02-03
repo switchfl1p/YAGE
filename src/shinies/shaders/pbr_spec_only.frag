@@ -1,3 +1,5 @@
+//PBR specular only
+
 #version 430 core
 
 uniform vec4 material_diffuse;
@@ -5,17 +7,13 @@ uniform vec4 light_intensity;
 uniform vec4 ambient_intensity;
 uniform vec3 camera_space_light_position;
 uniform float light_attenuation;
-
 in vec3 camera_space_position;
 in vec3 camera_space_normal;
-
 // PBR uniforms
 uniform vec4 base_color;
 uniform float metallic;
 uniform float roughness;
-
 out vec4 output_color;
-
 const float PI = 3.14159265359;
 
 // Normal Distribution Function (GGX/Trowbridge-Reitz)
@@ -24,10 +22,8 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
     float a2 = a * a;
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH * NdotH;
-    
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
-    
     return a2 / denom;
 }
 
@@ -35,9 +31,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
 float GeometrySchlickGGX(float NdotV, float roughness) {
     float r = (roughness + 1.0);
     float k = (r * r) / 8.0;
-    
     float denom = NdotV * (1.0 - k) + k;
-    
     return NdotV / denom;
 }
 
@@ -46,7 +40,6 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
     float NdotL = max(dot(N, L), 0.0);
     float ggx1 = GeometrySchlickGGX(NdotV, roughness);
     float ggx2 = GeometrySchlickGGX(NdotL, roughness);
-    
     return ggx1 * ggx2;
 }
 
@@ -57,7 +50,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
 
 void main() {
     vec3 N = normalize(camera_space_normal);
-    vec3 V = normalize(-camera_space_position);  // view direction (camera at origin in view space)
+    vec3 V = normalize(-camera_space_position);
     
     // Light calculations
     vec3 L = normalize(camera_space_light_position - camera_space_position);
@@ -68,7 +61,6 @@ void main() {
     vec3 radiance = light_intensity.rgb * attenuation;
     
     // Calculate reflectance at normal incidence
-    // For dielectrics, F0 is around 0.04; for metals, use the base color
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, base_color.rgb, metallic);
     
@@ -81,13 +73,10 @@ void main() {
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
     vec3 specular = numerator / denominator;
     
-    // Energy conservation
-    vec3 kS = F;  // specular contribution
-    vec3 kD = vec3(1.0) - kS;  // diffuse contribution
-    kD *= 1.0 - metallic;  // metals have no diffuse
-    
     float NdotL = max(dot(N, L), 0.0);
-    vec3 Lo = (kD * base_color.rgb / PI + specular) * radiance * NdotL;
+    
+    // SPECULAR ONLY (no diffuse term)
+    vec3 Lo = specular * radiance * NdotL;
     
     // Ambient
     vec3 ambient = ambient_intensity.rgb * base_color.rgb;
@@ -99,7 +88,7 @@ void main() {
     
     // Gamma correction
     final_color = pow(final_color, vec3(1.0/2.2));
-
+    
     float dither = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
     final_color += dither;
     

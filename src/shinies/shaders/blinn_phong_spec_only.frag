@@ -1,3 +1,5 @@
+//Blinn-Phong specular only
+
 #version 330
 
 uniform vec4 material_diffuse;
@@ -30,18 +32,15 @@ void main()
     vec4 atten_intensity = atten * light_intensity;
 
     vec3 surface_normal = normalize(camera_space_normal);
-    float cos_ang_incidence = dot(surface_normal, light_dir);
-    cos_ang_incidence = clamp(cos_ang_incidence, 0, 1);
 
     vec3 view_dir = normalize(-camera_space_position);
 
     vec3 half_angle = normalize(light_dir + view_dir);
     float blinn_term = dot(surface_normal, half_angle);
     blinn_term = clamp(blinn_term, 0, 1);
-    blinn_term = cos_ang_incidence != 0.0 ? blinn_term : 0.0;
+    blinn_term = dot(surface_normal, light_dir) >= 0.0 ? blinn_term : 0.0;
     blinn_term = pow(blinn_term, shininess_factor);
 
-    output_color = (material_diffuse * atten_intensity * cos_ang_incidence) +
-        (specular_color * atten_intensity * blinn_term) +
+    output_color = (specular_color * atten_intensity * blinn_term) +
         (material_diffuse * ambient_intensity);
 }

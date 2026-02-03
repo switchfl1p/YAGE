@@ -1,3 +1,5 @@
+//Lambertian
+
 #version 330
 
 uniform vec4 material_diffuse;

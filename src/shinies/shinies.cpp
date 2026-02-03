@@ -15,9 +15,9 @@
 #include <Node.hpp>
 #include <core_util.hpp>
 
-core_util::LitProgramData diff_only_program;
-core_util::LitProgramData spec_diff_program;
-core_util::LitProgramData spec_only_program;
+core_util::LitProgramData lambertian_program;
+core_util::LitProgramData phong_program;
+core_util::LitProgramData phong_spec_only_program;
 core_util::LitProgramData blinn_program;
 core_util::LitProgramData blinn_spec_only_program;
 core_util::LitProgramData gaussian_program;
@@ -33,7 +33,7 @@ std::vector<core_util::LitProgramData*> lit_programs;
 core_util::LitProgramData* current_program;
 enum LightingModel
 {
-    LM_DIFFUSE_AMBIENT = 0,
+    LM_LAMBERTIAN = 0,
     LM_PHONG_LIGHTING,
     LM_PHONG_SPECULAR_ONLY,
     LM_BLINN_LIGHTING,
@@ -48,21 +48,31 @@ enum LightingModel
 static int light_model = LM_PBR_LIGHTING;
 
 void initializePrograms(){
-    diff_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_1.frag");
-    spec_diff_program = core_util::loadLitProgram("shinies_0.vert", "shinies_4.frag");
-    spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_5.frag");
-    blinn_program = core_util::loadLitProgram("shinies_0.vert", "shinies_6.frag");
-    blinn_spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_7.frag");
-    gaussian_program = core_util::loadLitProgram("shinies_0.vert", "shinies_8.frag");
-    gaussian_spec_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_9.frag");
-    pbr_program = core_util::loadLitProgram("shinies_0.vert", "shinies_10.frag");
-    pbr_specular_only_program = core_util::loadLitProgram("shinies_0.vert", "shinies_11.frag");
+    //Lambertian
+    lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
+    
+    //Phong
+    phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
+    phong_spec_only_program = core_util::loadLitProgram("pass_normals.vert", "phong_spec_only.frag");
 
-    unlit_program = core_util::loadUnlitProgram("shinies_2.vert", "shinies_3.frag");
+    //Blinn-Phong
+    blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
+    blinn_spec_only_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong_spec_only.frag");
 
-    lit_programs.push_back(&diff_only_program);
-    lit_programs.push_back(&spec_diff_program);
-    lit_programs.push_back(&spec_only_program);
+    //Gaussian
+    gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
+    gaussian_spec_only_program = core_util::loadLitProgram("pass_normals.vert", "gaussian_spec_only.frag");
+
+    //PBR
+    pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
+    pbr_specular_only_program = core_util::loadLitProgram("pass_normals.vert", "pbr_spec_only.frag");
+
+    //No Light
+    unlit_program = core_util::loadUnlitProgram("simple.vert", "no_light.frag");
+
+    lit_programs.push_back(&lambertian_program);
+    lit_programs.push_back(&phong_program);
+    lit_programs.push_back(&phong_spec_only_program);
     lit_programs.push_back(&blinn_program);
     lit_programs.push_back(&blinn_spec_only_program);
     lit_programs.push_back(&gaussian_program);
@@ -103,6 +113,7 @@ void initializeNodes(){
     Material bulb_material;
     bulb_material.diffuse_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
     bulb.material = bulb_material;
+
     Transform bulb_transform;
     bulb_transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
     bulb.transform = bulb_transform;
@@ -139,7 +150,6 @@ void initializeNodes(){
 
     Transform plane_transform;
     plane_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
-    //plane_transform.scale_component = glm::vec3(50,1,50);
     plane_transform.calc_model_mat();
     plane.transform = plane_transform;
 }
@@ -246,16 +256,16 @@ void display(GLFWwindow* window){
 
     //program switching
     switch(light_model){
-        case LM_DIFFUSE_AMBIENT:
-            current_program = &diff_only_program;
+        case LM_LAMBERTIAN:
+            current_program = &lambertian_program;
             break;
         case LM_PHONG_LIGHTING:
-            current_program = &spec_diff_program;
+            current_program = &phong_program;
             sphere.material.shininess_factor = 32.0f;
             plane.material.shininess_factor = 32.0f;
             break;
         case LM_PHONG_SPECULAR_ONLY:
-            current_program = &spec_only_program;
+            current_program = &phong_spec_only_program;
             sphere.material.shininess_factor = 32.0f;
             plane.material.shininess_factor = 32.0f;
             break;
@@ -445,7 +455,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
     if(light_model_changed){
         switch(light_model){
-            case LM_DIFFUSE_AMBIENT:
+            case LM_LAMBERTIAN:
                 std::cout << "Light Model: Diffuse + Ambient only\n";
                 break;
             case LM_PHONG_LIGHTING:

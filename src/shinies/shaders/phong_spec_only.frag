@@ -1,3 +1,5 @@
+//Phong specular + ambient only
+
 #version 330
 
 uniform vec4 material_diffuse;
@@ -32,15 +34,12 @@ void main()
     vec3 surface_normal = normalize(camera_space_normal);
 
     vec3 view_dir = normalize(-camera_space_position);
+    vec3 reflect_dir = normalize(reflect(-light_dir, surface_normal));
+    float phong_term = dot(view_dir, reflect_dir);
+    phong_term = clamp(phong_term,0,1);
+    phong_term = dot(surface_normal, light_dir) > 0.0 ? phong_term: 0.0;
+    phong_term = pow(phong_term, shininess_factor);
 
-    vec3 half_angle = normalize(light_dir + view_dir);
-    float angle_normal_half = acos(dot(half_angle,surface_normal));
-    float exponent = angle_normal_half / shininess_factor;
-    exponent = -(exponent * exponent);
-    float gaussian_term = exp(exponent);
-
-    gaussian_term = dot(surface_normal, light_dir) >= 0.0 ? gaussian_term : 0.0;
-
-    output_color = (specular_color * atten_intensity * gaussian_term) +
+    output_color = (specular_color * atten_intensity * phong_term) + 
         (material_diffuse * ambient_intensity);
 }
