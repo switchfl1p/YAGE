@@ -93,4 +93,5 @@ endfunction()
 #add_scene("testing" "testing" "testing.cpp")
 
 add_scene("shinies" "shinies" "shinies.cpp")
-add_scene("terrain" "terrain" "terrain.cpp")
+add_scene("imgui_demo" "imgui_demo" "imgui_demo.cpp")
+add_scene("gui_beginnings" "gui_beginnings" "gui_beginnings.cpp")
