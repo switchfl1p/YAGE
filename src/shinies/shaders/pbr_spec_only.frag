@@ -1,6 +1,6 @@
 //PBR specular only
 
-#version 430 core
+#version 330
 
 uniform vec4 material_diffuse;
 uniform vec4 light_intensity;

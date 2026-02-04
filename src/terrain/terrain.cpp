@@ -3,6 +3,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
 #include <tiny_gltf.h>
+#include <imgui.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
 #include <iostream>
 
 #include <Shader.hpp>
@@ -210,7 +213,19 @@ void initializeCameras(GLFWwindow* window){
     cam->position = glm::vec3(0.0f, 0.0f, 2.5f);
     cam_controler->movement_speed = 3.0f;
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+}
+
+void initializeIMGUI(GLFWwindow* window){
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init("#version 330");
 }
 
 void init(GLFWwindow* window){
@@ -221,6 +236,7 @@ void init(GLFWwindow* window){
     initializeBuffers();
     initializeVertexArrayObjects();
     initializeCameras(window);
+    initializeIMGUI(window);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -236,6 +252,14 @@ float last_frame = 0.0f;
 
 // Called every frame
 void display(GLFWwindow* window){
+    glfwPollEvents();
+
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow(); // Show demo window! :)
+
     //set bg color and clear depth buffer
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -379,8 +403,10 @@ void display(GLFWwindow* window){
 
 	glUseProgram(0);
 
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 	glfwSwapBuffers(window);
-    glfwPollEvents();
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
@@ -506,6 +532,10 @@ void cleanup(){
     glDeleteVertexArrays(1, &plane_vao.vao);
 
     glDeleteBuffers(1, &matrices_UBO);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 
