@@ -203,6 +203,7 @@ void initializeVertexArrayObjects(){
 
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controler = nullptr;
+bool mouse_movement_flag;
 
 void initializeCameras(GLFWwindow* window){
     int width, height;
@@ -212,6 +213,7 @@ void initializeCameras(GLFWwindow* window){
     cam_controler = std::make_unique<CameraController>(*cam);
     cam->position = glm::vec3(0.0f, 0.0f, 2.5f);
     cam_controler->movement_speed = 3.0f;
+    mouse_movement_flag = false;
 
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
@@ -222,9 +224,10 @@ void initializeIMGUI(GLFWwindow* window){
     ImGuiIO& io = ImGui::GetIO();
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange; 
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplGlfw_InitForOpenGL(window, true);         // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init("#version 330");
 }
 
@@ -258,7 +261,10 @@ void display(GLFWwindow* window){
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow(); // Show demo window! :)
+
+    if(!mouse_movement_flag){
+        ImGui::ShowDemoWindow(); // Show demo window! :)
+    }
 
     //set bg color and clear depth buffer
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -418,6 +424,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+
     bool rotation_changed = false;
     bool light_draw_changed = false;
     bool light_model_changed = false;
@@ -471,6 +478,17 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         light_model_changed = true;
     }
 
+    if(key == GLFW_KEY_1 && action == GLFW_PRESS){
+        mouse_movement_flag = !mouse_movement_flag;
+
+        if(mouse_movement_flag){
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            cam_controler->first_mouse = true;
+        }
+    }
+
     //console logging
     if(rotation_changed){
         bulb_controller.rotate_flag ? std::cout << "Light Rotation: On\n" : std::cout << "Light Rotation: Off\n";
@@ -512,11 +530,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
-    cam_controler->mouseCameraController(window, x_pos, y_pos);
+    if(mouse_movement_flag)
+        cam_controler->mouseCameraController(window, x_pos, y_pos);
 }
 
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
-    cam_controler->mouseZoomController(window, x_offset, y_offset);
+    if(mouse_movement_flag)
+        cam_controler->mouseZoomController(window, x_offset, y_offset);
 }
 
 void cleanup(){
