@@ -20,13 +20,9 @@
 
 core_util::LitProgramData lambertian_program;
 core_util::LitProgramData phong_program;
-core_util::LitProgramData phong_spec_only_program;
 core_util::LitProgramData blinn_program;
-core_util::LitProgramData blinn_spec_only_program;
 core_util::LitProgramData gaussian_program;
-core_util::LitProgramData gaussian_spec_only_program;
 core_util::LitProgramData pbr_program;
-core_util::LitProgramData pbr_specular_only_program;
 
 core_util::UnlitProgramData unlit_program;
 
@@ -38,13 +34,9 @@ enum LightingModel
 {
     LM_LAMBERTIAN = 0,
     LM_PHONG_LIGHTING,
-    LM_PHONG_SPECULAR_ONLY,
     LM_BLINN_LIGHTING,
-    LM_BLINN_SPECULAR_ONLY,
     LM_GAUSSIAN_LIGHTING,
-    LM_GAUSSIAN_SPECULAR_ONLY,
     LM_PBR_LIGHTING,
-    LM_PBR_SPECULAR_ONLY,
 
     LM_COUNT,
 };
@@ -56,32 +48,24 @@ void initializePrograms(){
     
     //Phong
     phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
-    phong_spec_only_program = core_util::loadLitProgram("pass_normals.vert", "phong_spec_only.frag");
 
     //Blinn-Phong
     blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
-    blinn_spec_only_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong_spec_only.frag");
 
     //Gaussian
     gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
-    gaussian_spec_only_program = core_util::loadLitProgram("pass_normals.vert", "gaussian_spec_only.frag");
 
     //PBR
     pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
-    pbr_specular_only_program = core_util::loadLitProgram("pass_normals.vert", "pbr_spec_only.frag");
 
     //No Light
     unlit_program = core_util::loadUnlitProgram("simple.vert", "no_light.frag");
 
     lit_programs.push_back(&lambertian_program);
     lit_programs.push_back(&phong_program);
-    lit_programs.push_back(&phong_spec_only_program);
     lit_programs.push_back(&blinn_program);
-    lit_programs.push_back(&blinn_spec_only_program);
     lit_programs.push_back(&gaussian_program);
-    lit_programs.push_back(&gaussian_spec_only_program);
     lit_programs.push_back(&pbr_program);
-    lit_programs.push_back(&pbr_specular_only_program);
 }
 
 GLuint matrices_uniform_block_index;
@@ -216,7 +200,7 @@ void initializeCameras(GLFWwindow* window){
     cam_controler->movement_speed = 3.0f;
     camera_movement_flag = true;
 
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
 
 void initializeIMGUI(GLFWwindow* window){
@@ -241,14 +225,16 @@ void init(GLFWwindow* window){
     initializeVertexArrayObjects();
     initializeCameras(window);
     initializeIMGUI(window);
-    
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     std::cout << "Light Model: PBR\n";
 }
@@ -287,55 +273,20 @@ void display(GLFWwindow* window){
         case LM_PHONG_LIGHTING:
             current_program = &phong_program;
             sphere.material.shininess_factor = 32.0f;
-            plane.material.shininess_factor = 32.0f;
-            break;
-        case LM_PHONG_SPECULAR_ONLY:
-            current_program = &phong_spec_only_program;
-            sphere.material.shininess_factor = 32.0f;
-            plane.material.shininess_factor = 32.0f;
+            plane.material.shininess_factor = 16.0f;
             break;
         case LM_BLINN_LIGHTING:
             current_program = &blinn_program;
-            sphere.material.shininess_factor = 64.0f;
-            plane.material.shininess_factor = 64.0f;
-            break;
-        case LM_BLINN_SPECULAR_ONLY:
-            current_program = &blinn_spec_only_program;
-            sphere.material.shininess_factor = 64.0f;
+            sphere.material.shininess_factor = 128.0f;
             plane.material.shininess_factor = 64.0f;
             break;
         case LM_GAUSSIAN_LIGHTING:
             current_program = &gaussian_program;
-            sphere.material.shininess_factor = 0.2f;
-            plane.material.shininess_factor = 0.2f;
-            break;
-        case LM_GAUSSIAN_SPECULAR_ONLY:
-            current_program = &gaussian_spec_only_program;
-            sphere.material.shininess_factor = 0.2f;
-            plane.material.shininess_factor = 0.2f;
+            sphere.material.shininess_factor = 0.15f;
+            plane.material.shininess_factor = 0.4f;
             break;
         case LM_PBR_LIGHTING:
             current_program = &pbr_program;
-            //ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            //point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-            //point_light.attenuation = 0.1f;
-
-            glUseProgram(current_program->program_uint);
-            glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-            glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-            glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
-            glUseProgram(0);
-            break;
-        case LM_PBR_SPECULAR_ONLY:
-            current_program = &pbr_specular_only_program;
-            //ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            //point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-
-            glUseProgram(current_program->program_uint);
-            glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-            glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-            glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
-            glUseProgram(0);
             break;
     }
 
@@ -366,17 +317,23 @@ void display(GLFWwindow* window){
         ImGui::End();
     }
 
+    //==============
+    //LIGHT UNIFORMS
+    //==============
+    glUseProgram(current_program->program_uint);
+
+    glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
+    glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+    glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
+
     //=============
     //RENDER SPHERE 
     //=============
-    glUseProgram(current_program->program_uint);
-
     glm::mat4 sphere_mv_mat = cam->getViewMat() * sphere.transform.model_mat;
     glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
     
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_mv_mat));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
 
     glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(sphere.material.diffuse_color));
     glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
@@ -389,6 +346,27 @@ void display(GLFWwindow* window){
 
     glBindVertexArray(sphere_vao.vao);
 	glDrawElements(GL_TRIANGLES, sphere_data.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+
+    //============
+    //RENDER PLANE 
+    //============
+    glm::mat4 plane_mv_mat = cam->getViewMat() * plane.transform.model_mat;
+    
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
+
+    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
+    glUniform1f(current_program->shininess_factor_unif, plane.material.shininess_factor);
+
+    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(plane.material.base_color));
+    glUniform1f(current_program->metallic_unif, plane.material.metallic);
+    glUniform1f(current_program->roughness_unif, plane.material.roughness);
+
+    glBindVertexArray(plane_vao.vao);
+    glDrawElements(GL_TRIANGLES, plane_data.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
 
     //===========
     //RENDER BULB
@@ -404,36 +382,13 @@ void display(GLFWwindow* window){
     glm::mat4 bulb_mv_mat = cam->getViewMat() * bulb.transform.model_mat;
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_mv_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
     if(bulb_controller.draw_flag){
+        glBindVertexArray(sphere_vao.vao);
         glDrawElements(GL_TRIANGLES, sphere_data.index_count, GL_UNSIGNED_SHORT, 0);
+        glBindVertexArray(0);
     }
-
-	glBindVertexArray(0);
-
-    //============
-    //RENDER PLANE 
-    //============
-    glUseProgram(current_program->program_uint);
-
-    glm::mat4 plane_mv_mat = cam->getViewMat() * plane.transform.model_mat;
-    
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(plane.material.diffuse_color));
-    glUniform1f(current_program->shininess_factor_unif, plane.material.shininess_factor);
-
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(plane.material.base_color));
-    glUniform1f(current_program->metallic_unif, plane.material.metallic);
-    glUniform1f(current_program->roughness_unif, plane.material.roughness);
-
-    glBindVertexArray(plane_vao.vao);
-    glDrawElements(GL_TRIANGLES, plane_data.index_count, GL_UNSIGNED_SHORT, 0);
-
-    glBindVertexArray(0);
-
-	glUseProgram(0);
 
     //=================
     //RENDER DEAR IMGUI 
@@ -448,6 +403,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     cam->viewport_w = width;
     cam->viewport_h = height;
     cam->updatePerspMat();
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glViewport(0, 0, width, height);
 }
@@ -477,33 +436,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             point_light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        glUseProgram(current_program->program_uint);
-        glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-        glUseProgram(0);
         light_draw_changed = true;
     }
 
-    if(key == GLFW_KEY_Y && action == GLFW_PRESS){
+    if(key == GLFW_KEY_Q && action == GLFW_PRESS){
         light_model += 1;
         light_model %= LM_COUNT;
-        light_model_changed = true;
-    }
-
-    if(key == GLFW_KEY_Q && action == GLFW_PRESS){
-        switch(light_model){
-            case LM_PHONG_LIGHTING:
-                light_model = LM_BLINN_LIGHTING;
-                break;
-            case LM_BLINN_LIGHTING:
-                light_model = LM_GAUSSIAN_LIGHTING;
-                break;
-            case LM_GAUSSIAN_LIGHTING:
-                light_model = LM_PBR_LIGHTING;
-                break;
-            case LM_PBR_LIGHTING:
-                light_model = LM_PHONG_LIGHTING;
-                break;
-        }
         light_model_changed = true;
     }
 
@@ -533,26 +471,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             case LM_PHONG_LIGHTING:
                 std::cout << "Light Model: Phong Lighting\n";
                 break;
-            case LM_PHONG_SPECULAR_ONLY:
-                std::cout << "Light Model: Phong Specular Only\n";
-                break;
             case LM_BLINN_LIGHTING:
                 std::cout << "Light Model: Blinn-Phong Lighting\n";
-                break;
-            case LM_BLINN_SPECULAR_ONLY:
-                std::cout << "Light Model: Blinn-Phong Specular Only\n";
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 std::cout << "Light Model: Gaussian Lighting\n";
                 break;
-            case LM_GAUSSIAN_SPECULAR_ONLY:
-                std::cout << "Light Model: Gaussian Specular Only\n";
-                break;
             case LM_PBR_LIGHTING:
                 std::cout << "Light Model: PBR Lighting\n";
-                break;
-            case LM_PBR_SPECULAR_ONLY:
-                std::cout << "Light Model: PBR Specular only\n";
                 break;
         }
     }
