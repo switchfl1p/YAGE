@@ -162,9 +162,10 @@ PointLight point_light;
 LightController bulb_controller(point_light);
 
 void initializeLights(){
-    ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
-    point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+    
+    point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
     point_light.attenuation = 1.0f;
     point_light.position = glm::vec3(0.0f, 0.25f, 0.0f);
 
@@ -203,7 +204,7 @@ void initializeVertexArrayObjects(){
 
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controler = nullptr;
-bool mouse_movement_flag;
+bool camera_movement_flag;
 
 void initializeCameras(GLFWwindow* window){
     int width, height;
@@ -213,7 +214,7 @@ void initializeCameras(GLFWwindow* window){
     cam_controler = std::make_unique<CameraController>(*cam);
     cam->position = glm::vec3(0.0f, 0.0f, 2.5f);
     cam_controler->movement_speed = 3.0f;
-    mouse_movement_flag = false;
+    camera_movement_flag = true;
 
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
 }
@@ -223,12 +224,12 @@ void initializeIMGUI(GLFWwindow* window){
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
 
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange; 
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);         // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
-    ImGui_ImplOpenGL3_Init("#version 330");
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init();
 }
 
 void init(GLFWwindow* window){
@@ -247,6 +248,8 @@ void init(GLFWwindow* window){
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     std::cout << "Light Model: PBR\n";
 }
 
@@ -256,15 +259,6 @@ float last_frame = 0.0f;
 // Called every frame
 void display(GLFWwindow* window){
     glfwPollEvents();
-
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    if(!mouse_movement_flag){
-        ImGui::ShowDemoWindow(); // Show demo window! :)
-    }
 
     //set bg color and clear depth buffer
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -276,8 +270,10 @@ void display(GLFWwindow* window){
     last_frame = current_frame;
 
     //camera movement
-    cam_controler->processCameraInput(window, delta_time);
-    cam->updateCamera();
+    if(camera_movement_flag){
+        cam_controler->processCameraInput(window, delta_time);
+        cam->updateCamera();
+    }
 
     //bulb movement
     bulb_controller.halfRotatePointLight(current_frame, delta_time);
@@ -320,9 +316,9 @@ void display(GLFWwindow* window){
             break;
         case LM_PBR_LIGHTING:
             current_program = &pbr_program;
-            ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-            point_light.attenuation = 0.1f;
+            //ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+            //point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+            //point_light.attenuation = 0.1f;
 
             glUseProgram(current_program->program_uint);
             glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
@@ -332,8 +328,8 @@ void display(GLFWwindow* window){
             break;
         case LM_PBR_SPECULAR_ONLY:
             current_program = &pbr_specular_only_program;
-            ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+            //ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+            //point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
 
             glUseProgram(current_program->program_uint);
             glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
@@ -341,6 +337,33 @@ void display(GLFWwindow* window){
             glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
             glUseProgram(0);
             break;
+    }
+
+    //==========
+    //DEAR IMGUI 
+    //==========
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    if(!camera_movement_flag){
+        ImGui::Begin("Node Options");
+        ImGui::Text("Centerpiece Material");
+        ImGui::ColorEdit4("base color##sphere", glm::value_ptr(sphere.material.base_color));
+        ImGui::DragFloat("metallic##sphere", &sphere.material.metallic, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("roughness##sphere", &sphere.material.roughness, 0.01f, 0.0f, 1.0f);
+
+        ImGui::Text("Plane Material");
+        ImGui::ColorEdit4("base color##plane", glm::value_ptr(plane.material.base_color));
+        ImGui::DragFloat("metallic##plane", &plane.material.metallic, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("roughness##plane", &plane.material.roughness, 0.01f, 0.0f, 1.0f);
+
+        ImGui::Text("Light Options");
+        ImGui::ColorEdit4("ambient intensity", glm::value_ptr(ambient_light.intensity));
+
+        ImGui::ColorEdit4("light intensity", glm::value_ptr(point_light.intensity));
+        ImGui::DragFloat("light attenuation", &point_light.attenuation, 0.01f, 0.0f, 5.0f);
+        ImGui::End();
     }
 
     //=============
@@ -371,6 +394,9 @@ void display(GLFWwindow* window){
     //RENDER BULB
     //===========
     glUseProgram(unlit_program.program_uint);
+
+    bulb.material.diffuse_color = point_light.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(bulb.material.diffuse_color));
 
     bulb.transform.translation_component = point_light.position;
     bulb.transform.calc_model_mat();
@@ -409,6 +435,9 @@ void display(GLFWwindow* window){
 
 	glUseProgram(0);
 
+    //=================
+    //RENDER DEAR IMGUI 
+    //=================
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -478,10 +507,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         light_model_changed = true;
     }
 
-    if(key == GLFW_KEY_1 && action == GLFW_PRESS){
-        mouse_movement_flag = !mouse_movement_flag;
+    if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS){
+        camera_movement_flag = !camera_movement_flag;
 
-        if(mouse_movement_flag){
+        if(camera_movement_flag){
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         } else {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -530,12 +559,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
-    if(mouse_movement_flag)
+    if(camera_movement_flag)
         cam_controler->mouseCameraController(window, x_pos, y_pos);
 }
 
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
-    if(mouse_movement_flag)
+    if(camera_movement_flag)
         cam_controler->mouseZoomController(window, x_offset, y_offset);
 }
 
