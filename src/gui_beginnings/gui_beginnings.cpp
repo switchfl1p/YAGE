@@ -269,21 +269,29 @@ void display(GLFWwindow* window){
     switch(light_model){
         case LM_LAMBERTIAN:
             current_program = &lambertian_program;
+            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
             break;
         case LM_PHONG_LIGHTING:
             current_program = &phong_program;
             sphere.material.shininess_factor = 32.0f;
             plane.material.shininess_factor = 16.0f;
+            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
             break;
         case LM_BLINN_LIGHTING:
             current_program = &blinn_program;
             sphere.material.shininess_factor = 128.0f;
             plane.material.shininess_factor = 64.0f;
+            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
             break;
         case LM_GAUSSIAN_LIGHTING:
             current_program = &gaussian_program;
             sphere.material.shininess_factor = 0.15f;
             plane.material.shininess_factor = 0.4f;
+            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
+            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
             break;
         case LM_PBR_LIGHTING:
             current_program = &pbr_program;
