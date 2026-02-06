@@ -97,6 +97,9 @@ core_util::VAOData core_util::loadVAOData(ModelData &model_data){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model_data.ibo);
 
     glBindVertexArray(0);
+
+    data.index_count = model_data.index_count;
+    
     return data;
 }
 

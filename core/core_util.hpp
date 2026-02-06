@@ -45,6 +45,7 @@ namespace core_util{
 
     struct VAOData{
         GLuint vao;
+        int index_count = 0;
     };
 
     VAOData loadVAOData(ModelData& model_data);
