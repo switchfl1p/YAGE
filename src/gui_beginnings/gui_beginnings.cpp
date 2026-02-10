@@ -20,6 +20,7 @@
 #include <Node.hpp>
 #include <core_util.hpp>
 #include <renderGUI.hpp>
+#include <FrameBuffer.hpp>
 
 //========================================================
 
@@ -68,6 +69,8 @@ bool camera_movement_flag;
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
+
+std::unique_ptr<Framebuffer> viewport_fb = nullptr;
 
 //========================================================
 
@@ -222,6 +225,7 @@ void initializeIMGUI(GLFWwindow* window){
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange; 
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -238,6 +242,10 @@ void init(GLFWwindow* window){
     initializeCameras(window);
     initializeIMGUI(window);
 
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    viewport_fb = std::make_unique<Framebuffer>(width,height);
+
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -252,10 +260,6 @@ void init(GLFWwindow* window){
 // Called every frame
 void display(GLFWwindow* window){
     glfwPollEvents();
-
-    //set bg color and clear depth buffer
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //delta time calcs
     float current_frame = glfwGetTime();
@@ -313,12 +317,34 @@ void display(GLFWwindow* window){
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    renderGUI::ImGuiDemoDockspaceArgs args;
+    renderGUI::dockingDemo(&args, nullptr);
+    renderGUI::renderNodeWindow(nodes, ambient_light, point_light);
 
-    if(!camera_movement_flag){
-        renderGUI::renderNodeWindow(nodes, ambient_light, point_light);
+    ImGui::Begin("Viewport");
+    // Get the size of the content region
+    ImVec2 viewport_size = ImGui::GetContentRegionAvail();
+    
+    // Resize framebuffer if needed
+    if (viewport_size.x != viewport_fb->width || viewport_size.y != viewport_fb->height) {
+        viewport_fb->Resize((int)viewport_size.x, (int)viewport_size.y);
     }
-    renderGUI::renderLightmodeOverlay(light_model);
-    ImGui::End();
+
+    cam->viewport_w = (int)viewport_size.x;
+    cam->viewport_h = (int)viewport_size.y;
+    cam->updatePerspMat();
+
+    viewport_fb->Bind();
+
+    //==========
+    //Start Here
+    //==========
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //==============
     //LIGHT UNIFORMS
@@ -393,6 +419,16 @@ void display(GLFWwindow* window){
         glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
         glBindVertexArray(0);
     }
+
+    viewport_fb->Unbind();
+    // Display the framebuffer texture in ImGui
+    ImGui::Image(
+        (void*)(intptr_t)viewport_fb->textureID,
+        viewport_size,
+        ImVec2(0, 1),  // UV coordinates (flipped vertically)
+        ImVec2(1, 0)
+    );
+    ImGui::End();
 
     //=================
     //RENDER DEAR IMGUI 
