@@ -516,6 +516,12 @@ void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
 }
 
 void cleanup(){
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    viewport_fb.reset();
+
     for(auto* program : lit_programs){
         glDeleteProgram(program->program_uint);
     }
@@ -528,10 +534,6 @@ void cleanup(){
     glDeleteVertexArrays(1, &plane_vao.vao);
 
     glDeleteBuffers(1, &matrices_UBO);
-
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
 

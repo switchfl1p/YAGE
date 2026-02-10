@@ -36,6 +36,7 @@ void renderGUI::renderLightmodeOverlay(int light_model){
     ImGui::End();
 }
 
+//Imma keep it 100 I legit just copy pasted the relevant parts from imgui_demo.cpp
 void renderGUI::dockingDemo(ImGuiDemoDockspaceArgs* args, bool* p_open){
     ImGuiDockNodeFlags dockspace_flags = args->DockSpaceFlags;
 
