@@ -9,6 +9,7 @@ set(CORE_SOURCES
 	tinygltf_impl.cpp
 	gltf_util.cpp
 	core_util.cpp
+	renderGUI.cpp
 )
 
 set(CORE_HEADERS
@@ -21,6 +22,7 @@ set(CORE_HEADERS
 	Node.hpp
 	gltf_util.hpp
 	core_util.hpp
+	renderGUI.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

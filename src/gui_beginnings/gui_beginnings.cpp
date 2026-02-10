@@ -1,4 +1,4 @@
-//========================================================
+//=============== switchfl1p 2025-2026 ==================
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -19,6 +19,7 @@
 #include <LightController.hpp>
 #include <Node.hpp>
 #include <core_util.hpp>
+#include <renderGUI.hpp>
 
 //========================================================
 
@@ -71,19 +72,10 @@ float last_frame = 0.0f;
 //========================================================
 
 void initializePrograms(){
-    //Lambertian
     lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
-    
-    //Phong
     phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
-
-    //Blinn-Phong
     blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
-
-    //Gaussian
     gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
-
-    //PBR
     pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
 
     //No Light
@@ -323,38 +315,9 @@ void display(GLFWwindow* window){
     ImGui::NewFrame();
 
     if(!camera_movement_flag){
-        ImGui::Begin("Node Options");
-        ImGui::Text("Centerpiece Material");
-        ImGui::ColorEdit4("base color##sphere", glm::value_ptr(nodes["sphere"].material.base_color));
-        ImGui::DragFloat("metallic##sphere", &nodes["sphere"].material.metallic, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("roughness##sphere", &nodes["sphere"].material.roughness, 0.01f, 0.0f, 1.0f);
-
-        ImGui::Text("Plane Material");
-        ImGui::ColorEdit4("base color##plane", glm::value_ptr(nodes["plane"].material.base_color));
-        ImGui::DragFloat("metallic##plane", &nodes["plane"].material.metallic, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("roughness##plane", &nodes["plane"].material.roughness, 0.01f, 0.0f, 1.0f);
-
-        ImGui::Text("Light Options");
-        ImGui::ColorEdit4("ambient intensity", glm::value_ptr(ambient_light.intensity));
-
-        ImGui::ColorEdit4("light intensity", glm::value_ptr(point_light.intensity));
-        ImGui::DragFloat("light attenuation", &point_light.attenuation, 0.01f, 0.0f, 5.0f);
-        ImGui::End();
+        renderGUI::renderNodeWindow(nodes, ambient_light, point_light);
     }
-
-    // Simple lighting model overlay
-    ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Lighting Model", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-    const char* lighting_names[] = {
-        "Lambertian",
-        "Phong",
-        "Blinn-Phong",
-        "Gaussian",
-        "PBR"
-    };
-
-    ImGui::Text("Current Model: %s", lighting_names[light_model]);
+    renderGUI::renderLightmodeOverlay(light_model);
     ImGui::End();
 
     //==============
@@ -398,6 +361,7 @@ void display(GLFWwindow* window){
     glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.diffuse_color));
     glUniform1f(current_program->shininess_factor_unif, nodes["plane"].material.shininess_factor);
 
+    //pbr
     glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["plane"].material.base_color));
     glUniform1f(current_program->metallic_unif, nodes["plane"].material.metallic);
     glUniform1f(current_program->roughness_unif, nodes["plane"].material.roughness);
