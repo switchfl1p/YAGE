@@ -10,7 +10,6 @@ set(CORE_SOURCES
 	gltf_util.cpp
 	core_util.cpp
 	renderGUI.cpp
-	FrameBuffer.cpp
 )
 
 set(CORE_HEADERS
@@ -24,7 +23,6 @@ set(CORE_HEADERS
 	gltf_util.hpp
 	core_util.hpp
 	renderGUI.hpp
-	FrameBuffer.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
