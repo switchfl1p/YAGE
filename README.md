@@ -15,7 +15,7 @@ cmake ..
 cd ..
 ln -s build/compile_commands.json .
 ```
-
+## Architecture Diagram, Feb 11 2026
 ![Architecture Diagram, Feb 11 2026](diagram/engine.png)
 
 
