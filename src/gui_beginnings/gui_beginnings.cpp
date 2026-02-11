@@ -20,7 +20,6 @@
 #include <Node.hpp>
 #include <core_util.hpp>
 #include <renderGUI.hpp>
-#include <FrameBuffer.hpp>
 
 //========================================================
 
@@ -70,7 +69,7 @@ bool camera_movement_flag;
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
-std::unique_ptr<Framebuffer> viewport_fb = nullptr;
+std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
 
 //========================================================
 
@@ -244,7 +243,7 @@ void init(GLFWwindow* window){
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
-    viewport_fb = std::make_unique<Framebuffer>(width,height);
+    viewport_fb = std::make_unique<core_util::Framebuffer>(width,height);
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
@@ -324,11 +323,6 @@ void display(GLFWwindow* window){
     ImGui::Begin("Viewport");
     // Get the size of the content region
     ImVec2 viewport_size = ImGui::GetContentRegionAvail();
-    
-    // Resize framebuffer if needed
-    if (viewport_size.x != viewport_fb->width || viewport_size.y != viewport_fb->height) {
-        viewport_fb->Resize((int)viewport_size.x, (int)viewport_size.y);
-    }
 
     cam->viewport_w = (int)viewport_size.x;
     cam->viewport_h = (int)viewport_size.y;
