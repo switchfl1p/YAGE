@@ -1,23 +1,63 @@
 #include <renderGUI.hpp>
 #include "glm/gtc/type_ptr.hpp"
 
-void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, AmbientLight ambient_light, PointLight point_light){
+void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
     ImGui::Begin("Node Options");
-    ImGui::Text("Centerpiece Material");
-    ImGui::ColorEdit4("base color##sphere", glm::value_ptr(nodes["sphere"].material.base_color));
-    ImGui::DragFloat("metallic##sphere", &nodes["sphere"].material.metallic, 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat("roughness##sphere", &nodes["sphere"].material.roughness, 0.01f, 0.0f, 1.0f);
+    
+    for (auto& [name, node] : nodes) {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode(name.c_str())) {
+            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+            if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                std::string base_color_label = "base color##" + name;
+                std::string metallic_label = "metallic##" + name;
+                std::string roughness_label = "roughness##" + name;
+                
+                ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.base_color));
+                ImGui::DragFloat(metallic_label.c_str(), &node.material.metallic, 0.01f, 0.0f, 1.0f);
+                ImGui::DragFloat(roughness_label.c_str(), &node.material.roughness, 0.01f, 0.0f, 1.0f);
+                
+                ImGui::TreePop();
+            }
 
-    ImGui::Text("Plane Material");
-    ImGui::ColorEdit4("base color##plane", glm::value_ptr(nodes["plane"].material.base_color));
-    ImGui::DragFloat("metallic##plane", &nodes["plane"].material.metallic, 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat("roughness##plane", &nodes["plane"].material.roughness, 0.01f, 0.0f, 1.0f);
+            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+            if(ImGui::TreeNode(("Transform Properties##" + name).c_str())){
+                std::string translation_label = "translation##" + name;
+                std::string rotation_label = "rotation##" + name;
+                std::string scale_label = "scale##" + name;
+                
+                bool transform_changed = false;
+                transform_changed |= ImGui::DragFloat3(translation_label.c_str(), glm::value_ptr(node.transform.translation_component), 0.01f);
+                transform_changed |= ImGui::DragFloat3(rotation_label.c_str(), glm::value_ptr(node.transform.rotation_component), 0.01f, -glm::two_pi<float>(), glm::two_pi<float>());
+                transform_changed |= ImGui::DragFloat3(scale_label.c_str(), glm::value_ptr(node.transform.scale_component), 0.01f, 0.01f, 10.0f);
+                
+                if(transform_changed){
+                    node.transform.calc_model_mat();
+                }
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();  // Closes the node name tree (this was missing!)
+        }
+    }
+    ImGui::End();
+}
 
-    ImGui::Text("Light Options");
-    ImGui::ColorEdit4("ambient intensity", glm::value_ptr(ambient_light.intensity));
+void renderGUI::renderLightWindow(AmbientLight &ambient_light, PointLight &point_light){
+    ImGui::Begin("Light Options");
 
-    ImGui::ColorEdit4("light intensity", glm::value_ptr(point_light.intensity));
-    ImGui::DragFloat("light attenuation", &point_light.attenuation, 0.01f, 0.0f, 5.0f);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Ambient Light")) {
+        ImGui::ColorEdit4("intensity##ambient", glm::value_ptr(ambient_light.intensity));
+        ImGui::TreePop();
+    }
+    
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Point Light")) {
+        ImGui::ColorEdit4("intensity##point", glm::value_ptr(point_light.intensity));
+        ImGui::DragFloat("attenuation##point", &point_light.attenuation, 0.01f, 0.0f, 5.0f);
+        ImGui::TreePop();
+    }
+
     ImGui::End();
 }
 

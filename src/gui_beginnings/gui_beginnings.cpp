@@ -4,14 +4,13 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
+#include <memory>
 #include <tiny_gltf.h>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 #include <iostream>
 
-#include <Shader.hpp>
-#include <Program.hpp>
 #include <Camera.hpp>
 #include <CameraController.hpp>
 #include <gltf_util.hpp>
@@ -318,7 +317,9 @@ void display(GLFWwindow* window){
     ImGui::NewFrame();
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
-    renderGUI::renderNodeWindow(nodes, ambient_light, point_light);
+    renderGUI::renderNodeWindow(nodes);
+    renderGUI::renderLightWindow(ambient_light, point_light);
+    renderGUI::renderLightmodeOverlay(light_model);
 
     ImGui::Begin("Viewport");
     // Get the size of the content region
