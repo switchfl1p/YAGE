@@ -16,18 +16,7 @@ cd ..
 ln -s build/compile_commands.json .
 ```
 
-There is a helpful python script for generating the boilerplate required for a new scene:
-
-```bash
-# Basic usage, executable has same name as source file
-./scene_gen.py scene_name
-
-# With custom executable name
-./scene_gen.py scene_name -e executable_name
-
-# With custom templates folder
-./scene_gen.py scene_name -t template_folder
-```
+![Architecture Diagram, Feb 11 2026](diagram/engine.png)
 
 
 
