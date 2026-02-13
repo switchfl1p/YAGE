@@ -3,12 +3,11 @@
 #pragma once
 #include <glm/glm.hpp>
 
-struct AmbientLight{
+struct Light{
     glm::vec4 intensity = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 };
 
-struct PointLight{
+struct PointLight : Light{
     float attenuation = 1.0f;
-    glm::vec4 intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     glm::vec3 position;
 };

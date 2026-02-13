@@ -6,7 +6,7 @@
 
 namespace renderGUI{
     void renderNodeWindow(std::unordered_map<std::string, Node> &nodes);
-    void renderLightWindow(AmbientLight &ambient_light, PointLight &point_light);
+    void renderLightWindow(Light &ambient_light, std::vector<PointLight> &point_lights);
     void renderLightmodeOverlay(int light_model);
 
     struct ImGuiDemoDockspaceArgs

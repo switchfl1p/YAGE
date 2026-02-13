@@ -42,7 +42,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
     ImGui::End();
 }
 
-void renderGUI::renderLightWindow(AmbientLight &ambient_light, PointLight &point_light){
+void renderGUI::renderLightWindow(Light &ambient_light, std::vector<PointLight> &point_lights){
     ImGui::Begin("Light Options");
 
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -50,14 +50,19 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, PointLight &point
         ImGui::ColorEdit4("intensity##ambient", glm::value_ptr(ambient_light.intensity));
         ImGui::TreePop();
     }
-    
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Point Light")) {
-        ImGui::ColorEdit4("intensity##point", glm::value_ptr(point_light.intensity));
-        ImGui::DragFloat("attenuation##point", &point_light.attenuation, 0.01f, 0.0f, 5.0f);
-        ImGui::TreePop();
-    }
 
+    for(size_t i = 0; i < point_lights.size(); i++){
+
+        ImGui::PushID(i);
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("Point Light")) {
+            ImGui::ColorEdit4("intensity", glm::value_ptr(point_lights[i].intensity));
+            ImGui::DragFloat("attenuation", &point_lights[i].attenuation, 0.01f, 0.0f, 5.0f);
+            ImGui::DragFloat3("position", glm::value_ptr(point_lights[i].position));
+            ImGui::TreePop();
+        }
+        ImGui::PopID();  // Always pop after pushing!
+    }
     ImGui::End();
 }
 

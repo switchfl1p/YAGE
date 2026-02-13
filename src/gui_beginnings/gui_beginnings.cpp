@@ -51,9 +51,9 @@ const int matrices_binding_index = 0;
 
 std::unordered_map<std::string, Node> nodes;
 
-AmbientLight ambient_light;
-PointLight point_light;
-LightController bulb_controller(point_light);
+Light ambient_light;
+std::vector<PointLight> point_lights;
+std::unique_ptr<LightController> bulb_controller;
 
 core_util::ModelData sphere_data;
 core_util::ModelData plane_data;
@@ -172,18 +172,22 @@ void initializeNodes(){
 void initializeLights(){
     ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
     
-    point_light.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
-    point_light.attenuation = 1.0f;
-    point_light.position = glm::vec3(0.0f, 0.25f, 0.0f);
+    PointLight pl;
+    pl.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+    pl.attenuation = 1.0f;
+    pl.position = glm::vec3(0.0f, 0.25f, 0.0f);
 
-    bulb_controller.radius = 1.0f;
+    point_lights.push_back(pl);
+
+    bulb_controller = std::make_unique<LightController>(point_lights[0]);
+    bulb_controller->radius = 1.0f;
 
     //send light values to shaders
     for(auto* program : lit_programs){
         glUseProgram(program->program_uint);
         glUniform4fv(program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-        glUniform4fv(program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-        glUniform1f(program->light_attenuation_unif, point_light.attenuation);
+        glUniform4fv(program->light_intensity_unif, 1, glm::value_ptr(point_lights[0].intensity));
+        glUniform1f(program->light_attenuation_unif, point_lights[0].attenuation);
         glUseProgram(0);
     }
 }
@@ -271,8 +275,10 @@ void display(GLFWwindow* window){
     }
 
     //bulb movement
-    bulb_controller.halfRotatePointLight(current_frame, delta_time);
-    bulb_controller.processPointLightInput(window, delta_time);
+    bulb_controller->halfRotatePointLight(current_frame, delta_time);
+    bulb_controller->processPointLightInput(window, delta_time);
+
+    PointLight& point_light = point_lights[0];
 
     //program switching
     switch(light_model){
@@ -304,7 +310,7 @@ void display(GLFWwindow* window){
             break;
         case LM_PBR_LIGHTING:
             ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            point_light.intensity = point_light.intensity = glm::vec4(1.0f, 1.0, 1.0f, 1.0f);
+            point_light.intensity = glm::vec4(1.0f, 1.0, 1.0f, 1.0f);
             current_program = &pbr_program;
             break;
     }
@@ -318,7 +324,7 @@ void display(GLFWwindow* window){
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
-    renderGUI::renderLightWindow(ambient_light, point_light);
+    renderGUI::renderLightWindow(ambient_light, point_lights);
     renderGUI::renderLightmodeOverlay(light_model);
 
     ImGui::Begin("Viewport");
@@ -409,7 +415,7 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_mv_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
-    if(bulb_controller.draw_flag){
+    if(bulb_controller->draw_flag){
         glBindVertexArray(sphere_vao.vao);
         glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
         glBindVertexArray(0);
@@ -457,22 +463,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 
     if(key == GLFW_KEY_R && action == GLFW_PRESS){
-        bulb_controller.rotate_flag = !bulb_controller.rotate_flag;
+        bulb_controller->rotate_flag = !bulb_controller->rotate_flag;
         rotation_changed = true;
     }
 
-    if(key == GLFW_KEY_E && action == GLFW_PRESS){
+/*     if(key == GLFW_KEY_E && action == GLFW_PRESS){
         bulb_controller.draw_flag = !bulb_controller.draw_flag;
 
         if(bulb_controller.draw_flag){
-            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            point_light->intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         }
         else{
-            point_light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            point_light->intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         light_draw_changed = true;
-    }
+    } */
 
     if(key == GLFW_KEY_Q && action == GLFW_PRESS){
         light_model += 1;
@@ -493,10 +499,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     //console logging
     if(rotation_changed){
-        bulb_controller.rotate_flag ? std::cout << "Light Rotation: On\n" : std::cout << "Light Rotation: Off\n";
+        bulb_controller->rotate_flag ? std::cout << "Light Rotation: On\n" : std::cout << "Light Rotation: Off\n";
     }
     if(light_draw_changed){
-        bulb_controller.draw_flag ? std::cout << "Point Light: On\n" : std::cout << "Point Light: Off\n";
+        bulb_controller->draw_flag ? std::cout << "Point Light: On\n" : std::cout << "Point Light: Off\n";
     }
 }
 
