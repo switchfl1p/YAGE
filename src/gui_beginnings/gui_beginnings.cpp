@@ -280,39 +280,42 @@ void display(GLFWwindow* window){
 
     PointLight& point_light = point_lights[0];
 
-    //program switching
-    switch(light_model){
-        case LM_LAMBERTIAN:
-            current_program = &lambertian_program;
-            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            break;
-        case LM_PHONG_LIGHTING:
-            current_program = &phong_program;
-            nodes["sphere"].material.shininess_factor = 32.0f;
-            nodes["plane"].material.shininess_factor = 16.0f;
-            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
-            break;
-        case LM_BLINN_LIGHTING:
-            current_program = &blinn_program;
-            nodes["sphere"].material.shininess_factor = 128.0f;
-            nodes["plane"].material.shininess_factor = 64.0f;
-            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
-            break;
-        case LM_GAUSSIAN_LIGHTING:
-            current_program = &gaussian_program;
-            nodes["sphere"].material.shininess_factor = 0.15f;
-            nodes["plane"].material.shininess_factor = 0.4f;
-            ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
-            point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
-            break;
-        case LM_PBR_LIGHTING:
-            ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-            point_light.intensity = glm::vec4(1.0f, 1.0, 1.0f, 1.0f);
-            current_program = &pbr_program;
-            break;
+    static int previous_light_model = -1;
+    if(light_model != previous_light_model){
+        switch(light_model){
+            case LM_LAMBERTIAN:
+                current_program = &lambertian_program;
+                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+                break;
+            case LM_PHONG_LIGHTING:
+                current_program = &phong_program;
+                nodes["sphere"].material.shininess_factor = 32.0f;
+                nodes["plane"].material.shininess_factor = 16.0f;
+                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
+                break;
+            case LM_BLINN_LIGHTING:
+                current_program = &blinn_program;
+                nodes["sphere"].material.shininess_factor = 128.0f;
+                nodes["plane"].material.shininess_factor = 64.0f;
+                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
+                break;
+            case LM_GAUSSIAN_LIGHTING:
+                current_program = &gaussian_program;
+                nodes["sphere"].material.shininess_factor = 0.15f;
+                nodes["plane"].material.shininess_factor = 0.4f;
+                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
+                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
+                break;
+            case LM_PBR_LIGHTING:
+                ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+                point_light.intensity = glm::vec4(1.0f, 1.0, 1.0f, 1.0f);
+                current_program = &pbr_program;
+                break;
+        }
+        previous_light_model = light_model;
     }
 
     //==========
@@ -467,18 +470,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         rotation_changed = true;
     }
 
-/*     if(key == GLFW_KEY_E && action == GLFW_PRESS){
-        bulb_controller.draw_flag = !bulb_controller.draw_flag;
+    if(key == GLFW_KEY_E && action == GLFW_PRESS){
+        bulb_controller->draw_flag = !bulb_controller->draw_flag;
 
-        if(bulb_controller.draw_flag){
-            point_light->intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        if(bulb_controller->draw_flag){
+            point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         }
         else{
-            point_light->intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            point_lights[0].intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         light_draw_changed = true;
-    } */
+    }
 
     if(key == GLFW_KEY_Q && action == GLFW_PRESS){
         light_model += 1;
@@ -521,11 +524,12 @@ void cleanup(){
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    viewport_fb.reset();
-
     for(auto* program : lit_programs){
         glDeleteProgram(program->program_uint);
     }
+
+    viewport_fb.reset(); //needs to be here or segfault on exit
+
     glDeleteProgram(unlit_program.program_uint);
 
     core_util::cleanupBuffers(sphere_data);
