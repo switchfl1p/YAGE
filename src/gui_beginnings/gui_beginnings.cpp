@@ -113,7 +113,8 @@ void initializeNodes(){
     {
         Node bulb;
         Material bulb_material;
-        bulb_material.diffuse_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
+        bulb_material.type = Material::EMISSIVE;
+        bulb_material.phong_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
         bulb.material = bulb_material;
 
         Transform bulb_transform;
@@ -121,20 +122,17 @@ void initializeNodes(){
         bulb.transform = bulb_transform;
 
         nodes["bulb"] = bulb;
-
-        glUseProgram(unlit_program.program_uint);
-        glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(bulb.material.diffuse_color));
-        glUseProgram(0);
     }
 
     //Centerpiece
     {
         Node sphere;
         Material sphere_material;
-        sphere_material.diffuse_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
-        sphere_material.shininess_factor = 64.0f;
+        sphere_material.phong_color = glm::vec4(0.2, 0.2, 1.0, 1.0); //blue
+        sphere_material.shininess = 64.0f;
+
         //pbr
-        sphere_material.base_color = glm::vec4(0.0, 0.0, 1.5, 1.0);
+        sphere_material.pbr_color = glm::vec4(0.0, 0.0, 1.5, 1.0);
         sphere_material.metallic = 0.0f;   // plastic/ceramic
         sphere_material.roughness = 0.30f;  // somewhat shiny
         sphere.material = sphere_material;
@@ -151,11 +149,11 @@ void initializeNodes(){
     {
         Node plane;
         Material plane_material;
-        plane_material.diffuse_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
-        plane_material.shininess_factor = 64.0f;
+        plane_material.phong_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+        plane_material.shininess = 64.0f;
 
         //pbr
-        plane_material.base_color = glm::vec4(0.8, 0.8, 0.8, 1.0);
+        plane_material.pbr_color = glm::vec4(0.8, 0.8, 0.8, 1.0);
         plane_material.metallic = 0.0f;
         plane_material.roughness = 0.7f;  // matte
         plane.material = plane_material;
@@ -181,15 +179,6 @@ void initializeLights(){
 
     bulb_controller = std::make_unique<LightController>(point_lights[0]);
     bulb_controller->radius = 1.0f;
-
-    //send light values to shaders
-    for(auto* program : lit_programs){
-        glUseProgram(program->program_uint);
-        glUniform4fv(program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-        glUniform4fv(program->light_intensity_unif, 1, glm::value_ptr(point_lights[0].intensity));
-        glUniform1f(program->light_attenuation_unif, point_lights[0].attenuation);
-        glUseProgram(0);
-    }
 }
 
 void initializeBuffers(){
@@ -282,39 +271,52 @@ void display(GLFWwindow* window){
 
     static int previous_light_model = -1;
     if(light_model != previous_light_model){
+
         switch(light_model){
             case LM_LAMBERTIAN:
                 current_program = &lambertian_program;
+                nodes["sphere"].material.type = Material::LAMBERTIAN;
+                nodes["plane"].material.type= Material::LAMBERTIAN;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &phong_program;
-                nodes["sphere"].material.shininess_factor = 32.0f;
-                nodes["plane"].material.shininess_factor = 16.0f;
+                nodes["sphere"].material.type = Material::PHONG;
+                nodes["plane"].material.type = Material::PHONG;
+                nodes["sphere"].material.shininess = 32.0f;
+                nodes["plane"].material.shininess = 16.0f;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &blinn_program;
-                nodes["sphere"].material.shininess_factor = 128.0f;
-                nodes["plane"].material.shininess_factor = 64.0f;
+                nodes["sphere"].material.type = Material::PHONG;
+                nodes["plane"].material.type = Material::PHONG;
+                nodes["sphere"].material.shininess = 128.0f;
+                nodes["plane"].material.shininess = 64.0f;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &gaussian_program;
-                nodes["sphere"].material.shininess_factor = 0.15f;
-                nodes["plane"].material.shininess_factor = 0.4f;
+                nodes["sphere"].material.type = Material::PHONG;
+                nodes["plane"].material.type = Material::PHONG;
+                nodes["sphere"].material.shininess = 0.15f;
+                nodes["plane"].material.shininess = 0.4f;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
                 point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
                 break;
             case LM_PBR_LIGHTING:
+                current_program = &pbr_program;
+                nodes["sphere"].material.type = Material::PBR;
+                nodes["plane"].material.type = Material::PBR;
                 ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 point_light.intensity = glm::vec4(1.0f, 1.0, 1.0f, 1.0f);
                 current_program = &pbr_program;
                 break;
         }
+        
         previous_light_model = light_model;
     }
 
@@ -368,12 +370,12 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_mv_mat));
 
-    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.diffuse_color));
+    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.phong_color));
     glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
-    glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.shininess_factor);
+    glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.shininess);
 
     //pbr
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["sphere"].material.base_color));
+    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["sphere"].material.pbr_color));
     glUniform1f(current_program->metallic_unif, nodes["sphere"].material.metallic);
     glUniform1f(current_program->roughness_unif, nodes["sphere"].material.roughness);
 
@@ -388,11 +390,11 @@ void display(GLFWwindow* window){
     
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_mv_mat));
 
-    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.diffuse_color));
-    glUniform1f(current_program->shininess_factor_unif, nodes["plane"].material.shininess_factor);
+    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.phong_color));
+    glUniform1f(current_program->shininess_factor_unif, nodes["plane"].material.shininess);
 
     //pbr
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["plane"].material.base_color));
+    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["plane"].material.pbr_color));
     glUniform1f(current_program->metallic_unif, nodes["plane"].material.metallic);
     glUniform1f(current_program->roughness_unif, nodes["plane"].material.roughness);
 
@@ -407,8 +409,8 @@ void display(GLFWwindow* window){
     //===========
     glUseProgram(unlit_program.program_uint);
 
-    nodes["bulb"].material.diffuse_color = point_light.intensity;
-    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb"].material.diffuse_color));
+    nodes["bulb"].material.phong_color = point_light.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb"].material.phong_color));
 
     nodes["bulb"].transform.translation_component = point_light.position;
     nodes["bulb"].transform.calc_model_mat();

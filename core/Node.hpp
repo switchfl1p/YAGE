@@ -14,15 +14,14 @@ class Transform{
 };
 
 struct Material{
-    //pbr shaders
-    glm::vec4 base_color;
+    enum Type {PBR, EMISSIVE, PHONG, LAMBERTIAN} type = PBR;
+
+    glm::vec4 phong_color;
+    float shininess = 0.0f;
+
+    glm::vec4 pbr_color;
     float metallic = 0.0f;
     float roughness = 0.5f;
-    float ao = 1.0f;
-
-    //Non-PBR shaders
-    glm::vec4 diffuse_color;
-    float shininess_factor;
 };
 
 struct Node{

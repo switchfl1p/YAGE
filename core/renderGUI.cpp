@@ -5,22 +5,47 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
     ImGui::Begin("Node Options");
     
     for (auto& [name, node] : nodes) {
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode(name.c_str())) {
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
-                std::string base_color_label = "base color##" + name;
-                std::string metallic_label = "metallic##" + name;
-                std::string roughness_label = "roughness##" + name;
-                
-                ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.base_color));
-                ImGui::DragFloat(metallic_label.c_str(), &node.material.metallic, 0.01f, 0.0f, 1.0f);
-                ImGui::DragFloat(roughness_label.c_str(), &node.material.roughness, 0.01f, 0.0f, 1.0f);
-                
-                ImGui::TreePop();
+            
+            switch (node.material.type){
+                case Material::PBR:
+                    if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                        std::string base_color_label = "color##" + name;
+                        std::string metallic_label = "metallic##" + name;
+                        std::string roughness_label = "roughness##" + name;
+                        
+                        ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.pbr_color));
+                        ImGui::DragFloat(metallic_label.c_str(), &node.material.metallic, 0.01f, 0.0f, 1.0f);
+                        ImGui::DragFloat(roughness_label.c_str(), &node.material.roughness, 0.01f, 0.0f, 1.0f);
+                        
+                        ImGui::TreePop();
+                    }
+                    break;
+                case Material::LAMBERTIAN:
+                    if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                        std::string base_color_label = "color##" + name;
+                        
+                        ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.phong_color));
+                        
+                        ImGui::TreePop();
+                    }
+                    break;
+                case Material::PHONG:
+                    if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                        std::string base_color_label = "color##" + name;
+                        std::string shininess_label = "shininess##" + name;
+                        
+                        ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.phong_color));
+                        ImGui::DragFloat(shininess_label.c_str(), &node.material.shininess, 1.0f, 0.0f, 200.0f);
+                        
+                        ImGui::TreePop();
+                    }
+                    break;
+                case Material::EMISSIVE:
+                    break;
             }
 
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
             if(ImGui::TreeNode(("Transform Properties##" + name).c_str())){
                 std::string translation_label = "translation##" + name;
                 std::string rotation_label = "rotation##" + name;
@@ -36,7 +61,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
                 }
                 ImGui::TreePop();
             }
-            ImGui::TreePop();  // Closes the node name tree (this was missing!)
+            ImGui::TreePop();
         }
     }
     ImGui::End();
@@ -45,23 +70,22 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
 void renderGUI::renderLightWindow(Light &ambient_light, std::vector<PointLight> &point_lights){
     ImGui::Begin("Light Options");
 
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Ambient Light")) {
         ImGui::ColorEdit4("intensity##ambient", glm::value_ptr(ambient_light.intensity));
         ImGui::TreePop();
     }
 
     for(size_t i = 0; i < point_lights.size(); i++){
-
         ImGui::PushID(i);
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("Point Light")) {
             ImGui::ColorEdit4("intensity", glm::value_ptr(point_lights[i].intensity));
             ImGui::DragFloat("attenuation", &point_lights[i].attenuation, 0.01f, 0.0f, 5.0f);
             ImGui::DragFloat3("position", glm::value_ptr(point_lights[i].position));
             ImGui::TreePop();
         }
-        ImGui::PopID();  // Always pop after pushing!
+        ImGui::PopID();
     }
     ImGui::End();
 }
