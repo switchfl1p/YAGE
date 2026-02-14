@@ -316,7 +316,7 @@ void display(GLFWwindow* window){
                 current_program = &pbr_program;
                 break;
         }
-        
+
         previous_light_model = light_model;
     }
 
@@ -326,6 +326,7 @@ void display(GLFWwindow* window){
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
