@@ -7,7 +7,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
     for (auto& [name, node] : nodes) {
         //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode(name.c_str())) {
-            
+
             switch (node.material.type){
                 case Material::PBR:
                     if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
@@ -90,8 +90,8 @@ void renderGUI::renderLightWindow(Light &ambient_light, std::vector<PointLight> 
     ImGui::End();
 }
 
-void renderGUI::renderLightmodeOverlay(int light_model){
-    ImGui::Begin("Lighting Model");
+void renderGUI::renderStatusOverlay(int light_model, bool light_status, bool rotation_status, bool camera_status){
+    ImGui::Begin("Status");
 
     const char* lighting_names[] = {
         "Lambertian",
@@ -101,7 +101,27 @@ void renderGUI::renderLightmodeOverlay(int light_model){
         "PBR"
     };
 
-    ImGui::Text("Current Model: %s", lighting_names[light_model]);
+    ImGui::Text("Lighting Model: %s", lighting_names[light_model]);
+    // Light status with color
+    if (light_status) {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Light: On");
+    } else {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Light: Off");
+    }
+
+    // Light rotation with color
+    if (rotation_status) {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Light Rotation: On");
+    } else {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Light Rotation: Off");
+    }
+
+    // Camera movement with color
+    if (camera_status) {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Camera Movement: On");
+    } else {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Camera Movement: Off");
+    }
     ImGui::End();
 }
 
