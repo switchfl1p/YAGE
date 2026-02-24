@@ -1,16 +1,18 @@
 /* switchfl1p 2025-2026 */
 #pragma once
 #include <vector>
+#include <glm/glm.hpp>
 
-// Perlin noise - smooth, natural looking
-// Simplex noise - faster than Perlin, less directional artifacts
-// Fractional Brownian Motion (fBM) - layered noise for detail
-
-struct TerrainData{
-    std::vector<float> heights;
-    int width;
-    int depth;
-    float scale;
+class TerrainData{
+    public:
+        TerrainData(int size_x, int size_z, float s, int seed, float amplitude);
+        std::vector<std::vector<float>> height_map;
+        std::vector<glm::vec3> vertices;
+    private:
+        int width;
+        int depth;
+        float scale;
+        int seed;
+        float amplitude;
+        void generateVertices();
 };
-
-TerrainData generateTerrain(int width, int depth, float amplitute, float frequency);
