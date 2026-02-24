@@ -87,16 +87,13 @@ float Perlin::fade(float t){
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-//not very cache friendly
-std::vector<std::vector<float>> Perlin::generateHeightMap(int size_x, int size_z, float scale){
-    std::vector<std::vector<float>> height_map;
+std::vector<float> Perlin::generateHeightMap(int size_x, int size_z, float scale){
+    std::vector<float> height_map(size_z * size_x);
 
     for(int z = 0; z < size_z; z++){
-        std::vector<float> temp_vec;
         for(int x = 0; x < size_x; x++){
-            temp_vec.push_back(perlin2D(x / scale, z / scale));
+            height_map[z * size_x + x] = perlin2D(x / scale, z / scale);
         }
-        height_map.push_back(temp_vec);
     }
 
     return height_map;

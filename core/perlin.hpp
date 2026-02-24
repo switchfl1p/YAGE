@@ -5,7 +5,7 @@ class Perlin{
     public:
         Perlin(int seed);
         void reseed(int seed);
-        std::vector<std::vector<float>> generateHeightMap(int size_x, int size_z, float scale);
+        std::vector<float> generateHeightMap(int size_x, int size_z, float scale);
     
     private:
         std::array<int, 512> perm_table;
