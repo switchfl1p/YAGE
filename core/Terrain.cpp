@@ -1,3 +1,5 @@
+/* switchfl1p 2025-2026 */
+
 #include <Terrain.hpp>
 #include <perlin.hpp>
 
@@ -24,6 +26,7 @@ void TerrainData::generateVertices(){
 }
 
 void TerrainData::generateIndices(){
+    //iterating through the cells, aka the spaces between vertices (length - 1)
     for(int z = 0; z < depth - 1; z++){
         for(int x = 0; x < width - 1; x++){
             int top_left = z * width + x; //[0][0]
@@ -44,23 +47,33 @@ void TerrainData::generateIndices(){
     }
 }
 
+//using the triangle-averaging method
 void TerrainData::generateNormals(){
-    for(int z = 0; z < depth; z++){
-        for(int x = 0; x < width; x++){
-            //get the neighbouring vertices
-            glm::vec3 left = vertices[z * width + x - 1];
-            glm::vec3 right = vertices[z * width + x + 1];
-            glm::vec3 top = vertices[(z - 1) * width + x];
-            glm::vec3 bot = vertices[(z + 1) * width + x];
+    //each 3 indices in the index array defines a triangle
+    //move through the index array with a stride of 3
 
-            //construct two vectors
-            glm::vec3 lr_vec = right - left;
-            glm::vec3 tb_vec = bot - top;
+    normals.resize(vertices.size());
 
-            //cross product gives the normal
-            glm::vec3 normal = glm::cross(lr_vec, tb_vec);
+    for(size_t i = 0; i < indices.size(); i += 3){
+        //grab the 3 triangle vertices from the index array
+        int tri_v0 = indices[i];
+        int tri_v1 = indices[i+1];
+        int tri_v2 = indices[i+2];
 
-            normals.push_back(normal);
-        }
+        //build 2 edge vectors
+        glm::vec3 edge_vec_1 = vertices[tri_v1] - vertices[tri_v0];
+        glm::vec3 edge_vec_2 = vertices[tri_v2] - vertices[tri_v0];
+
+        glm::vec3 normal = glm::cross(edge_vec_1, edge_vec_2);
+
+        //add to normals vector, does area weighting
+        normals[tri_v0] += normal;
+        normals[tri_v1] += normal;
+        normals[tri_v2] += normal;
+    }
+
+    //normalize normals after processing all triangles
+    for(size_t i = 0; i < normals.size(); i++){
+        normals[i] = glm::normalize(normals[i]);
     }
 }
