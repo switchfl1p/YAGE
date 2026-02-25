@@ -19,6 +19,7 @@
 #include <Node.hpp>
 #include <core_util.hpp>
 #include <renderGUI.hpp>
+#include <Terrain.hpp>
 
 //========================================================
 
@@ -159,12 +160,34 @@ void initializeNodes(){
         plane.material = plane_material;
 
         Transform plane_transform;
-        plane_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
+        plane_transform.translation_component = glm::vec3(-10.0f,-0.5f,-10.0f);
         plane_transform.calc_model_mat();
         plane.transform = plane_transform;
 
         nodes["plane"] = plane;
     }
+
+/*     //Procedurally Generated Terrain
+    {
+        Node terrain;
+        Material terrain_material;
+        terrain_material.phong_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
+        terrain_material.shininess = 64.0f;
+
+        //pbr
+        terrain_material.pbr_color = glm::vec4(0.8, 0.8, 0.8, 1.0);
+        terrain_material.metallic = 0.0f;
+        terrain_material.roughness = 0.7f;  // matte
+        terrain.material = terrain_material;
+
+        Transform terrain_transform;
+        terrain_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
+        terrain_transform.calc_model_mat();
+        terrain.transform = terrain_transform;
+
+        nodes["terrain"] = terrain;
+    } */
+    
 }
 
 void initializeLights(){
@@ -185,15 +208,17 @@ void initializeBuffers(){
     gltf_util::Loader loader;
 
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
-    gltf_util::Model plane = loader.loadModel("plane04.glb");
+    //gltf_util::Model plane = loader.loadModel("plane04.glb");
+
+    TerrainData terrain(20, 20, 10 , 3, 10 , 1);
 
     sphere_data = core_util::loadModelData(sphere);
-    plane_data = core_util::loadModelData(plane);
+    plane_data = core_util::createTerrainBuffers(terrain);
 }
 
 void initializeVertexArrayObjects(){
     sphere_vao = core_util::loadVAOData(sphere_data);
-    plane_vao = core_util::loadVAOData(plane_data);
+    plane_vao = core_util::createTerrainVAO(plane_data);
 }
 
 void initializeCameras(GLFWwindow* window){
@@ -400,7 +425,7 @@ void display(GLFWwindow* window){
     glUniform1f(current_program->roughness_unif, nodes["plane"].material.roughness);
 
     glBindVertexArray(plane_vao.vao);
-    glDrawElements(GL_TRIANGLES, plane_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, plane_vao.index_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     glUseProgram(0);

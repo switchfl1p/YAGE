@@ -160,3 +160,53 @@ core_util::Framebuffer::~Framebuffer() {
     glDeleteTextures(1, &textureID);
     glDeleteRenderbuffers(1, &RBO);
 }
+
+core_util::ModelData core_util::createTerrainBuffers(const TerrainData& terrain){
+    core_util::ModelData model_data;
+
+    // VBO
+    glGenBuffers(1, &model_data.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, model_data.vbo);
+    glBufferData(GL_ARRAY_BUFFER, terrain.vertex_data.size() * sizeof(TerrainData::Vertex), terrain.vertex_data.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // IBO
+    glGenBuffers(1, &model_data.ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model_data.ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, terrain.indices.size() * sizeof(unsigned int), terrain.indices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    model_data.index_count = terrain.indices.size();
+    return model_data;
+}
+
+core_util::VAOData core_util::createTerrainVAO(ModelData& model_data){
+    core_util::VAOData data;
+    glGenVertexArrays(1, &data.vao);
+    glBindVertexArray(data.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, model_data.vbo);
+
+    //positions at attribute location 0
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainData::Vertex), (void*)offsetof(TerrainData::Vertex, position));
+
+    //no colours, attrib 1 is skipped to comply with shaders
+
+    //normals at attribute location 2
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainData::Vertex), (void*)offsetof(TerrainData::Vertex, normal));
+
+    //uvs at attribute location 3
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainData::Vertex), (void*)offsetof(TerrainData::Vertex, uv));
+
+    //indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model_data.ibo);
+
+    glBindVertexArray(0);
+
+    data.index_count = model_data.index_count;
+    
+    return data;
+}

@@ -11,6 +11,7 @@ set(CORE_SOURCES
 	core_util.cpp
 	renderGUI.cpp
 	perlin.cpp
+	Terrain.cpp
 )
 
 set(CORE_HEADERS
@@ -25,6 +26,7 @@ set(CORE_HEADERS
 	core_util.hpp
 	renderGUI.hpp
 	perlin.hpp
+	Terrain.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

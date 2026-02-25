@@ -5,6 +5,7 @@
 #include <glad/gl.h>
 #include <string>
 #include <gltf_util.hpp>
+#include <Terrain.hpp>
 
 namespace core_util{
 
@@ -63,5 +64,10 @@ namespace core_util{
             void Bind();
             void Unbind();
             void Resize(int w, int h);
-        };
+    };
+
+    //good opportunity to look into polymorphism or templates or whatever it is here
+    ModelData createTerrainBuffers(const TerrainData& terrain);
+
+    VAOData createTerrainVAO(ModelData& model_data);
 }

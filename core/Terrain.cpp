@@ -3,17 +3,22 @@
 #include <Terrain.hpp>
 #include <perlin.hpp>
 
-TerrainData::TerrainData(int size_x, int size_z, float scale_p, int seed_p, float amplitude_p) 
+TerrainData::TerrainData(int size_x, int size_z, float scale_p, int seed_p, float amplitude_p, float tilescale_p) 
     : width(size_x),
       depth(size_z), 
       scale(scale_p),
       seed(seed_p),
-      amplitude(amplitude_p)
+      amplitude(amplitude_p),
+      tilescale(tilescale_p)
 {
     Perlin perlin(seed);
     height_map = perlin.generateHeightMap(width, depth, scale);
     generateVertices();
     generateIndices();
+    generateNormals();
+    generateTextureCoordinates();
+
+    fillVertexData();
 }
 
 void TerrainData::generateVertices(){
@@ -29,20 +34,20 @@ void TerrainData::generateIndices(){
     //iterating through the cells, aka the spaces between vertices (length - 1)
     for(int z = 0; z < depth - 1; z++){
         for(int x = 0; x < width - 1; x++){
-            int top_left = z * width + x; //[0][0]
-            int top_right = z * width + x + 1; //[0][1]
-            int bottom_left = (z + 1) * width + x; //[1][0]
-            int bottom_right = (z + 1) * width + x + 1; //[1][1]
+            unsigned int top_left = z * width + x; //[0][0]
+            unsigned int top_right = z * width + x + 1; //[0][1]
+            unsigned int bottom_left = (z + 1) * width + x; //[1][0]
+            unsigned int bottom_right = (z + 1) * width + x + 1; //[1][1]
 
             //first triangle
             indices.push_back(top_left);
-            indices.push_back(top_right);
             indices.push_back(bottom_left);
+            indices.push_back(top_right);
 
             //second triangle
             indices.push_back(top_right);
-            indices.push_back(bottom_right);
             indices.push_back(bottom_left);
+            indices.push_back(bottom_right);
         }
     }
 }
@@ -75,5 +80,29 @@ void TerrainData::generateNormals(){
     //normalize normals after processing all triangles
     for(size_t i = 0; i < normals.size(); i++){
         normals[i] = glm::normalize(normals[i]);
+    }
+}
+
+void TerrainData::generateTextureCoordinates(){
+    uv.resize(vertices.size());
+
+    for(size_t i = 0; i < vertices.size(); i++){
+        float u = vertices[i].x / (width - 1) * tilescale;
+        float v = vertices[i].z / (depth - 1) * tilescale;
+
+        uv[i] = glm::vec2(u, v);
+    }
+}
+
+void TerrainData::fillVertexData(){
+    vertex_data.resize(vertices.size());
+
+    for(size_t i = 0; i < vertex_data.size(); i++){
+        Vertex vert;
+        vert.position = vertices[i];
+        vert.normal = normals[i];
+        vert.uv = uv[i];
+
+        vertex_data[i] = vert;
     }
 }
