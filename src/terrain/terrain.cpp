@@ -63,7 +63,7 @@ core_util::VAOData sphere_vao;
 core_util::VAOData plane_vao;
 
 std::unique_ptr<Camera> cam = nullptr;
-std::unique_ptr<CameraController> cam_controler = nullptr;
+std::unique_ptr<CameraController> cam_controller = nullptr;
 bool camera_movement_flag;
 
 float delta_time = 0.0f;
@@ -205,9 +205,9 @@ void initializeCameras(GLFWwindow* window){
     glfwGetFramebufferSize(window, &width, &height);
 
     cam = std::make_unique<Camera>(width,height);
-    cam_controler = std::make_unique<CameraController>(*cam);
+    cam_controller = std::make_unique<CameraController>(*cam);
     cam->position = glm::vec3(0.0f, 0.0f, 2.5f);
-    cam_controler->movement_speed = 3.0f;
+    cam_controller->movement_speed = 3.0f;
     camera_movement_flag = true;
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
@@ -263,7 +263,7 @@ void display(GLFWwindow* window){
 
     //camera movement
     if(camera_movement_flag){
-        cam_controler->processCameraInput(window, delta_time);
+        cam_controller->processCameraInput(window, delta_time);
         cam->updateCamera();
     }
 
@@ -510,7 +510,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         } else {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            cam_controler->first_mouse = true;
+            cam_controller->first_mouse = true;
         }
     }
 
@@ -525,12 +525,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void mouse_callback(GLFWwindow* window, double x_pos, double y_pos){
     if(camera_movement_flag)
-        cam_controler->mouseCameraController(window, x_pos, y_pos);
+        cam_controller->mouseCameraController(window, x_pos, y_pos);
 }
 
 void scroll_callback(GLFWwindow* window, double x_offset, double y_offset){
     if(camera_movement_flag)
-        cam_controler->mouseZoomController(window, x_offset, y_offset);
+        cam_controller->mouseZoomController(window, x_offset, y_offset);
 }
 
 void cleanup(){
