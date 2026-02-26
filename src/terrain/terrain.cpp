@@ -70,6 +70,7 @@ float delta_time = 0.0f;
 float last_frame = 0.0f;
 
 std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
+std::unique_ptr<TerrainData> terrain = nullptr;
 
 //========================================================
 
@@ -146,7 +147,7 @@ void initializeNodes(){
         nodes["sphere"] = sphere;
     }
 
-    //Plane
+    //Plane (now terrain)
     {
         Node plane;
         Material plane_material;
@@ -166,28 +167,6 @@ void initializeNodes(){
 
         nodes["plane"] = plane;
     }
-
-/*     //Procedurally Generated Terrain
-    {
-        Node terrain;
-        Material terrain_material;
-        terrain_material.phong_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
-        terrain_material.shininess = 64.0f;
-
-        //pbr
-        terrain_material.pbr_color = glm::vec4(0.8, 0.8, 0.8, 1.0);
-        terrain_material.metallic = 0.0f;
-        terrain_material.roughness = 0.7f;  // matte
-        terrain.material = terrain_material;
-
-        Transform terrain_transform;
-        terrain_transform.translation_component = glm::vec3(0.0f,-0.5f,0.0f);
-        terrain_transform.calc_model_mat();
-        terrain.transform = terrain_transform;
-
-        nodes["terrain"] = terrain;
-    } */
-    
 }
 
 void initializeLights(){
@@ -210,10 +189,10 @@ void initializeBuffers(){
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
     //gltf_util::Model plane = loader.loadModel("plane04.glb");
 
-    TerrainData terrain(20, 20, 10 , 3, 10 , 1);
+    terrain = std::make_unique<TerrainData>(20, 20, 5.76f , 2, 10.94f , 1);
 
     sphere_data = core_util::loadModelData(sphere);
-    plane_data = core_util::createTerrainBuffers(terrain);
+    plane_data = core_util::createTerrainBuffers(*terrain);
 }
 
 void initializeVertexArrayObjects(){
@@ -289,7 +268,7 @@ void display(GLFWwindow* window){
     }
 
     //bulb movement
-    bulb_controller->halfRotatePointLight(current_frame, delta_time);
+    bulb_controller->rotatePointLight(current_frame, delta_time);
     bulb_controller->processPointLightInput(window, delta_time);
 
     PointLight& point_light = point_lights[0];
@@ -341,7 +320,6 @@ void display(GLFWwindow* window){
                 current_program = &pbr_program;
                 break;
         }
-
         previous_light_model = light_model;
     }
 
@@ -357,6 +335,14 @@ void display(GLFWwindow* window){
     renderGUI::renderNodeWindow(nodes);
     renderGUI::renderLightWindow(ambient_light, point_lights);
     renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, bulb_controller->rotate_flag, camera_movement_flag);
+
+    if(renderGUI::renderTerrainWindow(*terrain)){
+        terrain->generateTerrain();
+        core_util::cleanupBuffers(plane_data);
+        glDeleteVertexArrays(1, &plane_vao.vao);
+        plane_data = core_util::createTerrainBuffers(*terrain);
+        plane_vao = core_util::createTerrainVAO(plane_data);
+    }
 
     ImGui::Begin("Viewport");
     // Get the size of the content region

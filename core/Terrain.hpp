@@ -16,14 +16,17 @@ class TerrainData{
         std::vector<unsigned int> indices;
 
         std::vector<Vertex> vertex_data;
-    
-    private:
+
         int width;
         int depth;
         float scale;
         int seed;
         float amplitude;
         float tilescale;
+
+        void generateTerrain();
+    
+    private:
         std::vector<float> height_map;
 
         std::vector<glm::vec3> vertices;

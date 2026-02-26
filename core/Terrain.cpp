@@ -11,14 +11,7 @@ TerrainData::TerrainData(int size_x, int size_z, float scale_p, int seed_p, floa
       amplitude(amplitude_p),
       tilescale(tilescale_p)
 {
-    Perlin perlin(seed);
-    height_map = perlin.generateHeightMap(width, depth, scale);
-    generateVertices();
-    generateIndices();
-    generateNormals();
-    generateTextureCoordinates();
-
-    fillVertexData();
+    generateTerrain();
 }
 
 void TerrainData::generateVertices(){
@@ -105,4 +98,21 @@ void TerrainData::fillVertexData(){
 
         vertex_data[i] = vert;
     }
+}
+
+void TerrainData::generateTerrain(){
+    vertices.clear();
+    indices.clear();
+    normals.clear();
+    uv.clear();
+    vertex_data.clear();
+    
+    Perlin perlin(seed);
+    height_map = perlin.generateHeightMap(width, depth, scale);
+    generateVertices();
+    generateIndices();
+    generateNormals();
+    generateTextureCoordinates();
+
+    fillVertexData();
 }
