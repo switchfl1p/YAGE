@@ -3,13 +3,16 @@
 #include <Terrain.hpp>
 #include <perlin.hpp>
 
-TerrainData::TerrainData(int size_x, int size_z, float scale_p, int seed_p, float amplitude_p, float tilescale_p) 
+TerrainData::TerrainData(int size_x, int size_z, float scale_p, int seed_p, float amplitude_p, float tilescale_p, int octaves_p, float lacunarity_p, float persistance_p) 
     : width(size_x),
       depth(size_z), 
       scale(scale_p),
       seed(seed_p),
       amplitude(amplitude_p),
-      tilescale(tilescale_p)
+      tilescale(tilescale_p),
+      octaves(octaves_p),
+      lacunarity(lacunarity_p),
+      persistance(persistance_p)
 {
     generateTerrain();
 }
@@ -100,7 +103,9 @@ void TerrainData::fillVertexData(){
     }
 }
 
+//fBm implementation
 void TerrainData::generateTerrain(){
+    //clearing allows for dynamic creation in display loop
     vertices.clear();
     indices.clear();
     normals.clear();
@@ -108,7 +113,32 @@ void TerrainData::generateTerrain(){
     vertex_data.clear();
     
     Perlin perlin(seed);
-    height_map = perlin.generateHeightMap(width, depth, scale);
+
+    height_map.assign(width * depth, 0.0f);
+
+    //fBm implementation
+    float fBm_freq = 1;
+    float fBm_amp = 1;
+    float amp_sum = 0;
+
+    for(int i = 0; i < octaves; i++){
+        std::vector<float> octave_map = perlin.generateHeightMap(width, depth, scale / fBm_freq);
+
+        for(size_t j = 0; j < octave_map.size(); j++){
+            height_map[j] += octave_map[j] * fBm_amp;
+        }
+
+        //grab the sum for normalization later
+        amp_sum += fBm_amp;
+        fBm_freq *= lacunarity;
+        fBm_amp *= persistance;
+    }
+
+    //normalizing the height map
+    for(size_t i = 0; i < height_map.size(); i++){
+        height_map[i] = height_map[i]/amp_sum;
+    }
+
     generateVertices();
     generateIndices();
     generateNormals();

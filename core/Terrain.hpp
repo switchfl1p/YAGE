@@ -11,7 +11,7 @@ class TerrainData{
             glm::vec2 uv = glm::vec2(0.0f, 0.0f);
         };
         
-        TerrainData(int size_x, int size_z, float scale, int seed, float amplitude, float tilescale);
+        TerrainData(int size_x, int size_z, float scale, int seed, float amplitude, float tilescale, int octaves, float lacunarity, float persistance);
 
         std::vector<unsigned int> indices;
 
@@ -23,6 +23,10 @@ class TerrainData{
         int seed;
         float amplitude;
         float tilescale;
+        
+        int octaves;
+        float lacunarity;
+        float persistance;
 
         void generateTerrain();
     

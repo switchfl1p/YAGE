@@ -189,7 +189,7 @@ void initializeBuffers(){
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
     //gltf_util::Model plane = loader.loadModel("plane04.glb");
 
-    terrain = std::make_unique<TerrainData>(20, 20, 5.76f , 2, 10.94f , 1);
+    terrain = std::make_unique<TerrainData>(20, 20, 5.76f , 2, 10.94f , 1, 6, 2.0, 0.5);
 
     sphere_data = core_util::loadModelData(sphere);
     plane_data = core_util::createTerrainBuffers(*terrain);
