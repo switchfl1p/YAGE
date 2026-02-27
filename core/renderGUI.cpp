@@ -129,13 +129,15 @@ bool renderGUI::renderTerrainWindow(TerrainData &terrain){
     bool terrain_changed = false;
 
     ImGui::Begin("Terrain Options");
-    //TerrainData(int size_x, int size_z, float scale, int seed, float amplitude, float tilescale);
-    terrain_changed |= ImGui::DragInt("Size X/Width", &terrain.width, 1, 0, 1000);
-    terrain_changed |= ImGui::DragInt("Size Z/Depth", &terrain.depth, 1, 0, 1000);
+    terrain_changed |= ImGui::DragInt("Width", &terrain.width, 1, 0, 1000);
+    terrain_changed |= ImGui::DragInt("Depth", &terrain.depth, 1, 0, 1000);
     terrain_changed |= ImGui::DragFloat("Scale", &terrain.scale, 0.01f, 0.0f, 100.0f);
     terrain_changed |= ImGui::DragInt("Seed", &terrain.seed, 1, 0, 10000);
     terrain_changed |= ImGui::DragFloat("Amplitude", &terrain.amplitude, 0.01f, 0.0f, 100.0f);
     terrain_changed |= ImGui::DragFloat("Tilescale", &terrain.tilescale, 0.5f, 0.0f, 1000.0f);
+    terrain_changed |= ImGui::DragInt("Octaves", &terrain.octaves, 0.5f, 0.0f, 50);
+    terrain_changed |= ImGui::DragFloat("Lacunarity", &terrain.lacunarity, 0.5f, 0.0f, 1000.0f);
+    terrain_changed |= ImGui::DragFloat("Persistance", &terrain.persistance, 0.5f, 0.0f, 1000.0f);
 
     ImGui::End();
 
