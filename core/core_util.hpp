@@ -23,6 +23,9 @@ namespace core_util{
         GLuint base_color_unif;
         GLuint metallic_unif;
         GLuint roughness_unif;
+
+        //terrain
+        GLuint amplitutde_unif;
     };
 
     struct UnlitProgramData{

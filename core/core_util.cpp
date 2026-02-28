@@ -31,6 +31,9 @@ core_util::LitProgramData core_util::loadLitProgram(const std::string &vert_shad
     data.metallic_unif = glGetUniformLocation(data.program_uint, "metallic");
     data.roughness_unif = glGetUniformLocation(data.program_uint, "roughness");
 
+    //terrain gen
+    data.amplitutde_unif = glGetUniformLocation(data.program_uint, "amplitude");
+
     return data;
 }
 
