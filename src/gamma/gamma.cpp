@@ -63,6 +63,7 @@ std::unordered_map<std::string, Node> nodes;
 Light ambient_light;
 std::vector<PointLight> point_lights;
 std::unique_ptr<LightController> bulb_controller;
+std::unique_ptr<LightController> bulb2_controller;
 
 core_util::ModelData sphere_data;
 core_util::ModelData plane_data;
@@ -146,6 +147,20 @@ void initializeNodes(){
 
         nodes["bulb"] = bulb;
     }
+        //2nd Bulb
+    {
+        Node bulb_2;
+        Material bulb_material;
+        bulb_material.type = Material::EMISSIVE;
+        bulb_material.phong_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); //white
+        bulb_2.material = bulb_material;
+
+        Transform bulb_transform;
+        bulb_transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+        bulb_2.transform = bulb_transform;
+
+        nodes["bulb_2"] = bulb_2;
+    }
 
     //Centerpiece
     {
@@ -194,14 +209,23 @@ void initializeLights(){
     ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
     
     PointLight pl;
-    pl.intensity = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+    pl.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     pl.attenuation = 1.0f;
     pl.position = glm::vec3(0.0f, 0.25f, 0.0f);
 
+    PointLight pl_2;
+    pl_2.intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    pl_2.attenuation = 1.0f;
+    pl_2.position = glm::vec3(0.0f, 2.0f, 0.0f);
+    
     point_lights.push_back(pl);
+    point_lights.push_back(pl_2);
 
     bulb_controller = std::make_unique<LightController>(point_lights[0]);
     bulb_controller->radius = 1.0f;
+
+    bulb2_controller = std::make_unique<LightController>(point_lights[1]);
+    bulb2_controller->radius = 2.0f;
 }
 
 void initializeBuffers(){
@@ -291,7 +315,11 @@ void display(GLFWwindow* window){
     bulb_controller->rotatePointLight(current_frame, delta_time);
     bulb_controller->processPointLightInput(window, delta_time);
 
+    bulb2_controller->halfRotatePointLight(current_frame, delta_time);
+    bulb2_controller->processPointLightInput(window, delta_time);
+
     PointLight& point_light = point_lights[0];
+    PointLight& point_light_2 = point_lights[1];
 
     static int previous_light_model = -1;
     if(light_model != previous_light_model){
@@ -303,7 +331,6 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.type = Material::LAMBERTIAN;
                 nodes["plane"].material.type= Material::LAMBERTIAN;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &phong_program;
@@ -313,7 +340,6 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.shininess = 32.0f;
                 nodes["plane"].material.shininess = 16.0f;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &blinn_program;
@@ -323,7 +349,6 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.shininess = 128.0f;
                 nodes["plane"].material.shininess = 64.0f;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &gaussian_program;
@@ -333,7 +358,6 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.shininess = 0.15f;
                 nodes["plane"].material.shininess = 0.4f;
                 ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
-                point_light.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); 
                 break;
             case LM_PBR_LIGHTING:
                 current_program = &pbr_program;
@@ -341,7 +365,6 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.type = Material::PBR;
                 nodes["plane"].material.type = Material::PBR;
                 ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-                point_light.intensity = glm::vec4(1.0f, 1.0, 1.0f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
@@ -453,9 +476,10 @@ void display(GLFWwindow* window){
 
     glUseProgram(0);
 
-    //===========
-    //RENDER BULB
-    //===========
+    //============
+    //RENDER BULBS
+    //============
+    //1
     glUseProgram(unlit_program.program_uint);
 
     nodes["bulb"].material.phong_color = point_light.intensity;
@@ -467,9 +491,26 @@ void display(GLFWwindow* window){
     glm::mat4 bulb_model_mat = nodes["bulb"].transform.model_mat;
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_model_mat));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
     if(bulb_controller->draw_flag){
+        glBindVertexArray(sphere_vao.vao);
+        glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+        glBindVertexArray(0);
+    }
+
+    //2
+    nodes["bulb_2"].material.phong_color = point_light_2.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_2"].material.phong_color));
+
+    nodes["bulb_2"].transform.translation_component = point_light_2.position;
+    nodes["bulb_2"].transform.calc_model_mat();
+
+    glm::mat4 bulb2_model_mat = nodes["bulb_2"].transform.model_mat;
+
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb2_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    if(bulb2_controller->draw_flag){
         glBindVertexArray(sphere_vao.vao);
         glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
         glBindVertexArray(0);

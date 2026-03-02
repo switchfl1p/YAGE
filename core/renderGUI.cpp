@@ -131,13 +131,13 @@ bool renderGUI::renderTerrainWindow(TerrainData &terrain){
     ImGui::Begin("Terrain Options");
     terrain_changed |= ImGui::DragInt("Width", &terrain.width, 1, 0, 1000);
     terrain_changed |= ImGui::DragInt("Depth", &terrain.depth, 1, 0, 1000);
-    terrain_changed |= ImGui::DragFloat("Scale", &terrain.scale, 0.01f, 0.0f, 100.0f);
+    terrain_changed |= ImGui::SliderFloat("Scale", &terrain.scale, 0.0f, 100.0f);
     terrain_changed |= ImGui::InputInt("Seed", &terrain.seed);
-    terrain_changed |= ImGui::DragFloat("Amplitude", &terrain.amplitude, 0.01f, 0.0f, 100.0f);
+    terrain_changed |= ImGui::SliderFloat("Amplitude", &terrain.amplitude, 0.0f, 35.0f);
     terrain_changed |= ImGui::DragFloat("Tilescale", &terrain.tilescale, 0.5f, 0.0f, 1000.0f);
-    terrain_changed |= ImGui::DragInt("Octaves", &terrain.octaves, 0.5f, 0.0f, 50);
-    terrain_changed |= ImGui::DragFloat("Lacunarity", &terrain.lacunarity, 0.5f, 0.0f, 1000.0f);
-    terrain_changed |= ImGui::DragFloat("Persistance", &terrain.persistance, 0.5f, 0.0f, 1000.0f);
+    terrain_changed |= ImGui::InputInt("Octaves", &terrain.octaves);
+    terrain_changed |= ImGui::SliderFloat("Lacunarity", &terrain.lacunarity, 0.0f, 30.0f);
+    terrain_changed |= ImGui::SliderFloat("Persistance", &terrain.persistance, 0.0f, 20.0f);
 
     ImGui::End();
 
