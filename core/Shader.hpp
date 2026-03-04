@@ -7,6 +7,7 @@ https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf#page=109
 #include <glad/gl.h>
 #include <string>
 #include <filesystem>
+#include <unordered_set>
 
 class Shader{
     public:
@@ -18,6 +19,7 @@ class Shader{
         std::filesystem::path findFile(const std::string& filename);
         GLenum getShaderType(const std::string& filename);
         std::string getShaderData(const std::filesystem::path& filepath);
+        std::string processIncludes(const std::filesystem::path& filepath, std::unordered_set<std::string>& included);
 
         GLuint shader_object;
 };

@@ -89,14 +89,33 @@ std::filesystem::path Shader::findFile(const std::string& filename){
 }
 
 std::string Shader::getShaderData(const std::filesystem::path& filepath){
+    std::unordered_set<std::string> included;
+    return processIncludes(filepath, included);
+}
+
+std::string Shader::processIncludes(const std::filesystem::path& filepath, std::unordered_set<std::string>& included){
     std::ifstream file(filepath);
-    
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open shader file. Possible wrong filepath.");
+
+    std::string line;
+    std::string result;
+
+    while(std::getline(file, line)){
+        if (line.find("#include") != std::string::npos){
+            //extract the filename between the quotes
+            size_t start = line.find('"') + 1;
+            size_t end = line.find('"', start);
+            std::string include_name = line.substr(start, end - start);
+
+            auto [it, inserted] = included.insert(include_name);
+            if(inserted){
+                std::filesystem::path include_path = findFile(include_name);
+                result += processIncludes(include_path, included);
+            }
+        }
+        else{
+            result += line + "\n";
+        }
     }
-    
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    
-    return buffer.str();
+
+    return result;
 }

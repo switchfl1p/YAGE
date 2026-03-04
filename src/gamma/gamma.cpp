@@ -52,6 +52,7 @@ enum LightingModel
 
     LM_COUNT,
 };
+
 int light_model = LM_PBR_LIGHTING;
 
 GLuint matrices_uniform_block_index;
