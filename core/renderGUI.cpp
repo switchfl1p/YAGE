@@ -67,7 +67,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
     ImGui::End();
 }
 
-void renderGUI::renderLightWindow(Light &ambient_light, std::vector<PointLight> &point_lights){
+void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::vector<PointLight> &point_lights){
     ImGui::Begin("Light Options");
 
     //ImGui::SetNextItemOpen(true, ImGuiCond_Once);

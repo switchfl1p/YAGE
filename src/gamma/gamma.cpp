@@ -61,7 +61,8 @@ const int matrices_binding_index = 0;
 
 std::unordered_map<std::string, Node> nodes;
 
-Light ambient_light;
+AmbientLight ambient_light;
+std::vector<DirectionalLight> directional_lights;
 std::vector<PointLight> point_lights;
 std::unique_ptr<LightController> bulb_controller;
 std::unique_ptr<LightController> bulb2_controller;
@@ -212,12 +213,12 @@ void initializeLights(){
     PointLight pl;
     pl.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     pl.attenuation = 1.0f;
-    pl.position = glm::vec3(0.0f, 0.25f, 0.0f);
+    pl.position = glm::vec4(0.0f, 0.25f, 0.0f, 1.0f);
 
     PointLight pl_2;
     pl_2.intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     pl_2.attenuation = 1.0f;
-    pl_2.position = glm::vec3(0.0f, 2.0f, 0.0f);
+    pl_2.position = glm::vec4(0.0f, 2.0f, 0.0f, 1.0f);
     
     point_lights.push_back(pl);
     point_lights.push_back(pl_2);
@@ -427,7 +428,7 @@ void display(GLFWwindow* window){
     //RENDER SPHERE 
     //=============
     glm::mat4 sphere_model_mat = nodes["sphere"].transform.model_mat;
-    glm::vec4 p_light_camera_pos = cam->getViewMat() * glm::vec4(point_light.position, 1.0f);
+    glm::vec4 p_light_camera_pos = cam->getViewMat() * point_light.position;
     
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_model_mat));

@@ -1,3 +1,4 @@
+uniform vec4 material_diffuse;
 uniform vec4 light_intensity;
 uniform vec4 ambient_intensity;
 uniform vec3 camera_space_light_position;
