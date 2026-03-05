@@ -1,4 +1,4 @@
-#version 330
+#version 440
 
 layout(location = 0) in vec3 position;
 layout(location = 2) in vec3 normal;
@@ -12,6 +12,27 @@ layout(std140) uniform Matrices
 
 out vec3 camera_space_normal;
 out vec3 camera_space_position;
+
+struct PointLight{
+	vec4 position;
+	vec4 intensity;
+	float attenuation;
+};
+
+struct DirectionalLight{
+	vec4 direction;
+	vec4 intensity;
+};
+
+#define MAX_POINT_LIGHTS 2
+#define MAX_DIR_LIGHTS 2
+
+layout(std140) uniform Lights{
+	PointLight point_lights[MAX_POINT_LIGHTS];
+	DirectionalLight dir_lights[MAX_DIR_LIGHTS];
+	int point_light_count;
+	int dir_light_count;
+};
 
 void main()
 {

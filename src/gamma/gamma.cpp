@@ -57,15 +57,31 @@ int light_model = LM_PBR_LIGHTING;
 
 GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
-const int matrices_binding_index = 0;
+constexpr int matrices_binding_index = 0;
+
+GLuint lights_uniform_block_index;
+GLuint lights_UBO;
+constexpr int lights_binding_index = 1;
 
 std::unordered_map<std::string, Node> nodes;
 
 AmbientLight ambient_light;
-std::vector<DirectionalLight> directional_lights;
-std::vector<PointLight> point_lights;
+//std::vector<DirectionalLight> directional_lights;
+//std::vector<PointLight> point_lights;
 std::unique_ptr<LightController> bulb_controller;
 std::unique_ptr<LightController> bulb2_controller;
+
+constexpr int MAX_POINT_LIGHTS = 2;
+constexpr int MAX_DIR_LIGHTS = 2;
+
+struct LightBuffer{
+    PointLight point_lights[MAX_POINT_LIGHTS];
+    DirectionalLight dir_lights[MAX_DIR_LIGHTS];
+    int point_light_count;
+    int dir_light_count;
+};
+
+LightBuffer light_buffer;
 
 core_util::ModelData sphere_data;
 core_util::ModelData plane_data;
@@ -116,6 +132,7 @@ void initializePrograms(){
 }
 
 void initializeUBOs(){
+    //Matrices UBO
     //Create UBO and bind to binding index
     glGenBuffers(1, &matrices_UBO);
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
@@ -132,6 +149,20 @@ void initializeUBOs(){
     //handle unlit ones
     matrices_uniform_block_index = glGetUniformBlockIndex(unlit_program.program_uint, "Matrices");
     glUniformBlockBinding(unlit_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
+
+    //Lights UBO
+    glGenBuffers(1, &lights_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightBuffer), NULL, GL_STREAM_DRAW);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, lights_binding_index, lights_UBO, 0, sizeof(LightBuffer));
+
+    //handle lit programs
+    for(auto* program : lit_programs){
+        lights_uniform_block_index = glGetUniformBlockIndex(program->program_uint, "Lights");
+        glUniformBlockBinding(program->program_uint, lights_uniform_block_index, lights_binding_index);
+    }
 }
 
 void initializeNodes(){
@@ -208,6 +239,8 @@ void initializeNodes(){
 }
 
 void initializeLights(){
+    std::vector<DirectionalLight> directional_lights;
+    std::vector<PointLight> point_lights;
     ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
     
     PointLight pl;
@@ -223,10 +256,28 @@ void initializeLights(){
     point_lights.push_back(pl);
     point_lights.push_back(pl_2);
 
-    bulb_controller = std::make_unique<LightController>(point_lights[0]);
+    DirectionalLight sun;
+    sun.direction = glm::vec4(-0.3f, -1.0f, -0.4f, 0.0f); //slightly angled, not straight down
+    sun.intensity = glm::vec4(1.0f, 0.95f, 0.8f, 1.0f); //warm white
+
+    directional_lights.push_back(sun);
+
+    //copy to LightBuffer for use with UBO
+    light_buffer.point_light_count = point_lights.size();
+    light_buffer.dir_light_count = directional_lights.size();
+
+    for(int i = 0; i < point_lights.size(); i++){
+        light_buffer.point_lights[i] = point_lights[i];
+    }
+
+    for(int i = 0; i < directional_lights.size(); i++){
+        light_buffer.dir_lights[i] = directional_lights[i];
+    }
+
+    bulb_controller = std::make_unique<LightController>(light_buffer.point_lights[0]);
     bulb_controller->radius = 1.0f;
 
-    bulb2_controller = std::make_unique<LightController>(point_lights[1]);
+    bulb2_controller = std::make_unique<LightController>(light_buffer.point_lights[1]);
     bulb2_controller->radius = 2.0f;
 }
 
@@ -320,8 +371,8 @@ void display(GLFWwindow* window){
     bulb2_controller->halfRotatePointLight(current_frame, delta_time);
     bulb2_controller->processPointLightInput(window, delta_time);
 
-    PointLight& point_light = point_lights[0];
-    PointLight& point_light_2 = point_lights[1];
+    PointLight& point_light = light_buffer.point_lights[0];
+    PointLight& point_light_2 = light_buffer.point_lights[1];
 
     static int previous_light_model = -1;
     if(light_model != previous_light_model){
@@ -382,7 +433,7 @@ void display(GLFWwindow* window){
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
-    renderGUI::renderLightWindow(ambient_light, point_lights);
+    renderGUI::renderLightWindow(ambient_light, light_buffer.point_lights);
     renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, bulb_controller->rotate_flag, camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
@@ -409,43 +460,50 @@ void display(GLFWwindow* window){
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //pass view and perspective matrix
+    //pass view and perspective matrix to UBO
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getViewMat()));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //==============
-    //LIGHT UNIFORMS
-    //==============
-    glUseProgram(current_program->program_uint);
-
-    glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-    glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-    glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
-
     //=============
     //RENDER SPHERE 
     //=============
-    glm::mat4 sphere_model_mat = nodes["sphere"].transform.model_mat;
+    glUseProgram(current_program->program_uint);
+
+    //light uniforms
+    glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
+    glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
+    glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
     glm::vec4 p_light_camera_pos = cam->getViewMat() * point_light.position;
-    
+    glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
+
+    glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBuffer), &light_buffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    //modeltoWorld uniform
+    glm::mat4 sphere_model_mat = nodes["sphere"].transform.model_mat;
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    //material uniforms
+    //non-PBR
     glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.phong_color));
-    glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
     glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.shininess);
-
-    //pbr
+    //PBR
     glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["sphere"].material.pbr_color));
     glUniform1f(current_program->metallic_unif, nodes["sphere"].material.metallic);
     glUniform1f(current_program->roughness_unif, nodes["sphere"].material.roughness);
 
+    //draw
     glBindVertexArray(sphere_vao.vao);
 	glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
+    
     glUseProgram(0);
+    
 
     //============
     //RENDER PLANE 
@@ -459,7 +517,9 @@ void display(GLFWwindow* window){
 
     glm::mat4 plane_model_mat = nodes["plane"].transform.model_mat;
     
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.phong_color));
     glUniform1f(current_terrain_program->shininess_factor_unif, nodes["plane"].material.shininess);
@@ -492,7 +552,9 @@ void display(GLFWwindow* window){
 
     glm::mat4 bulb_model_mat = nodes["bulb"].transform.model_mat;
 
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
     if(bulb_controller->draw_flag){
         glBindVertexArray(sphere_vao.vao);
@@ -509,6 +571,7 @@ void display(GLFWwindow* window){
 
     glm::mat4 bulb2_model_mat = nodes["bulb_2"].transform.model_mat;
 
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb2_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
@@ -568,10 +631,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         bulb_controller->draw_flag = !bulb_controller->draw_flag;
 
         if(bulb_controller->draw_flag){
-            point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            light_buffer.point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         }
         else{
-            point_lights[0].intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            light_buffer.point_lights[0].intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
         light_draw_changed = true;

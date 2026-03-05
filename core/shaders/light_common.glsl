@@ -12,6 +12,27 @@ uniform float shininess_factor;
 
 out vec4 output_color;
 
+struct PointLight{
+	vec4 position;
+	vec4 intensity;
+	float attenuation;
+};
+
+struct DirectionalLight{
+	vec4 direction;
+	vec4 intensity;
+};
+
+#define MAX_POINT_LIGHTS 2
+#define MAX_DIR_LIGHTS 2
+
+layout(std140) uniform Lights{
+	PointLight point_lights[MAX_POINT_LIGHTS];
+	DirectionalLight dir_lights[MAX_DIR_LIGHTS];
+	int point_light_count;
+	int dir_light_count;
+};
+
 float calcAttenuation(in vec3 camera_space_pos, out vec3 light_dir)
 {
     vec3 light_difference = camera_space_light_position - camera_space_pos;
