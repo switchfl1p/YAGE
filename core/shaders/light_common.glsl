@@ -7,7 +7,6 @@ uniform float light_attenuation;
 in vec3 camera_space_position;
 in vec3 camera_space_normal;
 
-const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
 uniform float shininess_factor;
 
 out vec4 output_color;
@@ -24,7 +23,7 @@ struct DirectionalLight{
 };
 
 #define MAX_POINT_LIGHTS 2
-#define MAX_DIR_LIGHTS 2
+#define MAX_DIR_LIGHTS 1
 
 layout(std140) uniform Lights{
 	PointLight point_lights[MAX_POINT_LIGHTS];

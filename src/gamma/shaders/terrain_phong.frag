@@ -3,6 +3,8 @@
 #include "light_common.glsl"
 #include "terrain_common.glsl"
 
+const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
+
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
     vec3 light_dir = normalize(light.position.xyz - camera_space_position);
     float distance = length(light.position.xyz - camera_space_position);

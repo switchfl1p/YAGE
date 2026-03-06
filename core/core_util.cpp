@@ -20,10 +20,7 @@ core_util::LitProgramData core_util::loadLitProgram(const std::string &vert_shad
     data.program_uint = the_program.getProgramUint();
 
     data.material_diffuse_unif = glGetUniformLocation(data.program_uint, "material_diffuse");
-    data.camera_space_light_position_unif = glGetUniformLocation(data.program_uint, "camera_space_light_position");
-    data.light_intensity_unif = glGetUniformLocation(data.program_uint, "light_intensity");
     data.ambient_intensity_unif = glGetUniformLocation(data.program_uint, "ambient_intensity");
-    data.light_attenuation_unif = glGetUniformLocation(data.program_uint, "light_attenuation");
     data.shininess_factor_unif = glGetUniformLocation(data.program_uint, "shininess_factor");
 
     //pbr

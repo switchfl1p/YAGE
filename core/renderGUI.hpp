@@ -8,7 +8,7 @@
 
 namespace renderGUI{
     void renderNodeWindow(std::unordered_map<std::string, Node> &nodes);
-    void renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights);
+    void renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights, std::span<DirectionalLight> dir_lights);
     void renderStatusOverlay(int light_model, bool light_status, bool rotation_status, bool camera_status);
     bool renderTerrainWindow(TerrainData &terrain);
 

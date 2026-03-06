@@ -13,10 +13,7 @@ namespace core_util{
         GLuint program_uint;
 
         GLuint material_diffuse_unif;
-        GLuint camera_space_light_position_unif;
-        GLuint light_intensity_unif;
         GLuint ambient_intensity_unif;
-        GLuint light_attenuation_unif;
         GLuint shininess_factor_unif;
         
         //pbr

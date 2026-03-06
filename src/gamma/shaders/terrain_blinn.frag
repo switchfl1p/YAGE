@@ -1,99 +1,10 @@
 // Blinn-Phong Terrain
 #version 330
 
-in vec3 camera_space_position;
-in vec3 camera_space_normal;
-
-in float terrain_height;
-in vec2 world_xz;
-
-out vec4 output_color;
-
-uniform vec4 ambient_intensity;
-uniform float shininess_factor;
-uniform float amplitude;
+#include "light_common.glsl"
+#include "terrain_common.glsl"
 
 const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
-
-struct PointLight{
-    vec4 position;   // camera space
-    vec4 intensity;
-    float attenuation;
-};
-
-struct DirectionalLight{
-    vec4 direction;  // camera space
-    vec4 intensity;
-};
-
-#define MAX_POINT_LIGHTS 2
-#define MAX_DIR_LIGHTS 2
-
-layout(std140) uniform Lights{
-    PointLight point_lights[MAX_POINT_LIGHTS];
-    DirectionalLight dir_lights[MAX_DIR_LIGHTS];
-    int point_light_count;
-    int dir_light_count;
-};
-
-////////////////////////////////////////////////////////////
-// Terrain Color
-////////////////////////////////////////////////////////////
-
-vec3 water = vec3(0.05, 0.25, 0.55);
-vec3 sand  = vec3(0.85, 0.78, 0.45);
-vec3 grass = vec3(0.2,  0.5,  0.15);
-vec3 rock  = vec3(0.35, 0.30, 0.25);
-vec3 snow  = vec3(0.95, 0.95, 1.0);
-
-float thresholds[5] = float[](-0.31, -0.1, 0.0, 0.2, 0.4);
-vec3 colors[5] = vec3[](water, sand, grass, rock, snow);
-
-float smoothNoise(vec2 p)
-{
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-
-    float a = fract(sin(dot(i,              vec2(127.1,311.7))) * 43758.5453);
-    float b = fract(sin(dot(i + vec2(1,0),  vec2(127.1,311.7))) * 43758.5453);
-    float c = fract(sin(dot(i + vec2(0,1),  vec2(127.1,311.7))) * 43758.5453);
-    float d = fract(sin(dot(i + vec2(1,1),  vec2(127.1,311.7))) * 43758.5453);
-
-    return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
-}
-
-vec3 getColor()
-{
-    float height = terrain_height / (amplitude * 0.71);
-
-    float warp = (smoothNoise(world_xz * 0.7) - 0.5) * 0.15;
-    height += warp;
-
-    float blend_range = 0.02;
-
-    vec3 color = colors[0];
-
-    for(int i = 0; i < 4; i++)
-    {
-        float boundary = thresholds[i + 1];
-        if(height < boundary + blend_range)
-        {
-            float t = smoothstep(boundary - blend_range, boundary + blend_range, height);
-            color = mix(colors[i], colors[i+1], t);
-            break;
-        }
-    }
-
-    if(height >= thresholds[4])
-        color = colors[4];
-
-    return color;
-}
-
-////////////////////////////////////////////////////////////
-// Lighting
-////////////////////////////////////////////////////////////
 
 void main()
 {

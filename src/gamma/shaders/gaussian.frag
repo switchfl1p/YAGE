@@ -1,30 +1,60 @@
 //Gaussian
-
 #version 330
 #include "light_common.glsl"
 
-void main()
+const vec4 specular_color = vec4(0.25, 0.25, 0.25, 1.0);
+
+vec3 calcGaussianSpecular(vec3 light_dir, vec3 surface_normal, vec3 view_dir)
 {
-    vec3 light_dir = vec3(0.0);
-    float atten = calcAttenuation(camera_space_position, light_dir);
-    vec4 atten_intensity = atten * light_intensity;
-
-    vec3 surface_normal = normalize(camera_space_normal);
-    float cos_ang_incidence = dot(surface_normal, light_dir);
-    cos_ang_incidence = clamp(cos_ang_incidence, 0, 1);
-
-    vec3 view_dir = normalize(-camera_space_position);
-
     vec3 half_angle = normalize(light_dir + view_dir);
-    float angle_normal_half = acos(dot(half_angle,surface_normal));
+    float angle_normal_half = acos(dot(half_angle, surface_normal));
     float exponent = angle_normal_half / shininess_factor;
     exponent = -(exponent * exponent);
-    float gaussian_term = exp(exponent);
+    return vec3(exp(exponent));
+}
 
-    gaussian_term = cos_ang_incidence != 0.0 ? gaussian_term : 0.0;
+void main()
+{
+    vec3 surface_normal = normalize(camera_space_normal);
+    vec3 view_dir = normalize(-camera_space_position);
+    vec4 total_light = vec4(0.0);
 
-    output_color = (material_diffuse * atten_intensity * cos_ang_incidence) + 
-        (specular_color * atten_intensity * gaussian_term) + 
-        (material_diffuse * ambient_intensity);
+    // --- Point Lights ---
+    for (int i = 0; i < point_light_count; i++)
+    {
+        vec3 light_difference = point_lights[i].position.xyz - camera_space_position;
+        float light_dist_sqrt = dot(light_difference, light_difference);
+        vec3 light_dir = light_difference * inversesqrt(light_dist_sqrt);
+        float atten = 1.0 / (1.0 + point_lights[i].attenuation * sqrt(light_dist_sqrt));
+        vec4 atten_intensity = atten * point_lights[i].intensity;
 
+        float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
+
+        float gaussian_term = 0.0;
+        if (cos_ang_incidence != 0.0)
+            gaussian_term = calcGaussianSpecular(light_dir, surface_normal, view_dir).r;
+
+        total_light += (material_diffuse * atten_intensity * cos_ang_incidence)
+                     + (specular_color * atten_intensity * gaussian_term);
+    }
+
+    // --- Directional Lights ---
+    for (int i = 0; i < dir_light_count; i++)
+    {
+        // Direction in light_common points *toward* the light (negate if stored as light-to-surface)
+        vec3 light_dir = normalize(-dir_lights[i].direction.xyz); // flip to point toward light
+        vec4 intensity = dir_lights[i].intensity;
+
+        float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
+
+        float gaussian_term = 0.0;
+        if (cos_ang_incidence != 0.0)
+            gaussian_term = calcGaussianSpecular(light_dir, surface_normal, view_dir).r;
+
+        total_light += (material_diffuse * intensity * cos_ang_incidence)
+                     + (specular_color * intensity * gaussian_term);
+    }
+
+    // --- Ambient ---
+    output_color = total_light + (material_diffuse * ambient_intensity);
 }

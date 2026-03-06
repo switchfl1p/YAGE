@@ -66,13 +66,11 @@ constexpr int lights_binding_index = 1;
 std::unordered_map<std::string, Node> nodes;
 
 AmbientLight ambient_light;
-//std::vector<DirectionalLight> directional_lights;
-//std::vector<PointLight> point_lights;
 std::unique_ptr<LightController> bulb_controller;
 std::unique_ptr<LightController> bulb2_controller;
 
 constexpr int MAX_POINT_LIGHTS = 2;
-constexpr int MAX_DIR_LIGHTS = 2;
+constexpr int MAX_DIR_LIGHTS = 1;
 
 struct LightBuffer{
     PointLight point_lights[MAX_POINT_LIGHTS];
@@ -436,7 +434,7 @@ void display(GLFWwindow* window){
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
-    renderGUI::renderLightWindow(ambient_light, light_buffer.point_lights);
+    renderGUI::renderLightWindow(ambient_light, light_buffer.point_lights, light_buffer.dir_lights);
     renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, bulb_controller->rotate_flag, camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
@@ -476,11 +474,6 @@ void display(GLFWwindow* window){
 
     //light uniforms
     glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-    glUniform4fv(current_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-    glUniform1f(current_program->light_attenuation_unif, point_light.attenuation);
-    glm::vec4 p_light_camera_pos = cam->getViewMat() * point_light.position;
-    glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
-
     light_buffer_GPU = light_buffer;
 
     for(int i = 0; i < light_buffer.point_light_count; i++){
@@ -527,9 +520,6 @@ void display(GLFWwindow* window){
     glUseProgram(current_terrain_program->program_uint);
 
     glUniform4fv(current_terrain_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
-    glUniform4fv(current_terrain_program->light_intensity_unif, 1, glm::value_ptr(point_light.intensity));
-    glUniform1f(current_terrain_program->light_attenuation_unif, point_light.attenuation);
-    glUniform3fv(current_terrain_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
 
     glm::mat4 plane_model_mat = nodes["plane"].transform.model_mat;
     

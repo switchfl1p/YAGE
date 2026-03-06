@@ -68,26 +68,43 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
 }
 
 //span allows for use of vectors or arrays
-void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights){
+void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights, std::span<DirectionalLight> dir_lights){
     ImGui::Begin("Light Options");
 
-    //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Ambient Light")) {
         ImGui::ColorEdit4("intensity##ambient", glm::value_ptr(ambient_light.intensity));
         ImGui::TreePop();
     }
 
-    for(size_t i = 0; i < point_lights.size(); i++){
-        ImGui::PushID(i);
-        //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Point Light")) {
-            ImGui::ColorEdit4("intensity", glm::value_ptr(point_lights[i].intensity));
-            ImGui::DragFloat("attenuation", &point_lights[i].attenuation, 0.01f, 0.0f, 5.0f);
-            ImGui::DragFloat3("position", glm::value_ptr(point_lights[i].position));
-            ImGui::TreePop();
+    if (ImGui::TreeNode("Point Lights")) {
+        for(size_t i = 0; i < point_lights.size(); i++){
+            ImGui::PushID(i);
+            std::string label = "Point Light " + std::to_string(i + 1);
+            if (ImGui::TreeNode(label.c_str())) {
+                ImGui::ColorEdit4("intensity", glm::value_ptr(point_lights[i].intensity));
+                ImGui::DragFloat("attenuation", &point_lights[i].attenuation, 0.01f, 0.0f, 5.0f);
+                ImGui::DragFloat3("position", glm::value_ptr(point_lights[i].position));
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
         }
-        ImGui::PopID();
+        ImGui::TreePop();
     }
+
+    if (ImGui::TreeNode("Directional Lights")) {
+        for(size_t i = 0; i < dir_lights.size(); i++){
+            ImGui::PushID(point_lights.size() + i);
+            std::string label = "Directional Light " + std::to_string(i + 1);
+            if (ImGui::TreeNode(label.c_str())) {
+                ImGui::ColorEdit4("intensity", glm::value_ptr(dir_lights[i].intensity));
+                ImGui::DragFloat3("direction", glm::value_ptr(dir_lights[i].direction));
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+        }
+        ImGui::TreePop();
+    }
+
     ImGui::End();
 }
 

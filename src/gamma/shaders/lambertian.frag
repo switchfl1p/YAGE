@@ -1,36 +1,38 @@
 //Lambertian
-
 #version 330
+#include "light_common.glsl"
 
-uniform vec4 material_diffuse;
-uniform vec4 light_intensity;
-uniform vec4 ambient_intensity;
-uniform vec3 camera_space_light_position;
-uniform float light_attenuation;
-
-in vec3 camera_space_position;
-in vec3 camera_space_normal;
-
-out vec4 output_color;
-
-vec4 applyLightIntensity(in vec3 camera_space_position, out vec3 light_direction)
+void main()
 {
-    vec3 light_difference =  camera_space_light_position - camera_space_position;
-    float light_distance_sqr = dot(light_difference, light_difference);
-    light_direction = light_difference * inversesqrt(light_distance_sqr);
-    
-    float dist_factor = light_distance_sqr;
-    
-    return light_intensity * (1 / ( 1.0 + light_attenuation * dist_factor));
-}
+    vec3 surface_normal = normalize(camera_space_normal);
+    vec3 view_dir = normalize(-camera_space_position);
+    vec4 total_light = vec4(0.0);
 
-void main(){
+    // --- Point Lights ---
+    for (int i = 0; i < point_light_count; i++)
+    {
+        vec3 light_difference = point_lights[i].position.xyz - camera_space_position;
+        float light_dist_sqr = dot(light_difference, light_difference);
+        vec3 light_dir = light_difference * inversesqrt(light_dist_sqr);
+        float atten = 1.0 / (1.0 + point_lights[i].attenuation * sqrt(light_dist_sqr));
+        vec4 atten_intensity = atten * point_lights[i].intensity;
 
-    vec3 light_dir = vec3(0.0);
-    vec4 atten_intensity = applyLightIntensity(camera_space_position, light_dir);
+        float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
 
-    float cos_ang_incidence = dot(normalize(camera_space_normal), light_dir);
-    cos_ang_incidence = clamp(cos_ang_incidence, 0, 1);
+        total_light += material_diffuse * atten_intensity * cos_ang_incidence;
+    }
 
-    output_color = (material_diffuse * atten_intensity * cos_ang_incidence) + (material_diffuse * ambient_intensity);
+    // --- Directional Lights ---
+    for (int i = 0; i < dir_light_count; i++)
+    {
+        vec3 light_dir = normalize(-dir_lights[i].direction.xyz);
+        vec4 intensity = dir_lights[i].intensity;
+
+        float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
+
+        total_light += material_diffuse * intensity * cos_ang_incidence;
+    }
+
+    // --- Ambient ---
+    output_color = total_light + (material_diffuse * ambient_intensity);
 }
