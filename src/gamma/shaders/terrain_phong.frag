@@ -1,27 +1,57 @@
-//Phong Lighting
 #version 330
+
 #include "light_common.glsl"
 #include "terrain_common.glsl"
 
-void main()
-{
-    vec4 color = vec4(getColor(), 1.0);
-    vec3 light_dir = vec3(0.0);
-    float atten = calcAttenuation(camera_space_position, light_dir);
-    vec4 atten_intensity = atten * light_intensity;
+vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
+    vec3 light_dir = normalize(light.position.xyz - camera_space_position);
+    float distance = length(light.position.xyz - camera_space_position);
+    float atten = 1.0 / (1.0 + light.attenuation * distance);
+    vec4 atten_intensity = atten * light.intensity;
 
-    vec3 surface_normal = normalize(camera_space_normal);
-    float cos_ang_incidence = dot(surface_normal, light_dir);
-    cos_ang_incidence = clamp(cos_ang_incidence, 0, 1);
+    // diffuse
+    float diff = max(dot(surface_normal, light_dir), 0.0);
 
-    vec3 view_dir = normalize(-camera_space_position);
+    // specular (Phong)
     vec3 reflect_dir = reflect(-light_dir, surface_normal);
-    float phong_term = dot(view_dir, reflect_dir);
-    phong_term = clamp(phong_term,0,1);
-    phong_term = cos_ang_incidence != 0.0 ? phong_term : 0.0;
-    phong_term = pow(phong_term, shininess_factor);
+    float spec = 0.0;
+    if(diff > 0.0) {
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess_factor);
+    }
 
-    output_color = (color * atten_intensity * cos_ang_incidence) +
-        (specular_color * atten_intensity * phong_term) +
-        (color * ambient_intensity);
+    return (base_color * atten_intensity * diff) +
+           (specular_color * atten_intensity * spec);
+}
+
+vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
+    vec3 light_dir = normalize(-light.direction.xyz);
+
+    // diffuse
+    float diff = max(dot(surface_normal, light_dir), 0.0);
+
+    // specular (Phong)
+    vec3 reflect_dir = reflect(-light_dir, surface_normal);
+    float spec = 0.0;
+    if(diff > 0.0) {
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess_factor);
+    }
+
+    return (base_color * light.intensity * diff) +
+           (specular_color * light.intensity * spec);
+}
+
+void main() {
+    vec4 base_color = vec4(getColor(), 1.0);
+    vec3 N = normalize(camera_space_normal);
+    vec3 V = normalize(-camera_space_position);
+
+    vec4 result = base_color * ambient_intensity;
+
+    for(int i = 0; i < point_light_count; i++)
+        result += calcPointLight(point_lights[i], N, V, base_color);
+
+    for(int i = 0; i < dir_light_count; i++)
+        result += calcDirLight(dir_lights[i], N, V, base_color);
+
+    output_color = result;
 }

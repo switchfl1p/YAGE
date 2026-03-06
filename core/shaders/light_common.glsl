@@ -7,7 +7,7 @@ uniform float light_attenuation;
 in vec3 camera_space_position;
 in vec3 camera_space_normal;
 
-const vec4 specular_color = vec4(0.25, 0.25, 0.25, 1.0);
+const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
 uniform float shininess_factor;
 
 out vec4 output_color;

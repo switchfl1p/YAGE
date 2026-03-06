@@ -8,13 +8,13 @@ struct AmbientLight{
 };
 
 struct PointLight{
-    glm::vec4 intensity = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
     glm::vec4 position;
+    glm::vec4 intensity = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
     float attenuation = 1.0f;
     float padding[3]; //for UBO usage, size needs to multiple of 16
 };
 
 struct DirectionalLight{
-    glm::vec4 intensity = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
     glm::vec4 direction;
+    glm::vec4 intensity = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 };

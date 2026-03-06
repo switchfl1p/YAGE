@@ -37,7 +37,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
                         std::string shininess_label = "shininess##" + name;
                         
                         ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.phong_color));
-                        ImGui::DragFloat(shininess_label.c_str(), &node.material.shininess, 1.0f, 0.0f, 200.0f);
+                        ImGui::DragFloat(shininess_label.c_str(), &node.material.shininess, 1.0f, 0.0f, 1000.0f);
                         
                         ImGui::TreePop();
                     }

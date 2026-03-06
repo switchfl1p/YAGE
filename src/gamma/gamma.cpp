@@ -82,6 +82,7 @@ struct LightBuffer{
 };
 
 LightBuffer light_buffer;
+LightBuffer light_buffer_GPU;
 
 core_util::ModelData sphere_data;
 core_util::ModelData plane_data;
@@ -279,6 +280,8 @@ void initializeLights(){
 
     bulb2_controller = std::make_unique<LightController>(light_buffer.point_lights[1]);
     bulb2_controller->radius = 2.0f;
+
+    light_buffer_GPU = light_buffer;
 }
 
 void initializeBuffers(){
@@ -478,8 +481,21 @@ void display(GLFWwindow* window){
     glm::vec4 p_light_camera_pos = cam->getViewMat() * point_light.position;
     glUniform3fv(current_program->camera_space_light_position_unif, 1, glm::value_ptr(glm::vec3(p_light_camera_pos)));
 
+    light_buffer_GPU = light_buffer;
+
+    for(int i = 0; i < light_buffer.point_light_count; i++){
+        light_buffer_GPU.point_lights[i].position = cam->getViewMat() * light_buffer.point_lights[i].position;
+    }
+
+    glm::mat3 view_rot = glm::mat3(cam->getViewMat());
+    for(int i = 0; i < light_buffer.dir_light_count; i++){
+        glm::vec3 dir = view_rot * light_buffer.dir_lights[i].direction;
+        dir = glm::normalize(dir);
+        light_buffer_GPU.dir_lights[i].direction = glm::vec4(dir, 0.0f);
+    }
+
     glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBuffer), &light_buffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBuffer), &light_buffer_GPU);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //modeltoWorld uniform
