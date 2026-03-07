@@ -65,7 +65,6 @@ constexpr int lights_binding_index = 1;
 
 std::unordered_map<std::string, Node> nodes;
 
-AmbientLight ambient_light;
 std::unique_ptr<LightController> bulb_controller;
 std::unique_ptr<LightController> bulb2_controller;
 
@@ -75,6 +74,7 @@ constexpr int MAX_DIR_LIGHTS = 1;
 struct LightBuffer{
     PointLight point_lights[MAX_POINT_LIGHTS];
     DirectionalLight dir_lights[MAX_DIR_LIGHTS];
+    AmbientLight ambient_light;
     int point_light_count;
     int dir_light_count;
 };
@@ -240,7 +240,7 @@ void initializeNodes(){
 void initializeLights(){
     std::vector<DirectionalLight> directional_lights;
     std::vector<PointLight> point_lights;
-    ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+    light_buffer.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
     
     PointLight pl;
     pl.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -314,6 +314,7 @@ void initializeCameras(GLFWwindow* window){
 void initializeIMGUI(GLFWwindow* window){
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -384,7 +385,7 @@ void display(GLFWwindow* window){
                 current_terrain_program = &terrain_lambertian_program;
                 nodes["sphere"].material.type = Material::LAMBERTIAN;
                 nodes["plane"].material.type= Material::LAMBERTIAN;
-                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &phong_program;
@@ -393,7 +394,7 @@ void display(GLFWwindow* window){
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 32.0f;
                 nodes["plane"].material.shininess = 16.0f;
-                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &blinn_program;
@@ -402,7 +403,7 @@ void display(GLFWwindow* window){
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 128.0f;
                 nodes["plane"].material.shininess = 64.0f;
-                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &gaussian_program;
@@ -411,14 +412,14 @@ void display(GLFWwindow* window){
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 0.15f;
                 nodes["plane"].material.shininess = 0.4f;
-                ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
+                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
                 break;
             case LM_PBR_LIGHTING:
                 current_program = &pbr_program;
                 current_terrain_program = &terrain_pbr_program;
                 nodes["sphere"].material.type = Material::PBR;
                 nodes["plane"].material.type = Material::PBR;
-                ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+                light_buffer.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
@@ -434,7 +435,7 @@ void display(GLFWwindow* window){
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
-    renderGUI::renderLightWindow(ambient_light, light_buffer.point_lights, light_buffer.dir_lights);
+    renderGUI::renderLightWindow(light_buffer.ambient_light, light_buffer.point_lights, light_buffer.dir_lights);
     renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, bulb_controller->rotate_flag, camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
@@ -473,7 +474,6 @@ void display(GLFWwindow* window){
     glUseProgram(current_program->program_uint);
 
     //light uniforms
-    glUniform4fv(current_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
     light_buffer_GPU = light_buffer;
 
     for(int i = 0; i < light_buffer.point_light_count; i++){
@@ -518,8 +518,6 @@ void display(GLFWwindow* window){
     //RENDER PLANE 
     //============
     glUseProgram(current_terrain_program->program_uint);
-
-    glUniform4fv(current_terrain_program->ambient_intensity_unif, 1, glm::value_ptr(ambient_light.intensity));
 
     glm::mat4 plane_model_mat = nodes["plane"].transform.model_mat;
     
