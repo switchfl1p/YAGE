@@ -24,16 +24,7 @@
 //========================================================
 
 std::vector<core_util::LitProgramData*> lit_programs;
-core_util::LitProgramData lambertian_program;
-core_util::LitProgramData phong_program;
 core_util::LitProgramData blinn_program;
-core_util::LitProgramData gaussian_program;
-core_util::LitProgramData pbr_program;
-
-core_util::LitProgramData terrain_pbr_program;
-core_util::LitProgramData terrain_lambertian_program;
-core_util::LitProgramData terrain_phong_program;
-core_util::LitProgramData terrain_gaussian_program;
 core_util::LitProgramData terrain_blinn_program;
 
 core_util::UnlitProgramData unlit_program;
@@ -53,7 +44,7 @@ enum LightingModel
     LM_COUNT,
 };
 
-int light_model = LM_PBR_LIGHTING;
+int light_model = LM_BLINN_LIGHTING;
 
 GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
@@ -101,33 +92,13 @@ std::unique_ptr<TerrainData> terrain = nullptr;
 //========================================================
 
 void initializePrograms(){
-    lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
-    phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
     blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
-    gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
-    pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
-
-    //terrain
-    terrain_pbr_program = core_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
-    terrain_lambertian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
-    terrain_phong_program = core_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
-    terrain_gaussian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
     terrain_blinn_program = core_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
+    lit_programs.push_back(&blinn_program);
+    lit_programs.push_back(&terrain_blinn_program);
     
     //No Light
     unlit_program = core_util::loadUnlitProgram("simple.vert", "no_light.frag");
-
-    lit_programs.push_back(&lambertian_program);
-    lit_programs.push_back(&phong_program);
-    lit_programs.push_back(&blinn_program);
-    lit_programs.push_back(&gaussian_program);
-    lit_programs.push_back(&pbr_program);
-
-    lit_programs.push_back(&terrain_pbr_program);
-    lit_programs.push_back(&terrain_lambertian_program);
-    lit_programs.push_back(&terrain_phong_program);
-    lit_programs.push_back(&terrain_gaussian_program);
-    lit_programs.push_back(&terrain_blinn_program);
 }
 
 void initializeUBOs(){
@@ -380,22 +351,6 @@ void display(GLFWwindow* window){
     if(light_model != previous_light_model){
 
         switch(light_model){
-            case LM_LAMBERTIAN:
-                current_program = &lambertian_program;
-                current_terrain_program = &terrain_lambertian_program;
-                nodes["sphere"].material.type = Material::LAMBERTIAN;
-                nodes["plane"].material.type= Material::LAMBERTIAN;
-                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-                break;
-            case LM_PHONG_LIGHTING:
-                current_program = &phong_program;
-                current_terrain_program = &terrain_phong_program;
-                nodes["sphere"].material.type = Material::PHONG;
-                nodes["plane"].material.type = Material::PHONG;
-                nodes["sphere"].material.shininess = 32.0f;
-                nodes["plane"].material.shininess = 16.0f;
-                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-                break;
             case LM_BLINN_LIGHTING:
                 current_program = &blinn_program;
                 current_terrain_program = &terrain_blinn_program;
@@ -404,22 +359,6 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.shininess = 128.0f;
                 nodes["plane"].material.shininess = 64.0f;
                 light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-                break;
-            case LM_GAUSSIAN_LIGHTING:
-                current_program = &gaussian_program;
-                current_terrain_program = &terrain_gaussian_program;
-                nodes["sphere"].material.type = Material::PHONG;
-                nodes["plane"].material.type = Material::PHONG;
-                nodes["sphere"].material.shininess = 0.15f;
-                nodes["plane"].material.shininess = 0.4f;
-                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
-                break;
-            case LM_PBR_LIGHTING:
-                current_program = &pbr_program;
-                current_terrain_program = &terrain_pbr_program;
-                nodes["sphere"].material.type = Material::PBR;
-                nodes["plane"].material.type = Material::PBR;
-                light_buffer.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
@@ -642,12 +581,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
 
         light_draw_changed = true;
-    }
-
-    if(key == GLFW_KEY_Q && action == GLFW_PRESS){
-        light_model += 1;
-        light_model %= LM_COUNT;
-        light_model_changed = true;
     }
 
     if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS){
