@@ -9,7 +9,6 @@
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
-#include <iostream>
 
 #include <Camera.hpp>
 #include <CameraController.hpp>
@@ -572,14 +571,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     if(key == GLFW_KEY_E && action == GLFW_PRESS){
         bulb_controller->draw_flag = !bulb_controller->draw_flag;
+        bulb2_controller->draw_flag = !bulb2_controller->draw_flag;
+        
 
         if(bulb_controller->draw_flag){
             light_buffer.point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            light_buffer.point_lights[1].intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
         }
         else{
-            light_buffer.point_lights[0].intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            for(auto& light : light_buffer.point_lights){
+                light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            }
         }
-
         light_draw_changed = true;
     }
 
@@ -592,14 +595,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             cam_controller->first_mouse = true;
         }
-    }
-
-    //console logging
-    if(rotation_changed){
-        bulb_controller->rotate_flag ? std::cout << "Light Rotation: On\n" : std::cout << "Light Rotation: Off\n";
-    }
-    if(light_draw_changed){
-        bulb_controller->draw_flag ? std::cout << "Point Light: On\n" : std::cout << "Point Light: Off\n";
     }
 }
 
