@@ -88,6 +88,8 @@ float last_frame = 0.0f;
 std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
 std::unique_ptr<TerrainData> terrain = nullptr;
 
+std::unique_ptr<Framework::Timer> bulb_timer= nullptr;
+
 //========================================================
 
 void initializePrograms(){
@@ -250,6 +252,10 @@ void initializeLights(){
     bulb2_controller->radius = 2.0f;
 
     light_block_GPU = light_block;
+
+    Framework::Timer(Framework::Timer::TT_LOOP, 10.0f);
+
+    bulb_timer = std::make_unique<Framework::Timer>(Framework::Timer::TT_LOOP, 10.0f);
 }
 
 void initializeBuffers(){
@@ -337,10 +343,11 @@ void display(GLFWwindow* window){
     }
 
     //bulb movement
-    bulb_controller->rotatePointLight(current_frame, delta_time);
+    bulb_timer->Update();
+    bulb_controller->rotatePointLight(*bulb_timer);
     bulb_controller->processPointLightInput(window, delta_time);
 
-    bulb2_controller->halfRotatePointLight(current_frame, delta_time);
+    bulb2_controller->halfRotatePointLight(*bulb_timer);
     bulb2_controller->processPointLightInput(window, delta_time);
 
     PointLight& point_light = light_block.point_lights[0];
@@ -374,7 +381,7 @@ void display(GLFWwindow* window){
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
     renderGUI::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
-    renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, bulb_controller->rotate_flag, camera_movement_flag);
+    renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, !bulb_timer->IsPaused(), camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
@@ -524,7 +531,7 @@ void display(GLFWwindow* window){
     }
 
     viewport_fb->Unbind();
-    // Display the framebuffer texture in ImGui
+    //Display the framebuffer texture in ImGui
     ImGui::Image(
         (void*)(intptr_t)viewport_fb->textureID,
         viewport_size,
@@ -556,19 +563,17 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 
-    bool rotation_changed = false;
-    bool light_draw_changed = false;
-    bool light_model_changed = false;
-
+    //Exit
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         glfwSetWindowShouldClose(window, true);
     }
 
+    //Toggle Rotation On/Off
     if(key == GLFW_KEY_R && action == GLFW_PRESS){
-        bulb_controller->rotate_flag = !bulb_controller->rotate_flag;
-        rotation_changed = true;
+        bulb_timer->TogglePause();
     }
 
+    //Toggle Point Lights On/Off
     if(key == GLFW_KEY_E && action == GLFW_PRESS){
         bulb_controller->draw_flag = !bulb_controller->draw_flag;
         bulb2_controller->draw_flag = !bulb2_controller->draw_flag;
@@ -583,9 +588,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
             }
         }
-        light_draw_changed = true;
     }
 
+    //Toggle Camera lock On/Off
     if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS){
         camera_movement_flag = !camera_movement_flag;
 
