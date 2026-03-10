@@ -12,6 +12,7 @@ set(CORE_SOURCES
 	renderGUI.cpp
 	perlin.cpp
 	Terrain.cpp
+	Timer.cpp
 )
 
 set(CORE_HEADERS
@@ -27,6 +28,8 @@ set(CORE_HEADERS
 	renderGUI.hpp
 	perlin.hpp
 	Terrain.hpp
+	Timer.hpp
+	Interpolators.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

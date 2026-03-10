@@ -61,7 +61,7 @@ std::unique_ptr<LightController> bulb2_controller;
 constexpr int MAX_POINT_LIGHTS = 2;
 constexpr int MAX_DIR_LIGHTS = 1;
 
-struct LightBuffer{
+struct LightBlock{
     PointLight point_lights[MAX_POINT_LIGHTS];
     DirectionalLight dir_lights[MAX_DIR_LIGHTS];
     AmbientLight ambient_light;
@@ -69,8 +69,8 @@ struct LightBuffer{
     int dir_light_count;
 };
 
-LightBuffer light_buffer;
-LightBuffer light_buffer_GPU;
+LightBlock light_block;
+LightBlock light_block_GPU;
 
 core_util::ModelData sphere_data;
 core_util::ModelData plane_data;
@@ -122,10 +122,10 @@ void initializeUBOs(){
     //Lights UBO
     glGenBuffers(1, &lights_UBO);
     glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightBuffer), NULL, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightBlock), NULL, GL_STREAM_DRAW);
 
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, lights_binding_index, lights_UBO, 0, sizeof(LightBuffer));
+    glBindBufferRange(GL_UNIFORM_BUFFER, lights_binding_index, lights_UBO, 0, sizeof(LightBlock));
 
     //handle lit programs
     for(auto* program : lit_programs){
@@ -199,7 +199,7 @@ void initializeNodes(){
         plane.material = plane_material;
 
         Transform plane_transform;
-        plane_transform.translation_component = glm::vec3(-25.0f,0.0,-25.0f);
+        plane_transform.translation_component = glm::vec3(-10.0f,0.0,-10.0f);
         plane_transform.calc_model_mat();
         plane.transform = plane_transform;
 
@@ -210,7 +210,7 @@ void initializeNodes(){
 void initializeLights(){
     std::vector<DirectionalLight> directional_lights;
     std::vector<PointLight> point_lights;
-    light_buffer.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+    light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
     
     PointLight pl;
     pl.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -231,25 +231,25 @@ void initializeLights(){
 
     directional_lights.push_back(sun);
 
-    //copy to LightBuffer for use with UBO
-    light_buffer.point_light_count = point_lights.size();
-    light_buffer.dir_light_count = directional_lights.size();
+    //copy to LightBlock for use with UBO
+    light_block.point_light_count = point_lights.size();
+    light_block.dir_light_count = directional_lights.size();
 
     for(int i = 0; i < point_lights.size(); i++){
-        light_buffer.point_lights[i] = point_lights[i];
+        light_block.point_lights[i] = point_lights[i];
     }
 
     for(int i = 0; i < directional_lights.size(); i++){
-        light_buffer.dir_lights[i] = directional_lights[i];
+        light_block.dir_lights[i] = directional_lights[i];
     }
 
-    bulb_controller = std::make_unique<LightController>(light_buffer.point_lights[0]);
+    bulb_controller = std::make_unique<LightController>(light_block.point_lights[0]);
     bulb_controller->radius = 1.0f;
 
-    bulb2_controller = std::make_unique<LightController>(light_buffer.point_lights[1]);
+    bulb2_controller = std::make_unique<LightController>(light_block.point_lights[1]);
     bulb2_controller->radius = 2.0f;
 
-    light_buffer_GPU = light_buffer;
+    light_block_GPU = light_block;
 }
 
 void initializeBuffers(){
@@ -257,7 +257,7 @@ void initializeBuffers(){
 
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
 
-    terrain = std::make_unique<TerrainData>(50, 50, 5.76f , 16, 10.94f , 1, 6, 2.0, 0.5);
+    terrain = std::make_unique<TerrainData>(20, 20, 6.667f , 36, 10.94f , 1, 6, 2.0f, 0.5f);
 
     sphere_data = core_util::loadModelData(sphere);
     plane_data = core_util::createTerrainBuffers(*terrain);
@@ -343,8 +343,8 @@ void display(GLFWwindow* window){
     bulb2_controller->halfRotatePointLight(current_frame, delta_time);
     bulb2_controller->processPointLightInput(window, delta_time);
 
-    PointLight& point_light = light_buffer.point_lights[0];
-    PointLight& point_light_2 = light_buffer.point_lights[1];
+    PointLight& point_light = light_block.point_lights[0];
+    PointLight& point_light_2 = light_block.point_lights[1];
 
     static int previous_light_model = -1;
     if(light_model != previous_light_model){
@@ -357,7 +357,7 @@ void display(GLFWwindow* window){
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 128.0f;
                 nodes["plane"].material.shininess = 64.0f;
-                light_buffer.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
@@ -373,7 +373,7 @@ void display(GLFWwindow* window){
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
-    renderGUI::renderLightWindow(light_buffer.ambient_light, light_buffer.point_lights, light_buffer.dir_lights);
+    renderGUI::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
     renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, bulb_controller->rotate_flag, camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
@@ -412,21 +412,21 @@ void display(GLFWwindow* window){
     glUseProgram(current_program->program_uint);
 
     //light uniforms
-    light_buffer_GPU = light_buffer;
+    light_block_GPU = light_block;
 
-    for(int i = 0; i < light_buffer.point_light_count; i++){
-        light_buffer_GPU.point_lights[i].position = cam->getViewMat() * light_buffer.point_lights[i].position;
+    for(int i = 0; i < light_block.point_light_count; i++){
+        light_block_GPU.point_lights[i].position = cam->getViewMat() * light_block.point_lights[i].position;
     }
 
     glm::mat3 view_rot = glm::mat3(cam->getViewMat());
-    for(int i = 0; i < light_buffer.dir_light_count; i++){
-        glm::vec3 dir = view_rot * light_buffer.dir_lights[i].direction;
+    for(int i = 0; i < light_block.dir_light_count; i++){
+        glm::vec3 dir = view_rot * light_block.dir_lights[i].direction;
         dir = glm::normalize(dir);
-        light_buffer_GPU.dir_lights[i].direction = glm::vec4(dir, 0.0f);
+        light_block_GPU.dir_lights[i].direction = glm::vec4(dir, 0.0f);
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBuffer), &light_buffer_GPU);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBlock), &light_block_GPU);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //modeltoWorld uniform
@@ -575,11 +575,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         
 
         if(bulb_controller->draw_flag){
-            light_buffer.point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            light_buffer.point_lights[1].intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+            light_block.point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            light_block.point_lights[1].intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
         }
         else{
-            for(auto& light : light_buffer.point_lights){
+            for(auto& light : light_block.point_lights){
                 light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
             }
         }
