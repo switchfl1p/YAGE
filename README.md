@@ -2,7 +2,9 @@
 YAGE is (Y)et (A)nother (G)raphics (E)ngine written in C++ using OpenGL.
 
 
-https://github.com/user-attachments/assets/c68a7b8e-99bd-4fe9-8397-0b4a02d48059
+
+https://github.com/user-attachments/assets/039cf1e9-18d2-428f-83dd-266c9354c7b2
+
 
 
 glfw dependencies for Fedora:
