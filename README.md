@@ -1,6 +1,10 @@
 # YAGE
 YAGE is (Y)et (A)nother (G)raphics (E)ngine written in C++ using OpenGL.
 
+
+https://github.com/user-attachments/assets/c68a7b8e-99bd-4fe9-8397-0b4a02d48059
+
+
 glfw dependencies for Fedora:
 ```bash
 sudo dnf install wayland-devel wayland-protocols-devel
