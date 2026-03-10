@@ -2,7 +2,7 @@
 
 ### Camera and CameraController classes
 Camera handles only the data and methods necessary to perform view and perspective transformations. Any data and methods related to movement and input are implemented in CameraController.
-We use smart pointers for the cameras because of delayed initalization, since the camera's cant be constructed before we know the size of the frame buffer.
+We use smart pointers for the cameras because of delayed initalization, since the cameras cant be constructed before we know the size of the frame buffer.
 
 Usage:
 
