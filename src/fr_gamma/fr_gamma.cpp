@@ -19,62 +19,43 @@
 #include <core_util.hpp>
 #include <renderGUI.hpp>
 #include <Terrain.hpp>
+#include <LightManager.hpp>
 
-//========================================================
+//=============================================================
 
 std::vector<core_util::LitProgramData*> lit_programs;
+core_util::LitProgramData lambertian_program;
+core_util::LitProgramData phong_program;
 core_util::LitProgramData blinn_program;
+core_util::LitProgramData gaussian_program;
+core_util::LitProgramData pbr_program;
+core_util::LitProgramData terrain_pbr_program;
+core_util::LitProgramData terrain_lambertian_program;
+core_util::LitProgramData terrain_phong_program;
+core_util::LitProgramData terrain_gaussian_program;
 core_util::LitProgramData terrain_blinn_program;
-
 core_util::UnlitProgramData unlit_program;
-
-//program switching helper
+//for switching between programs
 core_util::LitProgramData* current_program;
 core_util::LitProgramData* current_terrain_program;
-
-enum LightingModel
-{
-    LM_LAMBERTIAN = 0,
-    LM_PHONG_LIGHTING,
-    LM_BLINN_LIGHTING,
-    LM_GAUSSIAN_LIGHTING,
-    LM_PBR_LIGHTING,
-
-    LM_COUNT,
-};
-
-int light_model = LM_BLINN_LIGHTING;
 
 GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
 constexpr int matrices_binding_index = 0;
-
 GLuint lights_uniform_block_index;
 GLuint lights_UBO;
 constexpr int lights_binding_index = 1;
 
-std::unordered_map<std::string, Node> nodes;
-
+int light_model = LM_PBR_LIGHTING;
 std::unique_ptr<LightController> bulb_controller;
 std::unique_ptr<LightController> bulb2_controller;
-
-constexpr int MAX_POINT_LIGHTS = 2;
-constexpr int MAX_DIR_LIGHTS = 1;
-
-struct LightBlock{
-    PointLight point_lights[MAX_POINT_LIGHTS];
-    DirectionalLight dir_lights[MAX_DIR_LIGHTS];
-    AmbientLight ambient_light;
-    int point_light_count;
-    int dir_light_count;
-};
-
 LightBlock light_block;
 LightBlock light_block_GPU;
 
+std::unordered_map<std::string, Node> nodes;
+std::unique_ptr<TerrainData> terrain = nullptr;
 core_util::ModelData sphere_data;
 core_util::ModelData plane_data;
-
 core_util::VAOData sphere_vao;
 core_util::VAOData plane_vao;
 
@@ -82,24 +63,42 @@ std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
 bool camera_movement_flag;
 
+std::unique_ptr<Framework::Timer> bulb_timer= nullptr;
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
 std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
-std::unique_ptr<TerrainData> terrain = nullptr;
 
-std::unique_ptr<Framework::Timer> bulb_timer= nullptr;
-
-//========================================================
+//=============================================================
 
 void initializePrograms(){
+    lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
+    phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
     blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
+    gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
+    pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
+
+    //terrain
+    terrain_pbr_program = core_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
+    terrain_lambertian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
+    terrain_phong_program = core_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
+    terrain_gaussian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
     terrain_blinn_program = core_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
-    lit_programs.push_back(&blinn_program);
-    lit_programs.push_back(&terrain_blinn_program);
     
     //No Light
     unlit_program = core_util::loadUnlitProgram("simple.vert", "no_light.frag");
+
+    lit_programs.push_back(&lambertian_program);
+    lit_programs.push_back(&phong_program);
+    lit_programs.push_back(&blinn_program);
+    lit_programs.push_back(&gaussian_program);
+    lit_programs.push_back(&pbr_program);
+
+    lit_programs.push_back(&terrain_pbr_program);
+    lit_programs.push_back(&terrain_lambertian_program);
+    lit_programs.push_back(&terrain_phong_program);
+    lit_programs.push_back(&terrain_gaussian_program);
+    lit_programs.push_back(&terrain_blinn_program);
 }
 
 void initializeUBOs(){
@@ -251,10 +250,7 @@ void initializeLights(){
     bulb2_controller = std::make_unique<LightController>(light_block.point_lights[1]);
     bulb2_controller->radius = 2.0f;
 
-    light_block_GPU = light_block;
-
     Framework::Timer(Framework::Timer::TT_LOOP, 10.0f);
-
     bulb_timer = std::make_unique<Framework::Timer>(Framework::Timer::TT_LOOP, 10.0f);
 }
 
@@ -357,6 +353,22 @@ void display(GLFWwindow* window){
     if(light_model != previous_light_model){
 
         switch(light_model){
+            case LM_LAMBERTIAN:
+                current_program = &lambertian_program;
+                current_terrain_program = &terrain_lambertian_program;
+                nodes["sphere"].material.type = Material::LAMBERTIAN;
+                nodes["plane"].material.type= Material::LAMBERTIAN;
+                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                break;
+            case LM_PHONG_LIGHTING:
+                current_program = &phong_program;
+                current_terrain_program = &terrain_phong_program;
+                nodes["sphere"].material.type = Material::PHONG;
+                nodes["plane"].material.type = Material::PHONG;
+                nodes["sphere"].material.shininess = 32.0f;
+                nodes["plane"].material.shininess = 16.0f;
+                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                break;
             case LM_BLINN_LIGHTING:
                 current_program = &blinn_program;
                 current_terrain_program = &terrain_blinn_program;
@@ -365,6 +377,22 @@ void display(GLFWwindow* window){
                 nodes["sphere"].material.shininess = 128.0f;
                 nodes["plane"].material.shininess = 64.0f;
                 light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                break;
+            case LM_GAUSSIAN_LIGHTING:
+                current_program = &gaussian_program;
+                current_terrain_program = &terrain_gaussian_program;
+                nodes["sphere"].material.type = Material::PHONG;
+                nodes["plane"].material.type = Material::PHONG;
+                nodes["sphere"].material.shininess = 0.15f;
+                nodes["plane"].material.shininess = 0.4f;
+                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
+                break;
+            case LM_PBR_LIGHTING:
+                current_program = &pbr_program;
+                current_terrain_program = &terrain_pbr_program;
+                nodes["sphere"].material.type = Material::PBR;
+                nodes["plane"].material.type = Material::PBR;
+                light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
@@ -600,6 +628,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             cam_controller->first_mouse = true;
         }
+    }
+
+    bool light_model_changed = false;
+
+    if(key == GLFW_KEY_Q && action == GLFW_PRESS){
+        light_model += 1;
+        light_model %= LM_COUNT;
+        light_model_changed = true;
     }
 }
 

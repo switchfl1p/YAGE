@@ -30,6 +30,7 @@ set(CORE_HEADERS
 	Terrain.hpp
 	Timer.hpp
 	Interpolators.hpp
+	LightManager.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
