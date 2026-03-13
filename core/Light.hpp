@@ -11,7 +11,7 @@ struct PointLight{
     glm::vec4 position;
     glm::vec4 intensity = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
     float attenuation = 1.0f;
-    float padding[3]; //for UBO usage, size needs to multiple of 16
+    float padding[3]; //for UBO usage, size needs to be multiple of 16
 };
 
 struct DirectionalLight{

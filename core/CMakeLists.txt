@@ -13,6 +13,7 @@ set(CORE_SOURCES
 	perlin.cpp
 	Terrain.cpp
 	Timer.cpp
+	LightManager.cpp
 )
 
 set(CORE_HEADERS
