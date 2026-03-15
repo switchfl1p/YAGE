@@ -69,6 +69,8 @@ float last_frame = 0.0f;
 
 std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
 
+LightManager light_manager;
+
 //=============================================================
 
 void initializePrograms(){
@@ -252,6 +254,28 @@ void initializeLights(){
 
     Framework::Timer(Framework::Timer::TT_LOOP, 10.0f);
     bulb_timer = std::make_unique<Framework::Timer>(Framework::Timer::TT_LOOP, 10.0f);
+
+    //================
+    //================
+    //      NEW
+    //================
+    //================
+
+    SunlightValue values[] =
+	{
+		{ 0.0f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sun.intensity},
+		{ 4.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sun.intensity},
+		{ 6.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.10f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
+		{ 8.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
+		{18.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
+		{19.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.1f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
+		{20.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sun.intensity},
+	};
+
+    light_manager.setSunlightValues(values);
+
+    light_manager.setPointLightIntensity(0, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
+    light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 0.3f, 1.0f));
 }
 
 void initializeBuffers(){
@@ -325,6 +349,8 @@ void init(GLFWwindow* window){
 
 // Called every frame
 void display(GLFWwindow* window){
+    light_manager.updateTime();
+    glm::vec4 bkg = light_manager.getBackgroundColor();
     glfwPollEvents();
 
     //delta time calcs
@@ -432,7 +458,7 @@ void display(GLFWwindow* window){
     //==========
     //Start Here
     //==========
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(bkg[0], bkg[1], bkg[2], bkg[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //pass view and perspective matrix to UBO

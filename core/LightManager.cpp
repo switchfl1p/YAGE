@@ -1,3 +1,4 @@
+#include "glm/ext/matrix_transform.hpp"
 #include <LightManager.hpp>
 
 LightManager::LightManager()
@@ -49,6 +50,15 @@ LightManager::LightManager()
 
 	light_pos_interpolators[1].SetValues(pos_values);
 	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 25.0f));
+}
+
+glm::vec4 GetValue(const LightVectorData &data) {return data.first;}
+float GetTime(const LightVectorData &data) {return data.second;}
+float GetValue(const MaxIntensityData &data) {return data.first;}
+float GetTime(const MaxIntensityData &data) {return data.second;}
+float distance(const glm::vec3 &lhs, const glm::vec3 &rhs)
+{
+	return glm::length(rhs - lhs);
 }
 
 void LightManager::setSunlightValues(std::span<SunlightValue> sun_values){
@@ -147,5 +157,43 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
 	light_data.ambient_light.intensity = ambient_interpolator.Interpolate(sun_timer.GetAlpha());
 	//attenuation
 
-	light_data.dir_lights[0].direction = world_to_camera_mat * light_data.dir_lights[0].direction;
+	light_data.dir_lights[0].direction = world_to_camera_mat * getSunlightDirection();
+	light_data.dir_lights[0].intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+
+	for(int i = 0; i < light_data.point_light_count; i++){
+		glm::vec4 world_light_pos = glm::vec4(light_pos_interpolators[i].Interpolate(light_timers[i].GetAlpha()), 1.0f);
+		glm::vec4 light_pos_cam_space = world_to_camera_mat * world_light_pos;
+
+		light_data.point_lights[i].position = light_pos_cam_space;
+		light_data.point_lights[i].intensity = light_intensities[i];
+	}
+	return light_data;
+}
+
+//rotates sunlight and returns it
+glm::vec4 LightManager::getSunlightDirection() const{
+	float angle = 2.0f * 3.14159f * sun_timer.GetAlpha();
+	glm::vec4 sun_direction(0.0f);
+
+	//sun starts straight up, at noon
+	sun_direction.x = sinf(angle);
+	sun_direction.y = cosf(angle);
+
+	//keeps the sun from being perfectly centered overhead
+	//todo, check if 5.0f is an actual good angle here
+	sun_direction = glm::rotate(glm::mat4(1.0f), 5.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * sun_direction;
+
+	return sun_direction;
+}
+
+glm::vec4 LightManager::getSunlightIntensity() const{
+	return sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+}
+
+void LightManager::setPointLightIntensity(int light_index, const glm::vec4 &intensity){
+	light_intensities[light_index] = intensity;
+}
+
+glm::vec4 LightManager::getBackgroundColor() const{
+	return background_interpolator.Interpolate(sun_timer.GetAlpha());
 }
