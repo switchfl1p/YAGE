@@ -12,7 +12,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
 
     // diffuse
     float diff = max(dot(surface_normal, light_dir), 0.0);
-    
+
     // specular (Phong)
     vec3 reflect_dir = reflect(-light_dir, surface_normal);
     float spec = 0.0;
@@ -25,7 +25,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
 }
 
 vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
-    vec3 light_dir = normalize(-light.direction.xyz);
+    vec3 light_dir = normalize(light.direction.xyz);
 
     // diffuse
     float diff = max(dot(surface_normal, light_dir), 0.0);

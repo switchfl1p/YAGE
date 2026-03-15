@@ -25,7 +25,7 @@ void main()
     // --- Directional Lights ---
     for (int i = 0; i < dir_light_count; i++)
     {
-        vec3 light_dir = normalize(-dir_lights[i].direction.xyz);
+        vec3 light_dir = normalize(dir_lights[i].direction.xyz);
         vec4 intensity = dir_lights[i].intensity;
 
         float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);

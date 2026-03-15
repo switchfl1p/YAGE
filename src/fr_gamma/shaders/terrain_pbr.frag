@@ -47,7 +47,7 @@ void main()
     // --- Directional Lights ---
     for (int i = 0; i < dir_light_count; i++)
     {
-        vec3 L = normalize(-dir_lights[i].direction.xyz);
+        vec3 L = normalize(dir_lights[i].direction.xyz);
         vec3 radiance = dir_lights[i].intensity.rgb;
 
         Lo += calcBRDF(N, V, L, radiance, F0, terrain_color);

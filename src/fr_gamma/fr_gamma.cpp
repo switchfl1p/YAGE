@@ -143,7 +143,7 @@ void initializeNodes(){
         Node bulb;
         Material bulb_material;
         bulb_material.type = Material::EMISSIVE;
-        bulb_material.phong_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); //white
+        bulb_material.phong_color = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); //white
         bulb.material = bulb_material;
 
         Transform bulb_transform;
@@ -157,7 +157,7 @@ void initializeNodes(){
         Node bulb_2;
         Material bulb_material;
         bulb_material.type = Material::EMISSIVE;
-        bulb_material.phong_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); //white
+        bulb_material.phong_color = glm::vec4(0.0f, 0.0f, 0.3f, 1.0f); //white
         bulb_2.material = bulb_material;
 
         Transform bulb_transform;
@@ -473,19 +473,8 @@ void display(GLFWwindow* window){
     glUseProgram(current_program->program_uint);
 
     //light uniforms
-    light_block_GPU = light_block;
-
-    for(int i = 0; i < light_block.point_light_count; i++){
-        light_block_GPU.point_lights[i].position = cam->getViewMat() * light_block.point_lights[i].position;
-    }
-
-    glm::mat3 view_rot = glm::mat3(cam->getViewMat());
-    for(int i = 0; i < light_block.dir_light_count; i++){
-        glm::vec3 dir = view_rot * light_block.dir_lights[i].direction;
-        dir = glm::normalize(dir);
-        light_block_GPU.dir_lights[i].direction = glm::vec4(dir, 0.0f);
-    }
-
+    light_block_GPU = light_manager.getLightInformation(cam->getViewMat());
+    
     glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBlock), &light_block_GPU);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -550,7 +539,7 @@ void display(GLFWwindow* window){
     nodes["bulb"].material.phong_color = point_light.intensity;
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb"].material.phong_color));
 
-    nodes["bulb"].transform.translation_component = point_light.position;
+    nodes["bulb"].transform.translation_component = light_manager.getWorldLightPosition(0);
     nodes["bulb"].transform.calc_model_mat();
 
     glm::mat4 bulb_model_mat = nodes["bulb"].transform.model_mat;
@@ -559,17 +548,16 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
-    if(bulb_controller->draw_flag){
-        glBindVertexArray(sphere_vao.vao);
-        glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
-        glBindVertexArray(0);
-    }
+
+    glBindVertexArray(sphere_vao.vao);
+    glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
 
     //2
     nodes["bulb_2"].material.phong_color = point_light_2.intensity;
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_2"].material.phong_color));
 
-    nodes["bulb_2"].transform.translation_component = point_light_2.position;
+    nodes["bulb_2"].transform.translation_component = light_manager.getWorldLightPosition(1);
     nodes["bulb_2"].transform.calc_model_mat();
 
     glm::mat4 bulb2_model_mat = nodes["bulb_2"].transform.model_mat;
@@ -577,12 +565,10 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb2_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    
-    if(bulb2_controller->draw_flag){
-        glBindVertexArray(sphere_vao.vao);
-        glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
-        glBindVertexArray(0);
-    }
+
+    glBindVertexArray(sphere_vao.vao);
+    glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
 
     viewport_fb->Unbind();
     //Display the framebuffer texture in ImGui

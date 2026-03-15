@@ -42,7 +42,7 @@ void main()
     for (int i = 0; i < dir_light_count; i++)
     {
         // Direction in light_common points *toward* the light (negate if stored as light-to-surface)
-        vec3 light_dir = normalize(-dir_lights[i].direction.xyz); // flip to point toward light
+        vec3 light_dir = normalize(dir_lights[i].direction.xyz);
         vec4 intensity = dir_lights[i].intensity;
 
         float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);

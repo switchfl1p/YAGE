@@ -13,41 +13,31 @@ LightManager::LightManager()
     std::vector<glm::vec3> pos_values;
     pos_values.reserve(60);
 
-    pos_values.push_back(glm::vec3(-50.0f, 30.0f, 70.0f));
-	pos_values.push_back(glm::vec3(-70.0f, 30.0f, 50.0f));
-	pos_values.push_back(glm::vec3(-70.0f, 30.0f, -50.0f));
-	pos_values.push_back(glm::vec3(-50.0f, 30.0f, -70.0f));
-	pos_values.push_back(glm::vec3(50.0f, 30.0f, -70.0f));
-	pos_values.push_back(glm::vec3(70.0f, 30.0f, -50.0f));
-	pos_values.push_back(glm::vec3(70.0f, 30.0f, 50.0f));
-	pos_values.push_back(glm::vec3(50.0f, 30.0f, 70.0f));
+	// Light 0 - orbits the terrain
+	pos_values.push_back(glm::vec3(-5.0f, 1.5f, 8.0f));
+	pos_values.push_back(glm::vec3(-8.0f, 1.5f, 5.0f));
+	pos_values.push_back(glm::vec3(-8.0f, 1.5f, -5.0f));
+	pos_values.push_back(glm::vec3(-5.0f, 1.5f, -8.0f));
+	pos_values.push_back(glm::vec3(5.0f, 1.5f, -8.0f));
+	pos_values.push_back(glm::vec3(8.0f, 1.5f, -5.0f));
+	pos_values.push_back(glm::vec3(8.0f, 1.5f, 5.0f));
+	pos_values.push_back(glm::vec3(5.0f, 1.5f, 8.0f));
 	light_pos_interpolators[0].SetValues(pos_values);
 	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 15.0f));
 
-	//Right-side light.
+	// Light 1 - wanders across the terrain at varying heights
 	pos_values.clear();
-	pos_values.push_back(glm::vec3(100.0f, 6.0f, 75.0f));
-	pos_values.push_back(glm::vec3(90.0f, 8.0f, 90.0f));
-	pos_values.push_back(glm::vec3(75.0f, 10.0f, 100.0f));
-	pos_values.push_back(glm::vec3(60.0f, 12.0f, 90.0f));
-	pos_values.push_back(glm::vec3(50.0f, 14.0f, 75.0f));
-	pos_values.push_back(glm::vec3(60.0f, 16.0f, 60.0f));
-	pos_values.push_back(glm::vec3(75.0f, 18.0f, 50.0f));
-	pos_values.push_back(glm::vec3(90.0f, 20.0f, 60.0f));
-	pos_values.push_back(glm::vec3(100.0f, 22.0f, 75.0f));
-	pos_values.push_back(glm::vec3(90.0f, 24.0f, 90.0f));
-	pos_values.push_back(glm::vec3(75.0f, 26.0f, 100.0f));
-	pos_values.push_back(glm::vec3(60.0f, 28.0f, 90.0f));
-	pos_values.push_back(glm::vec3(50.0f, 30.0f, 75.0f));
-
-	pos_values.push_back(glm::vec3(105.0f, 9.0f, -70.0f));
-	pos_values.push_back(glm::vec3(105.0f, 10.0f, -90.0f));
-	pos_values.push_back(glm::vec3(72.0f, 20.0f, -90.0f));
-	pos_values.push_back(glm::vec3(72.0f, 22.0f, -70.0f));
-	pos_values.push_back(glm::vec3(105.0f, 32.0f, -70.0f));
-	pos_values.push_back(glm::vec3(105.0f, 34.0f, -90.0f));
-	pos_values.push_back(glm::vec3(72.0f, 44.0f, -90.0f));
-
+	pos_values.push_back(glm::vec3(8.0f, 1.0f, 6.0f));
+	pos_values.push_back(glm::vec3(6.0f, 1.5f, 8.0f));
+	pos_values.push_back(glm::vec3(3.0f, 2.0f, 7.0f));
+	pos_values.push_back(glm::vec3(-2.0f, 1.5f, 8.0f));
+	pos_values.push_back(glm::vec3(-6.0f, 1.0f, 5.0f));
+	pos_values.push_back(glm::vec3(-8.0f, 1.5f, 0.0f));
+	pos_values.push_back(glm::vec3(-6.0f, 2.0f, -5.0f));
+	pos_values.push_back(glm::vec3(-3.0f, 1.5f, -8.0f));
+	pos_values.push_back(glm::vec3(4.0f, 1.0f, -7.0f));
+	pos_values.push_back(glm::vec3(7.0f, 1.5f, -4.0f));
+	pos_values.push_back(glm::vec3(8.0f, 2.0f, 2.0f));
 	light_pos_interpolators[1].SetValues(pos_values);
 	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 25.0f));
 }
@@ -154,6 +144,9 @@ void LightManager::fastForwardTime(TimerTypes timer, float secFF){
 LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_mat) const{
 	LightBlock light_data;
 
+	light_data.point_light_count = NUMBER_OF_POINT_LIGHTS;
+    light_data.dir_light_count = 1;  
+
 	light_data.ambient_light.intensity = ambient_interpolator.Interpolate(sun_timer.GetAlpha());
 	//attenuation
 
@@ -196,4 +189,8 @@ void LightManager::setPointLightIntensity(int light_index, const glm::vec4 &inte
 
 glm::vec4 LightManager::getBackgroundColor() const{
 	return background_interpolator.Interpolate(sun_timer.GetAlpha());
+}
+
+glm::vec3 LightManager::getWorldLightPosition(int light_index) const{
+	return light_pos_interpolators[light_index].Interpolate(light_timers[light_index].GetAlpha());
 }

@@ -25,7 +25,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
 }
 
 vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
-    vec3 light_dir = normalize(-light.direction.xyz);
+    vec3 light_dir = normalize(light.direction.xyz);
 
     float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
 

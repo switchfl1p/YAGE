@@ -40,7 +40,7 @@ void main()
     // DIRECTIONAL LIGHTS
     for(int i = 0; i < dir_light_count; i++)
     {
-        vec3 light_dir = normalize(-dir_lights[i].direction.xyz);
+        vec3 light_dir = normalize(dir_lights[i].direction.xyz);
 
         float NdotL = max(dot(surface_normal, light_dir), 0.0);
 
