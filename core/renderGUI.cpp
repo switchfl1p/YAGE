@@ -1,49 +1,51 @@
 #include <renderGUI.hpp>
+#include "LightManager.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes){
+void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, int light_model){
     ImGui::Begin("Node Options");
     
     for (auto& [name, node] : nodes) {
         //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode(name.c_str())) {
-
-            switch (node.material.type){
-                case Material::PBR:
-                    if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
-                        std::string base_color_label = "color##" + name;
-                        std::string metallic_label = "metallic##" + name;
-                        std::string roughness_label = "roughness##" + name;
-                        
-                        ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.pbr_color));
-                        ImGui::DragFloat(metallic_label.c_str(), &node.material.metallic, 0.01f, 0.0f, 1.0f);
-                        ImGui::DragFloat(roughness_label.c_str(), &node.material.roughness, 0.01f, 0.0f, 1.0f);
-                        
-                        ImGui::TreePop();
-                    }
-                    break;
-                case Material::LAMBERTIAN:
-                    if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
-                        std::string base_color_label = "color##" + name;
-                        
-                        ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.phong_color));
-                        
-                        ImGui::TreePop();
-                    }
-                    break;
-                case Material::PHONG:
-                    if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
-                        std::string base_color_label = "color##" + name;
-                        std::string shininess_label = "shininess##" + name;
-                        
-                        ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.phong_color));
-                        ImGui::DragFloat(shininess_label.c_str(), &node.material.shininess, 1.0f, 0.0f, 1000.0f);
-                        
-                        ImGui::TreePop();
-                    }
-                    break;
-                case Material::EMISSIVE:
-                    break;
+            if(!node.material.is_emissive){
+                switch (light_model){
+                    case LM_PBR_LIGHTING:
+                        if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                            std::string base_color_label = "color##" + name;
+                            std::string metallic_label = "metallic##" + name;
+                            std::string roughness_label = "roughness##" + name;
+                            
+                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.pbr.color));
+                            ImGui::DragFloat(metallic_label.c_str(), &node.material.pbr.metallic, 0.01f, 0.0f, 1.0f);
+                            ImGui::DragFloat(roughness_label.c_str(), &node.material.pbr.roughness, 0.01f, 0.0f, 1.0f);
+                            
+                            ImGui::TreePop();
+                        }
+                        break;
+                    case LM_LAMBERTIAN:
+                        if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                            std::string base_color_label = "color##" + name;
+                            
+                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color));
+                            
+                            ImGui::TreePop();
+                        }
+                        break;
+                    case LM_PHONG_LIGHTING:
+                    case LM_BLINN_LIGHTING:
+                    case LM_GAUSSIAN_LIGHTING:
+                        if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
+                            std::string base_color_label = "color##" + name;
+                            std::string shininess_label = "shininess##" + name;
+                            
+                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color));
+                            ImGui::DragFloat(shininess_label.c_str(), &node.material.classic.shininess, 1.0f, 0.0f, 1000.0f);
+                            
+                            ImGui::TreePop();
+                        }
+                        break;
+                }
             }
 
             if(ImGui::TreeNode(("Transform Properties##" + name).c_str())){

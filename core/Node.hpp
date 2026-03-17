@@ -27,6 +27,7 @@ struct PBRProperties{
 struct Material{
     ClassicProperties classic;
     PBRProperties pbr;
+    bool is_emissive = false;
 };
 
 struct Node{

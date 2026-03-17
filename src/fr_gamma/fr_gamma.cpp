@@ -38,9 +38,9 @@ int light_model = LM_PBR_LIGHTING;
 std::unordered_map<std::string, Node> nodes;
 std::unique_ptr<TerrainData> terrain = nullptr;
 core_util::ModelData sphere_data;
-core_util::ModelData plane_data;
+core_util::ModelData terrain_data;
 core_util::VAOData sphere_vao;
-core_util::VAOData plane_vao;
+core_util::VAOData terrain_vao;
 
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
@@ -173,18 +173,16 @@ void initializeLights(){
 
 void initializeBuffers(){
     gltf_util::Loader loader;
-
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
+    sphere_data = core_util::loadModelData(sphere);
 
     terrain = std::make_unique<TerrainData>(20, 20, 6.667f , 36, 10.94f , 1, 6, 2.0f, 0.5f);
-
-    sphere_data = core_util::loadModelData(sphere);
-    plane_data = core_util::createTerrainBuffers(*terrain);
+    terrain_data = core_util::createTerrainBuffers(*terrain);
 }
 
 void initializeVertexArrayObjects(){
     sphere_vao = core_util::loadVAOData(sphere_data);
-    plane_vao = core_util::createTerrainVAO(plane_data);
+    terrain_vao = core_util::createTerrainVAO(terrain_data);
 }
 
 void initializeCameras(GLFWwindow* window){
@@ -275,19 +273,19 @@ void display(GLFWwindow* window){
                 current_program = &lit_programs[LM_PHONG_LIGHTING];
                 current_terrain_program = &lit_programs[LM_PHONG_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.classic.shininess = 32.0f;
-                nodes["plane"].material.classic.shininess = 16.0f;
+                nodes["terrain"].material.classic.shininess = 16.0f;
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &lit_programs[LM_BLINN_LIGHTING];
                 current_terrain_program = &lit_programs[LM_BLINN_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.classic.shininess = 128.0f;
-                nodes["plane"].material.classic.shininess = 64.0f;
+                nodes["terrain"].material.classic.shininess = 64.0f;
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &lit_programs[LM_GAUSSIAN_LIGHTING];
                 current_terrain_program = &lit_programs[LM_GAUSSIAN_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.classic.shininess = 0.15f;
-                nodes["plane"].material.classic.shininess = 0.4f;
+                nodes["terrain"].material.classic.shininess = 0.4f;
                 break;
             case LM_PBR_LIGHTING:
                 current_program = &lit_programs[LM_PBR_LIGHTING];
@@ -307,15 +305,15 @@ void display(GLFWwindow* window){
     
     renderGUI::ImGuiDemoDockspaceArgs args;
     renderGUI::dockingDemo(&args, nullptr);
-    renderGUI::renderNodeWindow(nodes);
+    renderGUI::renderNodeWindow(nodes, light_model);
     renderGUI::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
-        core_util::cleanupBuffers(plane_data);
-        glDeleteVertexArrays(1, &plane_vao.vao);
-        plane_data = core_util::createTerrainBuffers(*terrain);
-        plane_vao = core_util::createTerrainVAO(plane_data);
+        core_util::cleanupBuffers(terrain_data);
+        glDeleteVertexArrays(1, &terrain_vao.vao);
+        terrain_data = core_util::createTerrainBuffers(*terrain);
+        terrain_vao = core_util::createTerrainVAO(terrain_data);
     }
 
     ImGui::Begin("Viewport");
@@ -373,30 +371,30 @@ void display(GLFWwindow* window){
     glUseProgram(0);
     
 
-    //============
-    //RENDER PLANE 
-    //============
+    //==============
+    //RENDER TERRAIN 
+    //==============
     glUseProgram(current_terrain_program->program_uint);
 
-    glm::mat4 plane_model_mat = nodes["plane"].transform.model_mat;
+    glm::mat4 terrain_model_mat = nodes["terrain"].transform.model_mat;
     
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_model_mat));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(terrain_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.classic.color));
-    glUniform1f(current_terrain_program->shininess_factor_unif, nodes["plane"].material.classic.shininess);
+    glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["terrain"].material.classic.color));
+    glUniform1f(current_terrain_program->shininess_factor_unif, nodes["terrain"].material.classic.shininess);
 
     //pbr
-    glUniform4fv(current_terrain_program->base_color_unif, 1, glm::value_ptr(nodes["plane"].material.pbr.color));
-    glUniform1f(current_terrain_program->metallic_unif, nodes["plane"].material.pbr.metallic);
-    glUniform1f(current_terrain_program->roughness_unif, nodes["plane"].material.pbr.roughness);
+    glUniform4fv(current_terrain_program->base_color_unif, 1, glm::value_ptr(nodes["terrain"].material.pbr.color));
+    glUniform1f(current_terrain_program->metallic_unif, nodes["terrain"].material.pbr.metallic);
+    glUniform1f(current_terrain_program->roughness_unif, nodes["terrain"].material.pbr.roughness);
 
     //terrain
     glUniform1f(current_terrain_program->amplitutde_unif, terrain->amplitude);
 
-    glBindVertexArray(plane_vao.vao);
-    glDrawElements(GL_TRIANGLES, plane_vao.index_count, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(terrain_vao.vao);
+    glDrawElements(GL_TRIANGLES, terrain_vao.index_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     glUseProgram(0);
@@ -407,13 +405,13 @@ void display(GLFWwindow* window){
     //1
     glUseProgram(unlit_program.program_uint);
 
-    nodes["bulb"].material.classic.color = point_light.intensity;
-    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb"].material.classic.color));
+    nodes["bulb_1"].material.classic.color = point_light.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_1"].material.classic.color));
 
-    nodes["bulb"].transform.translation_component = light_manager.getWorldLightPosition(0);
-    nodes["bulb"].transform.calc_model_mat();
+    nodes["bulb_1"].transform.translation_component = light_manager.getWorldLightPosition(0);
+    nodes["bulb_1"].transform.calc_model_mat();
 
-    glm::mat4 bulb_model_mat = nodes["bulb"].transform.model_mat;
+    glm::mat4 bulb_model_mat = nodes["bulb_1"].transform.model_mat;
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_model_mat));
@@ -532,10 +530,10 @@ void cleanup(){
     viewport_fb.reset(); //needs to be here or segfault on exit
 
     core_util::cleanupBuffers(sphere_data);
-    core_util::cleanupBuffers(plane_data);
+    core_util::cleanupBuffers(terrain_data);
 
     glDeleteVertexArrays(1, &sphere_vao.vao);
-    glDeleteVertexArrays(1, &plane_vao.vao);
+    glDeleteVertexArrays(1, &terrain_vao.vao);
 
     glDeleteBuffers(1, &matrices_UBO);
     glDeleteBuffers(1, &lights_UBO);
