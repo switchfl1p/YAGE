@@ -13,31 +13,35 @@ LightManager::LightManager()
     std::vector<glm::vec3> pos_values;
     pos_values.reserve(60);
 
-	// Light 0 - orbits the terrain
+	// Light 0 - zigzags and cuts inward, varying heights
 	pos_values.push_back(glm::vec3(-5.0f, 1.5f, 8.0f));
-	pos_values.push_back(glm::vec3(-8.0f, 1.5f, 5.0f));
-	pos_values.push_back(glm::vec3(-8.0f, 1.5f, -5.0f));
-	pos_values.push_back(glm::vec3(-5.0f, 1.5f, -8.0f));
-	pos_values.push_back(glm::vec3(5.0f, 1.5f, -8.0f));
-	pos_values.push_back(glm::vec3(8.0f, 1.5f, -5.0f));
-	pos_values.push_back(glm::vec3(8.0f, 1.5f, 5.0f));
-	pos_values.push_back(glm::vec3(5.0f, 1.5f, 8.0f));
+	pos_values.push_back(glm::vec3(-2.0f, 3.0f, 5.0f));   // cuts inward, rises
+	pos_values.push_back(glm::vec3(-8.0f, 1.0f, 2.0f));   // swings back out, dips
+	pos_values.push_back(glm::vec3(-4.0f, 4.0f, -3.0f));  // cuts inward again, peaks
+	pos_values.push_back(glm::vec3(-8.0f, 1.0f, -7.0f));  // back to edge, low
+	pos_values.push_back(glm::vec3(0.0f,  2.5f, -4.0f));  // cuts across center
+	pos_values.push_back(glm::vec3(7.0f,  1.0f, -8.0f));  // swings to far corner
+	pos_values.push_back(glm::vec3(4.0f,  3.5f, -2.0f));  // cuts inward, rises
+	pos_values.push_back(glm::vec3(8.0f,  1.0f,  3.0f));  // back to edge
+	pos_values.push_back(glm::vec3(2.0f,  4.0f,  6.0f));  // cuts inward, high
+	pos_values.push_back(glm::vec3(7.0f,  1.0f,  8.0f));  // back to edge, low
 	light_pos_interpolators[0].SetValues(pos_values);
 	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 15.0f));
 
-	// Light 1 - wanders across the terrain at varying heights
+	// Light 1 - erratic, tight direction changes, big height variance
 	pos_values.clear();
-	pos_values.push_back(glm::vec3(8.0f, 1.0f, 6.0f));
-	pos_values.push_back(glm::vec3(6.0f, 1.5f, 8.0f));
-	pos_values.push_back(glm::vec3(3.0f, 2.0f, 7.0f));
-	pos_values.push_back(glm::vec3(-2.0f, 1.5f, 8.0f));
-	pos_values.push_back(glm::vec3(-6.0f, 1.0f, 5.0f));
-	pos_values.push_back(glm::vec3(-8.0f, 1.5f, 0.0f));
-	pos_values.push_back(glm::vec3(-6.0f, 2.0f, -5.0f));
-	pos_values.push_back(glm::vec3(-3.0f, 1.5f, -8.0f));
-	pos_values.push_back(glm::vec3(4.0f, 1.0f, -7.0f));
-	pos_values.push_back(glm::vec3(7.0f, 1.5f, -4.0f));
-	pos_values.push_back(glm::vec3(8.0f, 2.0f, 2.0f));
+	pos_values.push_back(glm::vec3( 3.0f, 4.5f,  2.0f));  // starts high near center
+	pos_values.push_back(glm::vec3( 8.0f, 1.0f,  5.0f));  // dives to edge
+	pos_values.push_back(glm::vec3( 4.0f, 2.0f, -1.0f));  // cuts back
+	pos_values.push_back(glm::vec3( 7.0f, 4.0f, -7.0f));  // far corner, rises
+	pos_values.push_back(glm::vec3( 1.0f, 1.0f, -5.0f));  // cuts inward, low
+	pos_values.push_back(glm::vec3(-4.0f, 3.5f, -8.0f));  // swings to edge, rises
+	pos_values.push_back(glm::vec3(-2.0f, 1.0f, -2.0f));  // cuts to center, dips
+	pos_values.push_back(glm::vec3(-8.0f, 4.0f,  1.0f));  // far edge, high
+	pos_values.push_back(glm::vec3(-3.0f, 1.5f,  5.0f));  // cuts inward
+	pos_values.push_back(glm::vec3( 2.0f, 5.0f,  8.0f));  // peaks high near edge
+	pos_values.push_back(glm::vec3(-1.0f, 1.0f,  3.0f));  // drops to near center
+	pos_values.push_back(glm::vec3( 6.0f, 3.0f,  1.0f));  // swings out
 	light_pos_interpolators[1].SetValues(pos_values);
 	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 25.0f));
 }

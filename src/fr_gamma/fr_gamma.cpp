@@ -1,4 +1,4 @@
-//=============== switchfl1p 2025-2026 ==================
+//=============== switchfl1p 2025-2026 =======================
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -23,34 +23,17 @@
 
 //=============================================================
 
-std::vector<core_util::LitProgramData*> lit_programs;
-core_util::LitProgramData lambertian_program;
-core_util::LitProgramData phong_program;
-core_util::LitProgramData blinn_program;
-core_util::LitProgramData gaussian_program;
-core_util::LitProgramData pbr_program;
-core_util::LitProgramData terrain_pbr_program;
-core_util::LitProgramData terrain_lambertian_program;
-core_util::LitProgramData terrain_phong_program;
-core_util::LitProgramData terrain_gaussian_program;
-core_util::LitProgramData terrain_blinn_program;
+std::vector<core_util::LitProgramData> lit_programs;
 core_util::UnlitProgramData unlit_program;
+
 //for switching between programs
 core_util::LitProgramData* current_program;
 core_util::LitProgramData* current_terrain_program;
 
-GLuint matrices_uniform_block_index;
 GLuint matrices_UBO;
-constexpr int matrices_binding_index = 0;
-GLuint lights_uniform_block_index;
 GLuint lights_UBO;
-constexpr int lights_binding_index = 1;
 
 int light_model = LM_PBR_LIGHTING;
-std::unique_ptr<LightController> bulb_controller;
-std::unique_ptr<LightController> bulb2_controller;
-LightBlock light_block;
-LightBlock light_block_GPU;
 
 std::unordered_map<std::string, Node> nodes;
 std::unique_ptr<TerrainData> terrain = nullptr;
@@ -63,7 +46,6 @@ std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
 bool camera_movement_flag;
 
-std::unique_ptr<Framework::Timer> bulb_timer= nullptr;
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
@@ -74,36 +56,42 @@ LightManager light_manager;
 //=============================================================
 
 void initializePrograms(){
-    lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
-    phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
-    blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
-    gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
-    pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
+    core_util::LitProgramData lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
+    core_util::LitProgramData phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
+    core_util::LitProgramData blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
+    core_util::LitProgramData gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
+    core_util::LitProgramData pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
 
     //terrain
-    terrain_pbr_program = core_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
-    terrain_lambertian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
-    terrain_phong_program = core_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
-    terrain_gaussian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
-    terrain_blinn_program = core_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
+    core_util::LitProgramData terrain_pbr_program = core_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
+    core_util::LitProgramData terrain_lambertian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
+    core_util::LitProgramData terrain_phong_program = core_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
+    core_util::LitProgramData terrain_gaussian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
+    core_util::LitProgramData terrain_blinn_program = core_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
     
     //No Light
     unlit_program = core_util::loadUnlitProgram("simple.vert", "no_light.frag");
 
-    lit_programs.push_back(&lambertian_program);
-    lit_programs.push_back(&phong_program);
-    lit_programs.push_back(&blinn_program);
-    lit_programs.push_back(&gaussian_program);
-    lit_programs.push_back(&pbr_program);
+    lit_programs.reserve(LM_COUNT * 2);
+    lit_programs.push_back(lambertian_program);
+    lit_programs.push_back(phong_program);
+    lit_programs.push_back(blinn_program);
+    lit_programs.push_back(gaussian_program);
+    lit_programs.push_back(pbr_program);
 
-    lit_programs.push_back(&terrain_pbr_program);
-    lit_programs.push_back(&terrain_lambertian_program);
-    lit_programs.push_back(&terrain_phong_program);
-    lit_programs.push_back(&terrain_gaussian_program);
-    lit_programs.push_back(&terrain_blinn_program);
+    lit_programs.push_back(terrain_lambertian_program);
+    lit_programs.push_back(terrain_phong_program);
+    lit_programs.push_back(terrain_blinn_program);
+    lit_programs.push_back(terrain_gaussian_program);
+    lit_programs.push_back(terrain_pbr_program);
 }
 
 void initializeUBOs(){
+    GLuint matrices_uniform_block_index;
+    GLuint lights_uniform_block_index;
+    constexpr int matrices_binding_index = 0;
+    constexpr int lights_binding_index = 1;
+
     //Matrices UBO
     //Create UBO and bind to binding index
     glGenBuffers(1, &matrices_UBO);
@@ -112,29 +100,26 @@ void initializeUBOs(){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferRange(GL_UNIFORM_BUFFER, matrices_binding_index, matrices_UBO, 0, sizeof(glm::mat4) * 3);
 
+    //Lights UBO
+    glGenBuffers(1, &lights_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightBlock), NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, lights_binding_index, lights_UBO, 0, sizeof(LightBlock));
+
+
     //handle lit programs
-    for(auto* program : lit_programs){
-        matrices_uniform_block_index = glGetUniformBlockIndex(program->program_uint, "Matrices");
-        glUniformBlockBinding(program->program_uint, matrices_uniform_block_index, matrices_binding_index);
+    for(auto& program : lit_programs){
+        matrices_uniform_block_index = glGetUniformBlockIndex(program.program_uint, "Matrices");
+        glUniformBlockBinding(program.program_uint, matrices_uniform_block_index, matrices_binding_index);
+        
+        lights_uniform_block_index = glGetUniformBlockIndex(program.program_uint, "Lights");
+        glUniformBlockBinding(program.program_uint, lights_uniform_block_index, lights_binding_index);
     }
 
     //handle unlit ones
     matrices_uniform_block_index = glGetUniformBlockIndex(unlit_program.program_uint, "Matrices");
     glUniformBlockBinding(unlit_program.program_uint, matrices_uniform_block_index, matrices_binding_index);
-
-    //Lights UBO
-    glGenBuffers(1, &lights_UBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightBlock), NULL, GL_STREAM_DRAW);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, lights_binding_index, lights_UBO, 0, sizeof(LightBlock));
-
-    //handle lit programs
-    for(auto* program : lit_programs){
-        lights_uniform_block_index = glGetUniformBlockIndex(program->program_uint, "Lights");
-        glUniformBlockBinding(program->program_uint, lights_uniform_block_index, lights_binding_index);
-    }
 }
 
 void initializeNodes(){
@@ -211,71 +196,21 @@ void initializeNodes(){
 }
 
 void initializeLights(){
-    std::vector<DirectionalLight> directional_lights;
-    std::vector<PointLight> point_lights;
-    light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
-    
-    PointLight pl;
-    pl.intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    pl.attenuation = 1.0f;
-    pl.position = glm::vec4(0.0f, 0.25f, 0.0f, 1.0f);
-
-    PointLight pl_2;
-    pl_2.intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    pl_2.attenuation = 1.0f;
-    pl_2.position = glm::vec4(0.0f, 2.0f, 0.0f, 1.0f);
-    
-    point_lights.push_back(pl);
-    point_lights.push_back(pl_2);
-
-    DirectionalLight sun;
-    sun.direction = glm::vec4(-0.3f, -1.0f, -0.4f, 0.0f); //slightly angled, not straight down
-    sun.intensity = glm::vec4(1.0f, 0.95f, 0.8f, 1.0f); //warm white
-
-    directional_lights.push_back(sun);
-
-    //copy to LightBlock for use with UBO
-    light_block.point_light_count = point_lights.size();
-    light_block.dir_light_count = directional_lights.size();
-
-    for(int i = 0; i < point_lights.size(); i++){
-        light_block.point_lights[i] = point_lights[i];
-    }
-
-    for(int i = 0; i < directional_lights.size(); i++){
-        light_block.dir_lights[i] = directional_lights[i];
-    }
-
-    bulb_controller = std::make_unique<LightController>(light_block.point_lights[0]);
-    bulb_controller->radius = 1.0f;
-
-    bulb2_controller = std::make_unique<LightController>(light_block.point_lights[1]);
-    bulb2_controller->radius = 2.0f;
-
-    Framework::Timer(Framework::Timer::TT_LOOP, 10.0f);
-    bulb_timer = std::make_unique<Framework::Timer>(Framework::Timer::TT_LOOP, 10.0f);
-
-    //================
-    //================
-    //      NEW
-    //================
-    //================
-
     SunlightValue values[] =
 	{
-		{ 0.0f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sun.intensity},
-		{ 4.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sun.intensity},
+		{ 0.0f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.0f, 0.95f, 0.8f, 1.0f)},
+		{ 4.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.0f, 0.95f, 0.8f, 1.0f)},
 		{ 6.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.10f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
 		{ 8.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
 		{18.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
 		{19.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.1f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
-		{20.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sun.intensity},
+		{20.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.0f, 0.95f, 0.8f, 1.0f)},
 	};
 
     light_manager.setSunlightValues(values);
 
-    light_manager.setPointLightIntensity(0, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
-    light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 0.3f, 1.0f));
+    light_manager.setPointLightIntensity(0, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+    light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 0.6f, 1.0f));
 }
 
 void initializeBuffers(){
@@ -350,6 +285,8 @@ void init(GLFWwindow* window){
 // Called every frame
 void display(GLFWwindow* window){
     light_manager.updateTime();
+    LightBlock light_block = light_manager.getLightInformation(cam->getViewMat());
+
     glm::vec4 bkg = light_manager.getBackgroundColor();
     glfwPollEvents();
 
@@ -364,14 +301,6 @@ void display(GLFWwindow* window){
         cam->updateCamera();
     }
 
-    //bulb movement
-    bulb_timer->Update();
-    bulb_controller->rotatePointLight(*bulb_timer);
-    bulb_controller->processPointLightInput(window, delta_time);
-
-    bulb2_controller->halfRotatePointLight(*bulb_timer);
-    bulb2_controller->processPointLightInput(window, delta_time);
-
     PointLight& point_light = light_block.point_lights[0];
     PointLight& point_light_2 = light_block.point_lights[1];
 
@@ -380,45 +309,42 @@ void display(GLFWwindow* window){
 
         switch(light_model){
             case LM_LAMBERTIAN:
-                current_program = &lambertian_program;
-                current_terrain_program = &terrain_lambertian_program;
+                current_program = &lit_programs[LM_LAMBERTIAN];
+                current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrains
                 nodes["sphere"].material.type = Material::LAMBERTIAN;
                 nodes["plane"].material.type= Material::LAMBERTIAN;
-                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+                //light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
-                current_program = &phong_program;
-                current_terrain_program = &terrain_phong_program;
+                current_program = &lit_programs[LM_PHONG_LIGHTING];
+                current_terrain_program = &lit_programs[LM_PHONG_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.type = Material::PHONG;
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 32.0f;
                 nodes["plane"].material.shininess = 16.0f;
-                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_BLINN_LIGHTING:
-                current_program = &blinn_program;
-                current_terrain_program = &terrain_blinn_program;
+                current_program = &lit_programs[LM_BLINN_LIGHTING];
+                current_terrain_program = &lit_programs[LM_BLINN_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.type = Material::PHONG;
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 128.0f;
                 nodes["plane"].material.shininess = 64.0f;
-                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_GAUSSIAN_LIGHTING:
-                current_program = &gaussian_program;
-                current_terrain_program = &terrain_gaussian_program;
+                current_program = &lit_programs[LM_GAUSSIAN_LIGHTING];
+                current_terrain_program = &lit_programs[LM_GAUSSIAN_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.type = Material::PHONG;
                 nodes["plane"].material.type = Material::PHONG;
                 nodes["sphere"].material.shininess = 0.15f;
                 nodes["plane"].material.shininess = 0.4f;
-                light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); 
                 break;
             case LM_PBR_LIGHTING:
-                current_program = &pbr_program;
-                current_terrain_program = &terrain_pbr_program;
+                current_program = &lit_programs[LM_PBR_LIGHTING];
+                current_terrain_program = &lit_programs[LM_PBR_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.type = Material::PBR;
                 nodes["plane"].material.type = Material::PBR;
-                light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+                //light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
@@ -435,7 +361,6 @@ void display(GLFWwindow* window){
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes);
     renderGUI::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
-    renderGUI::renderStatusOverlay(light_model, bulb_controller->draw_flag, !bulb_timer->IsPaused(), camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
@@ -473,10 +398,8 @@ void display(GLFWwindow* window){
     glUseProgram(current_program->program_uint);
 
     //light uniforms
-    light_block_GPU = light_manager.getLightInformation(cam->getViewMat());
-    
     glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBlock), &light_block_GPU);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBlock), &light_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //modeltoWorld uniform
@@ -570,6 +493,10 @@ void display(GLFWwindow* window){
     glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
 
+    //=================
+    //RENDER DEAR IMGUI 
+    //=================
+
     viewport_fb->Unbind();
     //Display the framebuffer texture in ImGui
     ImGui::Image(
@@ -580,9 +507,6 @@ void display(GLFWwindow* window){
     );
     ImGui::End();
 
-    //=================
-    //RENDER DEAR IMGUI 
-    //=================
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -608,28 +532,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glfwSetWindowShouldClose(window, true);
     }
 
-    //Toggle Rotation On/Off
-    if(key == GLFW_KEY_R && action == GLFW_PRESS){
-        bulb_timer->TogglePause();
-    }
-
-    //Toggle Point Lights On/Off
-    if(key == GLFW_KEY_E && action == GLFW_PRESS){
-        bulb_controller->draw_flag = !bulb_controller->draw_flag;
-        bulb2_controller->draw_flag = !bulb2_controller->draw_flag;
-        
-
-        if(bulb_controller->draw_flag){
-            light_block.point_lights[0].intensity = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            light_block.point_lights[1].intensity = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-        }
-        else{
-            for(auto& light : light_block.point_lights){
-                light.intensity = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-            }
-        }
-    }
-
     //Toggle Camera lock On/Off
     if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS){
         camera_movement_flag = !camera_movement_flag;
@@ -642,12 +544,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
     }
 
-    bool light_model_changed = false;
+    //Toggle Point Light movement On/Off
+    if(key == GLFW_KEY_R && action == GLFW_PRESS){
+        light_manager.togglePause(TIMER_LIGHTS);
+    }
 
+    //Toggle Sunlight
+    if(key == GLFW_KEY_T && action == GLFW_PRESS){
+        light_manager.togglePause(TIMER_SUN);
+    }
+
+    //Lighting model switching
     if(key == GLFW_KEY_Q && action == GLFW_PRESS){
         light_model += 1;
         light_model %= LM_COUNT;
-        light_model_changed = true;
     }
 }
 
@@ -666,8 +576,8 @@ void cleanup(){
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    for(auto* program : lit_programs){
-        glDeleteProgram(program->program_uint);
+    for(auto& program : lit_programs){
+        glDeleteProgram(program.program_uint);
     }
     glDeleteProgram(unlit_program.program_uint);
 
