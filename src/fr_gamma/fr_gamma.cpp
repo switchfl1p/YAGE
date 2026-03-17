@@ -123,76 +123,34 @@ void initializeUBOs(){
 }
 
 void initializeNodes(){
-    //Bulb
-    {
-        Node bulb;
-        Material bulb_material;
-        bulb_material.type = Material::EMISSIVE;
-        bulb_material.phong_color = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); //white
-        bulb.material = bulb_material;
+    Node bulb;
+    bulb.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+    nodes["bulb_1"] = bulb;
 
-        Transform bulb_transform;
-        bulb_transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
-        bulb.transform = bulb_transform;
+    Node bulb_2;
+    bulb_2.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+    nodes["bulb_2"] = bulb_2;
 
-        nodes["bulb"] = bulb;
-    }
-        //2nd Bulb
-    {
-        Node bulb_2;
-        Material bulb_material;
-        bulb_material.type = Material::EMISSIVE;
-        bulb_material.phong_color = glm::vec4(0.0f, 0.0f, 0.3f, 1.0f); //white
-        bulb_2.material = bulb_material;
+    Node sphere;
+    sphere.material.classic.color = glm::vec4(0.5f, 0.1f, 0.8f, 1.0f);
+    sphere.material.classic.shininess = 64.0f;
+    sphere.material.pbr.color = glm::vec4(0.3f, 0.0f, 0.7f, 1.0f);
+    sphere.material.pbr.metallic = 0.0f;
+    sphere.material.pbr.roughness = 0.30f;
+    sphere.transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
+    sphere.transform.calc_model_mat(); //called on init since it won't be called every frame, i.e static object
+    nodes["sphere"] = sphere;
 
-        Transform bulb_transform;
-        bulb_transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
-        bulb_2.transform = bulb_transform;
+    Node terrain;
+    terrain.material.classic.color = glm::vec4(0.5, 0.5, 0.5, 1.0);
+    terrain.material.classic.shininess = 64.0f;
+    terrain.material.pbr.color = glm::vec4(0.8, 0.8, 0.8, 1.0);
+    terrain.material.pbr.metallic = 0.0f;
+    terrain.material.pbr.roughness = 0.7f;
+    terrain.transform.translation_component = glm::vec3(-10.0f,0.0,-10.0f);
+    terrain.transform.calc_model_mat();
 
-        nodes["bulb_2"] = bulb_2;
-    }
-
-    //Centerpiece
-    {
-        Node sphere;
-        Material sphere_material;
-        sphere_material.phong_color = glm::vec4(0.5, 0.1, 0.8, 1.0);  //blue
-        sphere_material.shininess = 64.0f;
-
-        //pbr
-        sphere_material.pbr_color = glm::vec4(0.3, 0.0, 0.7, 1.0);
-        sphere_material.metallic = 0.0f;   //plastic/ceramic
-        sphere_material.roughness = 0.30f;  //somewhat shiny
-        sphere.material = sphere_material;
-
-        Transform sphere_transform;
-        sphere_transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
-        sphere_transform.calc_model_mat();
-        sphere.transform = sphere_transform;
-
-        nodes["sphere"] = sphere;
-    }
-
-    //Plane (now terrain)
-    {
-        Node plane;
-        Material plane_material;
-        plane_material.phong_color = glm::vec4(0.5, 0.5, 0.5, 1.0); //silver
-        plane_material.shininess = 64.0f;
-
-        //pbr
-        plane_material.pbr_color = glm::vec4(0.8, 0.8, 0.8, 1.0);
-        plane_material.metallic = 0.0f;
-        plane_material.roughness = 0.7f;  //matte
-        plane.material = plane_material;
-
-        Transform plane_transform;
-        plane_transform.translation_component = glm::vec3(-10.0f,0.0,-10.0f);
-        plane_transform.calc_model_mat();
-        plane.transform = plane_transform;
-
-        nodes["plane"] = plane;
-    }
+    nodes["terrain"] = terrain;
 }
 
 void initializeLights(){
@@ -311,39 +269,29 @@ void display(GLFWwindow* window){
             case LM_LAMBERTIAN:
                 current_program = &lit_programs[LM_LAMBERTIAN];
                 current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrains
-                nodes["sphere"].material.type = Material::LAMBERTIAN;
-                nodes["plane"].material.type= Material::LAMBERTIAN;
                 //light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &lit_programs[LM_PHONG_LIGHTING];
                 current_terrain_program = &lit_programs[LM_PHONG_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.type = Material::PHONG;
-                nodes["plane"].material.type = Material::PHONG;
-                nodes["sphere"].material.shininess = 32.0f;
-                nodes["plane"].material.shininess = 16.0f;
+                nodes["sphere"].material.classic.shininess = 32.0f;
+                nodes["plane"].material.classic.shininess = 16.0f;
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &lit_programs[LM_BLINN_LIGHTING];
                 current_terrain_program = &lit_programs[LM_BLINN_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.type = Material::PHONG;
-                nodes["plane"].material.type = Material::PHONG;
-                nodes["sphere"].material.shininess = 128.0f;
-                nodes["plane"].material.shininess = 64.0f;
+                nodes["sphere"].material.classic.shininess = 128.0f;
+                nodes["plane"].material.classic.shininess = 64.0f;
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &lit_programs[LM_GAUSSIAN_LIGHTING];
                 current_terrain_program = &lit_programs[LM_GAUSSIAN_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.type = Material::PHONG;
-                nodes["plane"].material.type = Material::PHONG;
-                nodes["sphere"].material.shininess = 0.15f;
-                nodes["plane"].material.shininess = 0.4f;
+                nodes["sphere"].material.classic.shininess = 0.15f;
+                nodes["plane"].material.classic.shininess = 0.4f;
                 break;
             case LM_PBR_LIGHTING:
                 current_program = &lit_programs[LM_PBR_LIGHTING];
                 current_terrain_program = &lit_programs[LM_PBR_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.type = Material::PBR;
-                nodes["plane"].material.type = Material::PBR;
                 //light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
@@ -410,12 +358,12 @@ void display(GLFWwindow* window){
 
     //material uniforms
     //non-PBR
-    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.phong_color));
-    glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.shininess);
+    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.classic.color));
+    glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.classic.shininess);
     //PBR
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["sphere"].material.pbr_color));
-    glUniform1f(current_program->metallic_unif, nodes["sphere"].material.metallic);
-    glUniform1f(current_program->roughness_unif, nodes["sphere"].material.roughness);
+    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["sphere"].material.pbr.color));
+    glUniform1f(current_program->metallic_unif, nodes["sphere"].material.pbr.metallic);
+    glUniform1f(current_program->roughness_unif, nodes["sphere"].material.pbr.roughness);
 
     //draw
     glBindVertexArray(sphere_vao.vao);
@@ -436,13 +384,13 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.phong_color));
-    glUniform1f(current_terrain_program->shininess_factor_unif, nodes["plane"].material.shininess);
+    glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["plane"].material.classic.color));
+    glUniform1f(current_terrain_program->shininess_factor_unif, nodes["plane"].material.classic.shininess);
 
     //pbr
-    glUniform4fv(current_terrain_program->base_color_unif, 1, glm::value_ptr(nodes["plane"].material.pbr_color));
-    glUniform1f(current_terrain_program->metallic_unif, nodes["plane"].material.metallic);
-    glUniform1f(current_terrain_program->roughness_unif, nodes["plane"].material.roughness);
+    glUniform4fv(current_terrain_program->base_color_unif, 1, glm::value_ptr(nodes["plane"].material.pbr.color));
+    glUniform1f(current_terrain_program->metallic_unif, nodes["plane"].material.pbr.metallic);
+    glUniform1f(current_terrain_program->roughness_unif, nodes["plane"].material.pbr.roughness);
 
     //terrain
     glUniform1f(current_terrain_program->amplitutde_unif, terrain->amplitude);
@@ -459,8 +407,8 @@ void display(GLFWwindow* window){
     //1
     glUseProgram(unlit_program.program_uint);
 
-    nodes["bulb"].material.phong_color = point_light.intensity;
-    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb"].material.phong_color));
+    nodes["bulb"].material.classic.color = point_light.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb"].material.classic.color));
 
     nodes["bulb"].transform.translation_component = light_manager.getWorldLightPosition(0);
     nodes["bulb"].transform.calc_model_mat();
@@ -477,8 +425,8 @@ void display(GLFWwindow* window){
     glBindVertexArray(0);
 
     //2
-    nodes["bulb_2"].material.phong_color = point_light_2.intensity;
-    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_2"].material.phong_color));
+    nodes["bulb_2"].material.classic.color = point_light_2.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_2"].material.classic.color));
 
     nodes["bulb_2"].transform.translation_component = light_manager.getWorldLightPosition(1);
     nodes["bulb_2"].transform.calc_model_mat();
