@@ -39,12 +39,16 @@ std::unordered_map<std::string, Node> nodes;
 std::unique_ptr<TerrainData> terrain = nullptr;
 core_util::ModelData sphere_data;
 core_util::ModelData terrain_data;
+core_util::ModelData obelisk_data;
 core_util::VAOData sphere_vao;
 core_util::VAOData terrain_vao;
+core_util::VAOData obelisk_vao;
 
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
-bool camera_movement_flag;
+bool camera_movement_flag = true;
+bool point_light_movement_flag = true;
+bool sun_movement_flag = true;
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
@@ -138,19 +142,28 @@ void initializeNodes(){
     sphere.material.pbr.metallic = 0.0f;
     sphere.material.pbr.roughness = 0.30f;
     sphere.transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
+    sphere.transform.translation_component = glm::vec3(2.47f, -0.210f, -5.85f);
     sphere.transform.calc_model_mat(); //called on init since it won't be called every frame, i.e static object
     nodes["sphere"] = sphere;
 
     Node terrain;
-    terrain.material.classic.color = glm::vec4(0.5, 0.5, 0.5, 1.0);
     terrain.material.classic.shininess = 64.0f;
-    terrain.material.pbr.color = glm::vec4(0.8, 0.8, 0.8, 1.0);
     terrain.material.pbr.metallic = 0.0f;
     terrain.material.pbr.roughness = 0.7f;
     terrain.transform.translation_component = glm::vec3(-10.0f,0.0,-10.0f);
     terrain.transform.calc_model_mat();
-
     nodes["terrain"] = terrain;
+
+    Node obelisk;
+    obelisk.material.classic.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
+    obelisk.material.pbr.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
+    obelisk.material.classic.shininess = 64.0f;
+    obelisk.material.pbr.metallic = 0.0f;
+    obelisk.material.pbr.roughness = 0.15f;
+    obelisk.transform.scale_component = glm::vec3(0.4);
+    obelisk.transform.translation_component = glm::vec3(-4.52f, 2.15f, 4.5f);
+    obelisk.transform.calc_model_mat();
+    nodes["obelisk"] = obelisk;
 }
 
 void initializeLights(){
@@ -173,8 +186,12 @@ void initializeLights(){
 
 void initializeBuffers(){
     gltf_util::Loader loader;
+
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
     sphere_data = core_util::loadModelData(sphere);
+
+    gltf_util::Model obelisk = loader.loadModel("obelisk.glb");
+    obelisk_data = core_util::loadModelData(obelisk);
 
     terrain = std::make_unique<TerrainData>(20, 20, 6.667f , 36, 10.94f , 1, 6, 2.0f, 0.5f);
     terrain_data = core_util::createTerrainBuffers(*terrain);
@@ -183,6 +200,7 @@ void initializeBuffers(){
 void initializeVertexArrayObjects(){
     sphere_vao = core_util::loadVAOData(sphere_data);
     terrain_vao = core_util::createTerrainVAO(terrain_data);
+    obelisk_vao = core_util::loadVAOData(obelisk_data);
 }
 
 void initializeCameras(GLFWwindow* window){
@@ -274,18 +292,21 @@ void display(GLFWwindow* window){
                 current_terrain_program = &lit_programs[LM_PHONG_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.classic.shininess = 32.0f;
                 nodes["terrain"].material.classic.shininess = 16.0f;
+                nodes["obelisk"].material.classic.shininess = 128.0f;
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &lit_programs[LM_BLINN_LIGHTING];
                 current_terrain_program = &lit_programs[LM_BLINN_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.classic.shininess = 128.0f;
                 nodes["terrain"].material.classic.shininess = 64.0f;
+                nodes["obelisk"].material.classic.shininess = 512.0f;
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &lit_programs[LM_GAUSSIAN_LIGHTING];
                 current_terrain_program = &lit_programs[LM_GAUSSIAN_LIGHTING + LM_COUNT];
                 nodes["sphere"].material.classic.shininess = 0.15f;
                 nodes["terrain"].material.classic.shininess = 0.4f;
+                nodes["obelisk"].material.classic.shininess = 0.09f;
                 break;
             case LM_PBR_LIGHTING:
                 current_program = &lit_programs[LM_PBR_LIGHTING];
@@ -307,6 +328,7 @@ void display(GLFWwindow* window){
     renderGUI::dockingDemo(&args, nullptr);
     renderGUI::renderNodeWindow(nodes, light_model);
     renderGUI::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
+    renderGUI::renderStatusOverlay(light_model, sun_movement_flag, point_light_movement_flag, camera_movement_flag);
 
     if(renderGUI::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
@@ -370,6 +392,31 @@ void display(GLFWwindow* window){
     
     glUseProgram(0);
     
+    //==============
+    //RENDER OBELISK
+    //==============
+    glUseProgram(current_program->program_uint);
+
+    glm::mat4 obelisk_model_mat = nodes["obelisk"].transform.model_mat;
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(obelisk_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    //material uniforms
+    //non-PBR
+    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["obelisk"].material.classic.color));
+    glUniform1f(current_program->shininess_factor_unif, nodes["obelisk"].material.classic.shininess);
+    //PBR
+    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["obelisk"].material.pbr.color));
+    glUniform1f(current_program->metallic_unif, nodes["obelisk"].material.pbr.metallic);
+    glUniform1f(current_program->roughness_unif, nodes["obelisk"].material.pbr.roughness);
+
+    //draw
+    glBindVertexArray(obelisk_vao.vao);
+	glDrawElements(GL_TRIANGLES, obelisk_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+    
+    glUseProgram(0);
 
     //==============
     //RENDER TERRAIN 
@@ -493,11 +540,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     //Toggle Point Light movement On/Off
     if(key == GLFW_KEY_R && action == GLFW_PRESS){
         light_manager.togglePause(TIMER_LIGHTS);
+        point_light_movement_flag = !point_light_movement_flag;
     }
 
-    //Toggle Sunlight
+    //Toggle sunlight timer pause on/off
     if(key == GLFW_KEY_T && action == GLFW_PRESS){
         light_manager.togglePause(TIMER_SUN);
+        sun_movement_flag = !sun_movement_flag;
     }
 
     //Lighting model switching

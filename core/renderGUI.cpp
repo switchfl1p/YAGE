@@ -16,7 +16,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, i
                             std::string metallic_label = "metallic##" + name;
                             std::string roughness_label = "roughness##" + name;
                             
-                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.pbr.color));
+                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.pbr.color), ImGuiColorEditFlags_Float);
                             ImGui::DragFloat(metallic_label.c_str(), &node.material.pbr.metallic, 0.01f, 0.0f, 1.0f);
                             ImGui::DragFloat(roughness_label.c_str(), &node.material.pbr.roughness, 0.01f, 0.0f, 1.0f);
                             
@@ -27,7 +27,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, i
                         if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
                             std::string base_color_label = "color##" + name;
                             
-                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color));
+                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color), ImGuiColorEditFlags_Float);
                             
                             ImGui::TreePop();
                         }
@@ -39,7 +39,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, i
                             std::string base_color_label = "color##" + name;
                             std::string shininess_label = "shininess##" + name;
                             
-                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color));
+                            ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color), ImGuiColorEditFlags_Float);
                             ImGui::DragFloat(shininess_label.c_str(), &node.material.classic.shininess, 1.0f, 0.0f, 1000.0f);
                             
                             ImGui::TreePop();
@@ -74,7 +74,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
     ImGui::Begin("Light Options");
 
     if (ImGui::TreeNode("Ambient Light")) {
-        ImGui::ColorEdit4("intensity##ambient", glm::value_ptr(ambient_light.intensity));
+        ImGui::ColorEdit4("intensity##ambient", glm::value_ptr(ambient_light.intensity), ImGuiColorEditFlags_Float);
         ImGui::TreePop();
     }
 
@@ -83,7 +83,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
             ImGui::PushID(i);
             std::string label = "Point Light " + std::to_string(i + 1);
             if (ImGui::TreeNode(label.c_str())) {
-                ImGui::ColorEdit4("intensity", glm::value_ptr(point_lights[i].intensity));
+                ImGui::ColorEdit4("intensity", glm::value_ptr(point_lights[i].intensity), ImGuiColorEditFlags_Float);
                 ImGui::DragFloat("attenuation", &point_lights[i].attenuation, 0.01f, 0.0f, 5.0f);
                 ImGui::DragFloat3("position", glm::value_ptr(point_lights[i].position));
                 ImGui::TreePop();
@@ -98,7 +98,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
             ImGui::PushID(point_lights.size() + i);
             std::string label = "Directional Light " + std::to_string(i + 1);
             if (ImGui::TreeNode(label.c_str())) {
-                ImGui::ColorEdit4("intensity", glm::value_ptr(dir_lights[i].intensity));
+                ImGui::ColorEdit4("intensity", glm::value_ptr(dir_lights[i].intensity), ImGuiColorEditFlags_Float);
                 ImGui::DragFloat3("direction", glm::value_ptr(dir_lights[i].direction));
                 ImGui::TreePop();
             }
@@ -110,7 +110,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
     ImGui::End();
 }
 
-void renderGUI::renderStatusOverlay(int light_model, bool light_status, bool rotation_status, bool camera_status){
+void renderGUI::renderStatusOverlay(int light_model, bool sun_movement_flag, bool point_light_movement_flag, bool camera_status){
     ImGui::Begin("Status");
 
     const char* lighting_names[] = {
@@ -123,17 +123,17 @@ void renderGUI::renderStatusOverlay(int light_model, bool light_status, bool rot
 
     ImGui::Text("Lighting Model: %s", lighting_names[light_model]);
     // Light status with color
-    if (light_status) {
-        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Light: On");
+    if (sun_movement_flag) {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Sun Movement: On");
     } else {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Light: Off");
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Sun Movement: Off");
     }
 
     // Light rotation with color
-    if (rotation_status) {
-        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Light Rotation: On");
+    if (point_light_movement_flag) {
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Point Light Movement: On");
     } else {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Light Rotation: Off");
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Point Light Movement: Off");
     }
 
     // Camera movement with color
