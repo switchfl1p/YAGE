@@ -129,14 +129,17 @@ void initializeUBOs(){
 void initializeNodes(){
     Node bulb;
     bulb.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+    bulb.material.is_emissive = true;
     nodes["bulb_1"] = bulb;
 
     Node bulb_2;
     bulb_2.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+    bulb_2.material.is_emissive = true;
     nodes["bulb_2"] = bulb_2;
 
     Node bulb_3;
     bulb_3.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+    bulb_3.material.is_emissive = true;
     nodes["bulb_3"] = bulb_3;
 
     Node sphere;
@@ -319,7 +322,6 @@ void display(GLFWwindow* window){
                 current_program = &lit_programs[LM_LAMBERTIAN];
                 current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrains
                 setupClassicLighting();
-                //light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &lit_programs[LM_PHONG_LIGHTING];
@@ -346,7 +348,6 @@ void display(GLFWwindow* window){
                 current_program = &lit_programs[LM_PBR_LIGHTING];
                 current_terrain_program = &lit_programs[LM_PBR_LIGHTING + LM_COUNT];
                 setupPBRLighting();
-                //light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
         previous_light_model = light_model;
