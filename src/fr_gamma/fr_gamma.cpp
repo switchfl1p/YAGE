@@ -135,6 +135,10 @@ void initializeNodes(){
     bulb_2.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
     nodes["bulb_2"] = bulb_2;
 
+    Node bulb_3;
+    bulb_3.transform.scale_component = glm::vec3(0.05f, 0.05f, 0.05f);
+    nodes["bulb_3"] = bulb_3;
+
     Node sphere;
     sphere.material.classic.color = glm::vec4(0.5f, 0.1f, 0.8f, 1.0f);
     sphere.material.classic.shininess = 64.0f;
@@ -166,22 +170,50 @@ void initializeNodes(){
     nodes["obelisk"] = obelisk;
 }
 
-void initializeLights(){
+//sets up light values for "classic" light models aka Lambertian, Phong, etc...
+void setupClassicLighting(){
+    const glm::vec4 sky_day_light_color = glm::vec4(0.65f, 0.65f, 1.0f, 1.0f);
+
     SunlightValue values[] =
 	{
-		{ 0.0f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.0f, 0.95f, 0.8f, 1.0f)},
-		{ 4.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.0f, 0.95f, 0.8f, 1.0f)},
+		{ 0.0f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sky_day_light_color},
+		{ 4.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sky_day_light_color},
 		{ 6.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.10f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
 		{ 8.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
 		{18.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
 		{19.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.1f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
-		{20.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.0f, 0.95f, 0.8f, 1.0f)},
+		{20.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sky_day_light_color},
 	};
 
     light_manager.setSunlightValues(values);
 
     light_manager.setPointLightIntensity(0, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
     light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 0.6f, 1.0f));
+    light_manager.setPointLightIntensity(2, glm::vec4(0.6f, 0.0f, 0.f, 1.0f));
+}
+
+//sets up light values for PBR Lighting
+void setupPBRLighting(){
+    const glm::vec4 sky_day_light_color = glm::vec4(0.65f, 0.65f, 1.0f, 1.0f);
+    SunlightValue values[] =
+    {
+        { 0.0f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color},
+        { 4.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color},
+        { 6.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
+        { 8.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
+        {18.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
+        {19.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
+        {20.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f,  1.0f), sky_day_light_color},
+    };
+    light_manager.setSunlightValues(values);
+
+    light_manager.setPointLightIntensity(0, glm::vec4(1.5f, 1.5f, 1.5f, 1.0f));
+    light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 1.5f, 1.0f));
+    light_manager.setPointLightIntensity(2, glm::vec4(1.5f, 0.0f, 0.0f, 1.0f));
+}
+
+void initializeLights(){
+    setupPBRLighting();
 }
 
 void initializeBuffers(){
@@ -277,6 +309,7 @@ void display(GLFWwindow* window){
 
     PointLight& point_light = light_block.point_lights[0];
     PointLight& point_light_2 = light_block.point_lights[1];
+    PointLight& point_light_3 = light_block.point_lights[2];
 
     static int previous_light_model = -1;
     if(light_model != previous_light_model){
@@ -285,6 +318,7 @@ void display(GLFWwindow* window){
             case LM_LAMBERTIAN:
                 current_program = &lit_programs[LM_LAMBERTIAN];
                 current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrains
+                setupClassicLighting();
                 //light_block.ambient_light.intensity = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
                 break;
             case LM_PHONG_LIGHTING:
@@ -311,6 +345,7 @@ void display(GLFWwindow* window){
             case LM_PBR_LIGHTING:
                 current_program = &lit_programs[LM_PBR_LIGHTING];
                 current_terrain_program = &lit_programs[LM_PBR_LIGHTING + LM_COUNT];
+                setupPBRLighting();
                 //light_block.ambient_light.intensity = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
                 break;
         }
@@ -464,7 +499,6 @@ void display(GLFWwindow* window){
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
-
     glBindVertexArray(sphere_vao.vao);
     glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
@@ -480,6 +514,23 @@ void display(GLFWwindow* window){
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb2_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindVertexArray(sphere_vao.vao);
+    glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+
+    //3
+    nodes["bulb_3"].material.classic.color = point_light_3.intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_3"].material.classic.color));
+
+    nodes["bulb_3"].transform.translation_component = light_manager.getWorldLightPosition(2);
+    nodes["bulb_3"].transform.calc_model_mat();
+
+    glm::mat4 bulb3_model_mat = nodes["bulb_3"].transform.model_mat;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(bulb3_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glBindVertexArray(sphere_vao.vao);

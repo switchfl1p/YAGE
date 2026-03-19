@@ -21,7 +21,7 @@ struct DirectionalLight{
 	vec4 intensity;
 };
 
-#define MAX_POINT_LIGHTS 2
+#define MAX_POINT_LIGHTS 3
 #define MAX_DIR_LIGHTS 1
 
 layout(std140) uniform Lights{

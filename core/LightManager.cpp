@@ -44,6 +44,24 @@ LightManager::LightManager()
 	pos_values.push_back(glm::vec3( 6.0f, 3.0f,  1.0f));  // swings out
 	light_pos_interpolators[1].SetValues(pos_values);
 	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 25.0f));
+
+	// Light 2 - slow creeping, tight area, unsettling
+	// Light 2 - figure-8, crosses center, medium height
+	pos_values.clear();
+	pos_values.push_back(glm::vec3( 7.0f, 2.0f,  5.0f));
+	pos_values.push_back(glm::vec3( 4.0f, 2.5f,  8.0f));
+	pos_values.push_back(glm::vec3(-1.0f, 2.0f,  5.0f));
+	pos_values.push_back(glm::vec3( 0.0f, 1.5f,  0.0f));  // crosses center
+	pos_values.push_back(glm::vec3(-1.0f, 2.0f, -5.0f));
+	pos_values.push_back(glm::vec3(-4.0f, 2.5f, -8.0f));
+	pos_values.push_back(glm::vec3(-7.0f, 2.0f, -5.0f));
+	pos_values.push_back(glm::vec3(-4.0f, 1.5f,  0.0f));  // crosses center again
+	pos_values.push_back(glm::vec3( 4.0f, 2.0f, -5.0f));
+	pos_values.push_back(glm::vec3( 7.0f, 2.5f, -8.0f));
+	pos_values.push_back(glm::vec3( 8.0f, 2.0f,  0.0f));
+	pos_values.push_back(glm::vec3( 5.0f, 1.5f,  6.0f));
+	light_pos_interpolators[2].SetValues(pos_values);
+	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 35.0f));
 }
 
 glm::vec4 GetValue(const LightVectorData &data) {return data.first;}
