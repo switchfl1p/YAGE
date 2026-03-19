@@ -6,7 +6,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, i
     ImGui::Begin("Node Options");
     
     for (auto& [name, node] : nodes) {
-        //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode(name.c_str())) {
             if(!node.material.is_emissive){
                 switch (light_model){
@@ -78,6 +78,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
         ImGui::TreePop();
     }
 
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Point Lights")) {
         for(size_t i = 0; i < point_lights.size(); i++){
             ImGui::PushID(i);
@@ -93,6 +94,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
         ImGui::TreePop();
     }
 
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Directional Lights")) {
         for(size_t i = 0; i < dir_lights.size(); i++){
             ImGui::PushID(point_lights.size() + i);
