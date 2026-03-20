@@ -77,20 +77,19 @@ void LightManager::setSunlightValues(std::span<SunlightValue> sun_values){
 	std::vector<std::pair<glm::vec4, float>> ambient;
 	std::vector<std::pair<glm::vec4, float>> light;
 	std::vector<std::pair<glm::vec4, float>> background;
+	std::vector<std::pair<float, float>> max_intensity;
 
 	for(auto& value : sun_values){
 		ambient.push_back(std::pair<glm::vec4, float>(value.ambient, value.norm_time));
 		light.push_back(std::pair<glm::vec4, float>(value.sunlightIntensity, value.norm_time));
 		background.push_back(std::pair<glm::vec4, float>(value.backgroundColor, value.norm_time));
+		max_intensity.push_back(std::pair<float, float>(value.max_intensity, value.norm_time));
 	}
 
 	ambient_interpolator.SetValues(ambient);
 	sunlight_interpolator.SetValues(light);
 	background_interpolator.SetValues(background);
-
-	std::vector<std::pair<float, float>> max_intensity; 
-	max_intensity.push_back(std::pair<float, float>(1.0f, 0.0f));
-	max_intensity_interpolator.SetValues(max_intensity, false);
+	max_intensity_interpolator.SetValues(max_intensity);
 }
 
 void LightManager::updateTime(){
@@ -170,7 +169,8 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
     light_data.dir_light_count = 1;  
 
 	light_data.ambient_light.intensity = ambient_interpolator.Interpolate(sun_timer.GetAlpha());
-	//attenuation
+	light_data.max_intensity = max_intensity_interpolator.Interpolate(sun_timer.GetAlpha());
+	//attenuation is point light specific
 
 	light_data.dir_lights[0].direction = world_to_camera_mat * getSunlightDirection();
 	light_data.dir_lights[0].intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());

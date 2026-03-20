@@ -1,9 +1,8 @@
 uniform vec4 material_diffuse;
+uniform float shininess_factor;
 
 in vec3 camera_space_position;
 in vec3 camera_space_normal;
-
-uniform float shininess_factor;
 
 out vec4 output_color;
 

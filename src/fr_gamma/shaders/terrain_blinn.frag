@@ -50,5 +50,5 @@ void main()
 
     vec4 ambient = base_color * ambient_intensity;
 
-    output_color = diffuse_accum + spec_accum + ambient;
+    output_color = (diffuse_accum + spec_accum + ambient) / max_intensity;
 }

@@ -55,5 +55,5 @@ void main()
     }
 
     // --- Ambient ---
-    output_color = total_light + (color * ambient_intensity);
+    output_color = (total_light + (color * ambient_intensity)) / max_intensity;
 }

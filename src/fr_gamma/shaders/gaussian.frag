@@ -54,5 +54,5 @@ void main()
     }
 
     // --- Ambient ---
-    output_color = total_light + (material_diffuse * ambient_intensity);
+    output_color = (total_light + (material_diffuse * ambient_intensity)) / max_intensity;
 }

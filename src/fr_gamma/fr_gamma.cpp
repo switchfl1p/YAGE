@@ -179,13 +179,13 @@ void setupClassicLighting(){
 
     SunlightValue values[] =
 	{
-		{ 0.0f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sky_day_light_color},
-		{ 4.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sky_day_light_color},
-		{ 6.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.10f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
-		{ 8.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
-		{18.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
-		{19.5f/24.0f, glm::vec4(0.15f, 0.05f, 0.05f, 1.0f), glm::vec4(0.3f, 0.1f, 0.1f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
-		{20.5f/24.0f, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), sky_day_light_color},
+		{ 0.0f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
+		{ 4.5f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
+		{ 6.5f/24.0f, glm::vec4(0.225f, 0.075f, 0.075f, 1.0f), glm::vec4(0.45f, 0.15f, 0.15f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
+		{ 8.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
+		{18.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
+		{19.5f/24.0f, glm::vec4(0.225f, 0.075f, 0.075f, 1.0f), glm::vec4(0.45f, 0.15f, 0.15f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
+		{20.5f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
 	};
 
     light_manager.setSunlightValues(values);
@@ -200,13 +200,13 @@ void setupPBRLighting(){
     const glm::vec4 sky_day_light_color = glm::vec4(0.65f, 0.65f, 1.0f, 1.0f);
     SunlightValue values[] =
     {
-        { 0.0f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color},
-        { 4.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color},
-        { 6.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
-        { 8.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
-        {18.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)},
-        {19.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f)},
-        {20.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f,  1.0f), sky_day_light_color},
+        { 0.0f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color, 3.0f},
+        { 4.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color, 3.0f},
+        { 6.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
+        { 8.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
+        {18.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
+        {19.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
+        {20.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f,  1.0f), sky_day_light_color, 3.0f},
     };
     light_manager.setSunlightValues(values);
 

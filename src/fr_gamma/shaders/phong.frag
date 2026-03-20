@@ -52,5 +52,5 @@ void main() {
     for(int i = 0; i < dir_light_count; i++)
         result += calcDirLight(dir_lights[i], N, V);
 
-    output_color = result;
+    output_color = result / max_intensity;
 }

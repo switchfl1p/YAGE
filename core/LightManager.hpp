@@ -38,6 +38,7 @@ struct SunlightValue{
     glm::vec4 ambient;
 	glm::vec4 sunlightIntensity;
 	glm::vec4 backgroundColor;
+    float max_intensity;
 };
 
 enum TimerTypes
