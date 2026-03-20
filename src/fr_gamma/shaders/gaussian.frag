@@ -22,11 +22,9 @@ void main()
     // --- Point Lights ---
     for (int i = 0; i < point_light_count; i++)
     {
-        vec3 light_difference = point_lights[i].position.xyz - camera_space_position;
-        float light_dist_sqrt = dot(light_difference, light_difference);
-        vec3 light_dir = light_difference * inversesqrt(light_dist_sqrt);
-        float atten = 1.0 / (1.0 + point_lights[i].attenuation * sqrt(light_dist_sqrt));
-        vec4 atten_intensity = atten * point_lights[i].intensity;
+        vec3 light_dir;
+        float attenuation = calcAttenuation(point_lights[i], light_dir);
+        vec4 atten_intensity = attenuation * point_lights[i].intensity;
 
         float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
 

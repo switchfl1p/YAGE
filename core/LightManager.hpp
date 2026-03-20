@@ -30,6 +30,7 @@ struct LightBlock{
     AmbientLight ambient_light;
     int point_light_count;
     int dir_light_count;
+    float max_intensity;
 };
 
 struct SunlightValue{

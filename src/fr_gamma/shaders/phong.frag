@@ -5,10 +5,9 @@
 const vec4 specular_color = vec4(0.25, 0.25, 0.25, 1.0);
 
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
-    vec3 light_dir = normalize(light.position.xyz - camera_space_position);
-    float distance = length(light.position.xyz - camera_space_position);
-    float atten = 1.0 / (1.0 + light.attenuation * distance);
-    vec4 atten_intensity = atten * light.intensity;
+    vec3 light_dir;
+    float attenuation = calcAttenuation(light, light_dir);
+    vec4 atten_intensity = attenuation * light.intensity;
 
     // diffuse
     float diff = max(dot(surface_normal, light_dir), 0.0);

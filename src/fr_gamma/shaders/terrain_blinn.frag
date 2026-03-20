@@ -19,13 +19,9 @@ void main()
     // POINT LIGHTS
     for(int i = 0; i < point_light_count; i++)
     {
-        vec3 light_vec = point_lights[i].position.xyz - camera_space_position;
-        float dist2 = dot(light_vec, light_vec);
-
-        vec3 light_dir = light_vec * inversesqrt(dist2);
-        float dist = sqrt(dist2);
-
-        float attenuation = 1.0 / (1.0 + point_lights[i].attenuation * dist);
+        vec3 light_dir;
+        float attenuation = calcAttenuation(point_lights[i], light_dir);
+        vec4 atten_intensity = attenuation * point_lights[i].intensity;
 
         float NdotL = max(dot(surface_normal, light_dir), 0.0);
 

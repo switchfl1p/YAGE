@@ -5,13 +5,9 @@
 const vec4 specular_color = vec4(0.25, 0.25, 0.25, 1.0);
 
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
-    vec3 light_difference = light.position.xyz - camera_space_position;
-    float light_dist_sq = dot(light_difference, light_difference);
-    float light_dist = sqrt(light_dist_sq);
-    vec3 light_dir = light_difference / light_dist;
-
-    float atten = 1.0 / (1.0 + light.attenuation * light_dist);
-    vec4 atten_intensity = atten * light.intensity;
+    vec3 light_dir;
+    float attenuation = calcAttenuation(light, light_dir);
+    vec4 atten_intensity = attenuation * light.intensity;
 
     float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
 
