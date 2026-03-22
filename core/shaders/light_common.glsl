@@ -27,6 +27,7 @@ layout(std140) uniform Lights{
 	int point_light_count;
 	int dir_light_count;
 	float max_intensity;
+	float gamma;
 };
 
 float calcAttenuation(in PointLight light, out vec3 light_dir)
@@ -35,5 +36,5 @@ float calcAttenuation(in PointLight light, out vec3 light_dir)
     float light_distance_squared = dot(light_difference, light_difference);
     light_dir = light_difference * inversesqrt(light_distance_squared);
 
-    return (1 / (1.0 + light.attenuation * sqrt(light_distance_squared)));
+    return (1 / (1.0 + light.attenuation * light_distance_squared));
 }

@@ -53,6 +53,8 @@ void main()
                      + (specular_color * intensity * gaussian_term);
     }
 
-    // --- Ambient ---
-    output_color = (total_light + (material_diffuse * ambient_intensity)) / max_intensity;
+    vec4 result = (total_light + (material_diffuse * ambient_intensity)) / max_intensity;
+    vec4 gamma_vec = vec4(gamma);
+    gamma_vec.w = 1.0;
+    output_color = pow(result, gamma_vec);
 }

@@ -56,6 +56,8 @@ float last_frame = 0.0f;
 std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
 
 LightManager light_manager;
+float g_gamma = 1.0f/2.2f;
+glm::vec4 g_gamma_vec = glm::vec4(glm::vec3(g_gamma),1.0f);
 
 //=============================================================
 
@@ -190,9 +192,13 @@ void setupClassicLighting(){
 
     light_manager.setSunlightValues(values);
 
-    light_manager.setPointLightIntensity(0, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
-    light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 0.6f, 1.0f));
-    light_manager.setPointLightIntensity(2, glm::vec4(0.6f, 0.0f, 0.f, 1.0f));
+    glm::vec4 p_light_color_1 = glm::pow(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), g_gamma_vec);
+    glm::vec4 p_light_color_2 = glm::pow(glm::vec4(0.0f, 0.0f, 0.6f, 1.0f), g_gamma_vec);
+    glm::vec4 p_light_color_3 = glm::pow(glm::vec4(0.6f, 0.0f, 0.f, 1.0f), g_gamma_vec);
+
+    light_manager.setPointLightIntensity(0, p_light_color_1);
+    light_manager.setPointLightIntensity(1, p_light_color_2);
+    light_manager.setPointLightIntensity(2, p_light_color_3);
 }
 
 //sets up light values for PBR Lighting
@@ -295,8 +301,10 @@ void init(GLFWwindow* window){
 void display(GLFWwindow* window){
     light_manager.updateTime();
     LightBlock light_block = light_manager.getLightInformation(cam->getViewMat());
+    light_block.gamma = g_gamma;
 
     glm::vec4 bkg = light_manager.getBackgroundColor();
+    bkg = glm::pow(bkg, g_gamma_vec); //gamma correction
     glfwPollEvents();
 
     //delta time calcs
@@ -552,6 +560,7 @@ void display(GLFWwindow* window){
     );
     ImGui::End();
 
+    //ImGui::ShowDemoWindow();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

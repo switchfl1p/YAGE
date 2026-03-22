@@ -30,6 +30,8 @@ layout(std140) uniform Lights{
     vec4 ambient_intensity;
 	int point_light_count;
 	int dir_light_count;
+    float max_intensity;
+	float gamma;
 };
 
 

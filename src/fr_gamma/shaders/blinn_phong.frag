@@ -46,5 +46,8 @@ void main() {
     for(int i = 0; i < dir_light_count; i++)
         result += calcDirLight(dir_lights[i], surface_normal, view_dir);
 
-    output_color = result / max_intensity;
+    result = result / max_intensity;
+    vec4 gamma_vec = vec4(gamma);
+    gamma_vec.w = 1.0;
+    output_color = pow(result, gamma_vec);
 }

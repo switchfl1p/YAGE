@@ -31,6 +31,7 @@ struct LightBlock{
     int point_light_count;
     int dir_light_count;
     float max_intensity;
+    float gamma;
 };
 
 struct SunlightValue{
