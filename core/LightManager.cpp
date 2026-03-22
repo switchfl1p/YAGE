@@ -166,7 +166,7 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
 	LightBlock light_data;
 
 	light_data.point_light_count = NUMBER_OF_POINT_LIGHTS;
-    light_data.dir_light_count = 1;  
+    light_data.dir_light_count = 2;  
 
 	light_data.ambient_light.intensity = ambient_interpolator.Interpolate(sun_timer.GetAlpha());
 	light_data.max_intensity = max_intensity_interpolator.Interpolate(sun_timer.GetAlpha());
@@ -174,6 +174,11 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
 
 	light_data.dir_lights[0].direction = world_to_camera_mat * getSunlightDirection();
 	light_data.dir_lights[0].intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+
+	glm::vec4 sun_intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+	light_data.dir_lights[1].direction = world_to_camera_mat * -getSunlightDirection();
+	light_data.dir_lights[1].intensity = (glm::vec4(1.0f) - sun_intensity) * glm::vec4(0.15f, 0.15f, 0.25f, 1.0f);
+	light_data.dir_lights[1].intensity.w = 1.0f;
 
 	for(int i = 0; i < light_data.point_light_count; i++){
 		glm::vec4 world_light_pos = glm::vec4(light_pos_interpolators[i].Interpolate(light_timers[i].GetAlpha()), 1.0f);

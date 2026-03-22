@@ -21,7 +21,7 @@ enum LightingModel
 };
 
 constexpr int NUMBER_OF_POINT_LIGHTS = 3;
-constexpr int NUMBER_OF_DIR_LIGHTS = 1;
+constexpr int NUMBER_OF_DIR_LIGHTS = 2;
 constexpr int NUMBER_OF_LIGHTS = NUMBER_OF_POINT_LIGHTS + NUMBER_OF_DIR_LIGHTS;
 
 struct LightBlock{

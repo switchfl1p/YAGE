@@ -144,6 +144,16 @@ void initializeNodes(){
     bulb_3.material.is_emissive = true;
     nodes["bulb_3"] = bulb_3;
 
+    Node sun;
+    sun.transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
+    sun.material.is_emissive = true;
+    nodes["sun"] = sun;
+
+    Node moon;
+    moon.transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
+    moon.material.is_emissive = true;
+    nodes["moon"] = moon;
+
     Node sphere;
     sphere.material.classic.color = glm::vec4(0.5f, 0.1f, 0.8f, 1.0f);
     sphere.material.classic.shininess = 64.0f;
@@ -546,10 +556,54 @@ void display(GLFWwindow* window){
     glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
 
+    //==========
+    //RENDER SUN
+    //==========
+    glUseProgram(unlit_program.program_uint);
+    nodes["sun"].material.classic.color = light_block.dir_lights[0].intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["sun"].material.classic.color));
+
+    nodes["sun"].transform.translation_component = glm::vec3(light_manager.getSunlightDirection()) * 16.0f;
+    nodes["sun"].transform.calc_model_mat();
+
+    glm::mat4 sun_model_mat = nodes["sun"].transform.model_mat;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sun_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindVertexArray(sphere_vao.vao);
+    glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
+
+    //===========
+    //RENDER MOON
+    //===========
+
+    glUseProgram(unlit_program.program_uint);
+    nodes["moon"].material.classic.color = light_block.dir_lights[1].intensity;
+    glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["moon"].material.classic.color));
+
+    nodes["moon"].transform.translation_component = -glm::vec3(light_manager.getSunlightDirection()) * 16.0f;
+    nodes["moon"].transform.calc_model_mat();
+
+    glm::mat4 moon_model_mat = nodes["moon"].transform.model_mat;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(moon_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindVertexArray(sphere_vao.vao);
+    glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
+
     //=================
     //RENDER DEAR IMGUI 
     //=================
-
     viewport_fb->Unbind();
     //Display the framebuffer texture in ImGui
     ImGui::Image(

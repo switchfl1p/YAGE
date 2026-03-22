@@ -18,7 +18,7 @@ struct DirectionalLight{
 };
 
 #define MAX_POINT_LIGHTS 3
-#define MAX_DIR_LIGHTS 1
+#define MAX_DIR_LIGHTS 2
 
 layout(std140) uniform Lights{
 	PointLight point_lights[MAX_POINT_LIGHTS];
