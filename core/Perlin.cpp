@@ -1,4 +1,4 @@
-#include <perlin.hpp>
+#include <Perlin.hpp>
 #include <random>
 #include <algorithm>
 

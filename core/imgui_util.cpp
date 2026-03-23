@@ -1,8 +1,8 @@
-#include <renderGUI.hpp>
+#include <imgui_util.hpp>
 #include "LightManager.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, int light_model){
+void imgui_util::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, int light_model){
     ImGui::Begin("Node Options");
     
     for (auto& [name, node] : nodes) {
@@ -70,7 +70,7 @@ void renderGUI::renderNodeWindow(std::unordered_map<std::string, Node> &nodes, i
 }
 
 //span allows for use of vectors or arrays
-void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights, std::span<DirectionalLight> dir_lights){
+void imgui_util::renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights, std::span<DirectionalLight> dir_lights){
     ImGui::Begin("Light Options");
 
     if (ImGui::TreeNode("Ambient Light")) {
@@ -112,7 +112,7 @@ void renderGUI::renderLightWindow(AmbientLight &ambient_light, std::span<PointLi
     ImGui::End();
 }
 
-void renderGUI::renderStatusOverlay(int light_model, bool sun_movement_flag, bool point_light_movement_flag, bool camera_status){
+void imgui_util::renderStatusOverlay(int light_model, bool sun_movement_flag, bool point_light_movement_flag, bool camera_status){
     ImGui::Begin("Status");
 
     const char* lighting_names[] = {
@@ -147,7 +147,7 @@ void renderGUI::renderStatusOverlay(int light_model, bool sun_movement_flag, boo
     ImGui::End();
 }
 
-bool renderGUI::renderTerrainWindow(TerrainData &terrain){
+bool imgui_util::renderTerrainWindow(TerrainData &terrain){
     bool terrain_changed = false;
 
     ImGui::Begin("Terrain Options");
@@ -167,7 +167,7 @@ bool renderGUI::renderTerrainWindow(TerrainData &terrain){
 }
 
 //Imma keep it 100 I legit just copy pasted the relevant parts from imgui_demo.cpp
-void renderGUI::dockingDemo(ImGuiDemoDockspaceArgs* args, bool* p_open){
+void imgui_util::dockingDemo(ImGuiDemoDockspaceArgs* args, bool* p_open){
     ImGuiDockNodeFlags dockspace_flags = args->DockSpaceFlags;
 
     // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,

@@ -17,7 +17,7 @@
 #include <LightController.hpp>
 #include <Node.hpp>
 #include <core_util.hpp>
-#include <renderGUI.hpp>
+#include <imgui_util.hpp>
 #include <Terrain.hpp>
 #include <LightManager.hpp>
 
@@ -378,13 +378,13 @@ void display(GLFWwindow* window){
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     
-    renderGUI::ImGuiDemoDockspaceArgs args;
-    renderGUI::dockingDemo(&args, nullptr);
-    renderGUI::renderNodeWindow(nodes, light_model);
-    renderGUI::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
-    renderGUI::renderStatusOverlay(light_model, sun_movement_flag, point_light_movement_flag, camera_movement_flag);
+    imgui_util::ImGuiDemoDockspaceArgs args;
+    imgui_util::dockingDemo(&args, nullptr);
+    imgui_util::renderNodeWindow(nodes, light_model);
+    imgui_util::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
+    imgui_util::renderStatusOverlay(light_model, sun_movement_flag, point_light_movement_flag, camera_movement_flag);
 
-    if(renderGUI::renderTerrainWindow(*terrain)){
+    if(imgui_util::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
         core_util::cleanupBuffers(terrain_data);
         glDeleteVertexArrays(1, &terrain_vao.vao);

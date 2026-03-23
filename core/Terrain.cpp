@@ -1,7 +1,7 @@
 /* switchfl1p 2025-2026 */
 
 #include <Terrain.hpp>
-#include <perlin.hpp>
+#include <Perlin.hpp>
 
 TerrainData::TerrainData(int size_x, int size_z, float scale_p, int seed_p, float amplitude_p, float tilescale_p, int octaves_p, float lacunarity_p, float persistance_p) 
     : width(size_x),

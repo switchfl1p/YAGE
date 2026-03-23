@@ -3,7 +3,6 @@
 
 LightManager::LightManager()
     : sun_timer(Framework::Timer::TT_LOOP, 30.0f)
-    , ambient_interpolator()
 {
     light_timers.reserve(NUMBER_OF_POINT_LIGHTS);
 
@@ -166,11 +165,10 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
 	LightBlock light_data;
 
 	light_data.point_light_count = NUMBER_OF_POINT_LIGHTS;
-    light_data.dir_light_count = 2;  
+    light_data.dir_light_count = NUMBER_OF_DIR_LIGHTS;  
 
 	light_data.ambient_light.intensity = ambient_interpolator.Interpolate(sun_timer.GetAlpha());
 	light_data.max_intensity = max_intensity_interpolator.Interpolate(sun_timer.GetAlpha());
-	//attenuation is point light specific
 
 	light_data.dir_lights[0].direction = world_to_camera_mat * getSunlightDirection();
 	light_data.dir_lights[0].intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());

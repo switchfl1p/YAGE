@@ -9,8 +9,8 @@ set(CORE_SOURCES
 	tinygltf_impl.cpp
 	gltf_util.cpp
 	core_util.cpp
-	renderGUI.cpp
-	perlin.cpp
+	imgui_util.cpp
+	Perlin.cpp
 	Terrain.cpp
 	Timer.cpp
 	LightManager.cpp
@@ -26,8 +26,8 @@ set(CORE_HEADERS
 	Node.hpp
 	gltf_util.hpp
 	core_util.hpp
-	renderGUI.hpp
-	perlin.hpp
+	imgui_util.hpp
+	Perlin.hpp
 	Terrain.hpp
 	Timer.hpp
 	Interpolators.hpp

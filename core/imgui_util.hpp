@@ -6,7 +6,7 @@
 #include <Terrain.hpp>
 #include <span>
 
-namespace renderGUI{
+namespace imgui_util{
     void renderNodeWindow(std::unordered_map<std::string, Node> &nodes, int light_model);
     void renderLightWindow(AmbientLight &ambient_light, std::span<PointLight> point_lights, std::span<DirectionalLight> dir_lights);
     void renderStatusOverlay(int light_model, bool sun_movement_flag, bool point_light_movement_flag, bool camera_status);
