@@ -21,7 +21,6 @@ namespace shader_util{
 
         //classic
         data.material_diffuse_unif = glGetUniformLocation(data.program_uint, "material_diffuse");
-        data.ambient_intensity_unif = glGetUniformLocation(data.program_uint, "ambient_intensity");
         data.shininess_factor_unif = glGetUniformLocation(data.program_uint, "shininess_factor");
 
         //pbr

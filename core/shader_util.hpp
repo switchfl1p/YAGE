@@ -6,12 +6,12 @@
 #include <string>
 
 namespace shader_util{
-    
+
     struct LitProgramData{
         GLuint program_uint;
 
+        //classic
         GLuint material_diffuse_unif;
-        GLuint ambient_intensity_unif;
         GLuint shininess_factor_unif;
         
         //pbr

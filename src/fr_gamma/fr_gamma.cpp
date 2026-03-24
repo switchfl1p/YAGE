@@ -33,6 +33,7 @@ shader_util::LitProgramData* current_terrain_program;
 
 GLuint matrices_UBO;
 GLuint lights_UBO;
+GLuint materials_UBO;
 
 int light_model = LM_PBR_LIGHTING;
 
