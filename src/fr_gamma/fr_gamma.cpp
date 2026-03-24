@@ -454,30 +454,22 @@ void display(GLFWwindow* window){
     //=============
     glUseProgram(current_program->program_uint);
 
-    //light uniforms
+    //Lights
     glBindBuffer(GL_UNIFORM_BUFFER, lights_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightBlock), &light_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //modeltoWorld uniform
+    //modelToWorld Matrix
     glm::mat4 sphere_model_mat = nodes["sphere"].transform.model_mat;
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //material uniforms
+    //material properties
     material_block.getMaterialInformation(nodes["sphere"]);
     glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //non-PBR
-    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.classic.color));
-    glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.classic.shininess);
-    //PBR
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["sphere"].material.pbr.color));
-    glUniform1f(current_program->metallic_unif, nodes["sphere"].material.pbr.metallic);
-    glUniform1f(current_program->roughness_unif, nodes["sphere"].material.pbr.roughness);
 
     //draw
     glBindVertexArray(sphere_vao.vao);
@@ -491,24 +483,17 @@ void display(GLFWwindow* window){
     //==============
     glUseProgram(current_program->program_uint);
 
+    //modelToWorld Matrix
     glm::mat4 obelisk_model_mat = nodes["obelisk"].transform.model_mat;
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(obelisk_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    //material properties
     material_block.getMaterialInformation(nodes["obelisk"]);
     glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //material uniforms
-    //non-PBR
-    glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["obelisk"].material.classic.color));
-    glUniform1f(current_program->shininess_factor_unif, nodes["obelisk"].material.classic.shininess);
-    //PBR
-    glUniform4fv(current_program->base_color_unif, 1, glm::value_ptr(nodes["obelisk"].material.pbr.color));
-    glUniform1f(current_program->metallic_unif, nodes["obelisk"].material.pbr.metallic);
-    glUniform1f(current_program->roughness_unif, nodes["obelisk"].material.pbr.roughness);
 
     //draw
     glBindVertexArray(obelisk_vao.vao);
@@ -522,26 +507,19 @@ void display(GLFWwindow* window){
     //==============
     glUseProgram(current_terrain_program->program_uint);
 
+    //modelToWorld Matrix
     glm::mat4 terrain_model_mat = nodes["terrain"].transform.model_mat;
-    
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(terrain_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    //material properties
     material_block.getMaterialInformation(nodes["terrain"]);
     glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["terrain"].material.classic.color));
-    glUniform1f(current_terrain_program->shininess_factor_unif, nodes["terrain"].material.classic.shininess);
-
-    //pbr
-    glUniform4fv(current_terrain_program->base_color_unif, 1, glm::value_ptr(nodes["terrain"].material.pbr.color));
-    glUniform1f(current_terrain_program->metallic_unif, nodes["terrain"].material.pbr.metallic);
-    glUniform1f(current_terrain_program->roughness_unif, nodes["terrain"].material.pbr.roughness);
-
-    //terrain
+    //terrain properties
     glUniform1f(current_terrain_program->amplitutde_unif, terrain->amplitude);
 
     glBindVertexArray(terrain_vao.vao);

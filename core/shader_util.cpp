@@ -19,15 +19,6 @@ namespace shader_util{
         LitProgramData data;
         data.program_uint = the_program.getProgramUint();
 
-        //classic
-        data.material_diffuse_unif = glGetUniformLocation(data.program_uint, "material_diffuse");
-        data.shininess_factor_unif = glGetUniformLocation(data.program_uint, "shininess_factor");
-
-        //pbr
-        data.base_color_unif = glGetUniformLocation(data.program_uint, "base_color");
-        data.metallic_unif = glGetUniformLocation(data.program_uint, "metallic");
-        data.roughness_unif = glGetUniformLocation(data.program_uint, "roughness");
-
         //terrain gen
         data.amplitutde_unif = glGetUniformLocation(data.program_uint, "amplitude");
 

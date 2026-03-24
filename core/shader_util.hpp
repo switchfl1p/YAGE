@@ -10,15 +10,6 @@ namespace shader_util{
     struct LitProgramData{
         GLuint program_uint;
 
-        //classic
-        GLuint material_diffuse_unif;
-        GLuint shininess_factor_unif;
-        
-        //pbr
-        GLuint base_color_unif;
-        GLuint metallic_unif;
-        GLuint roughness_unif;
-
         //terrain
         GLuint amplitutde_unif;
     };
