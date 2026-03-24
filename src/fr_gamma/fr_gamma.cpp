@@ -18,7 +18,6 @@
 #include <Camera.hpp>
 #include <CameraController.hpp>
 #include <Light.hpp>
-#include <LightController.hpp>
 #include <Node.hpp>
 #include <Terrain.hpp>
 #include <LightManager.hpp>
@@ -584,7 +583,6 @@ void display(GLFWwindow* window){
     //===========
     //RENDER MOON
     //===========
-
     glUseProgram(unlit_program.program_uint);
     nodes["moon"].material.classic.color = light_block.dir_lights[1].intensity;
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["moon"].material.classic.color));
@@ -698,9 +696,11 @@ void cleanup(){
 
     gl_util::cleanupBuffers(sphere_data);
     gl_util::cleanupBuffers(terrain_data);
+    gl_util::cleanupBuffers(obelisk_data);
 
     glDeleteVertexArrays(1, &sphere_vao.vao);
     glDeleteVertexArrays(1, &terrain_vao.vao);
+    glDeleteVertexArrays(1, &obelisk_vao.vao);
 
     glDeleteBuffers(1, &matrices_UBO);
     glDeleteBuffers(1, &lights_UBO);
