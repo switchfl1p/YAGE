@@ -1,6 +1,3 @@
-uniform vec4 material_diffuse;
-uniform float shininess_factor;
-
 in vec3 camera_space_position;
 in vec3 camera_space_normal;
 
@@ -29,6 +26,15 @@ layout(std140) uniform Lights{
 	float max_intensity;
 	float gamma;
 };
+
+layout(std140) uniform Materials{
+	vec4 classic_color;
+	vec4 pbr_color;
+	float shininess_factor;
+	float metallic;
+	float roughness;
+	float is_emissive;
+} material;
 
 float calcAttenuation(in PointLight light, out vec3 light_dir)
 {

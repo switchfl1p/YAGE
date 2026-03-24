@@ -8,7 +8,7 @@ vec3 calcGaussianSpecular(vec3 light_dir, vec3 surface_normal, vec3 view_dir)
 {
     vec3 half_angle = normalize(light_dir + view_dir);
     float angle_normal_half = acos(dot(half_angle, surface_normal));
-    float exponent = angle_normal_half / shininess_factor;
+    float exponent = angle_normal_half / material.shininess_factor;
     exponent = -(exponent * exponent);
     return vec3(exp(exponent));
 }
@@ -32,7 +32,7 @@ void main()
         if (cos_ang_incidence != 0.0)
             gaussian_term = calcGaussianSpecular(light_dir, surface_normal, view_dir).r;
 
-        total_light += (material_diffuse * atten_intensity * cos_ang_incidence)
+        total_light += (material.classic_color * atten_intensity * cos_ang_incidence)
                      + (specular_color * atten_intensity * gaussian_term);
     }
 
@@ -49,11 +49,11 @@ void main()
         if (cos_ang_incidence != 0.0)
             gaussian_term = calcGaussianSpecular(light_dir, surface_normal, view_dir).r;
 
-        total_light += (material_diffuse * intensity * cos_ang_incidence)
+        total_light += (material.classic_color * intensity * cos_ang_incidence)
                      + (specular_color * intensity * gaussian_term);
     }
 
-    vec4 result = (total_light + (material_diffuse * ambient_intensity)) / max_intensity;
+    vec4 result = (total_light + (material.classic_color * ambient_intensity)) / max_intensity;
     vec4 gamma_vec = vec4(gamma);
     gamma_vec.w = 1.0;
     output_color = pow(result, gamma_vec);

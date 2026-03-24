@@ -9,7 +9,7 @@ vec3 calcGaussianSpecular(vec3 light_dir, vec3 surface_normal, vec3 view_dir)
 {
     vec3 half_angle = normalize(light_dir + view_dir);
     float angle_normal_half = acos(dot(half_angle, surface_normal));
-    float exponent = angle_normal_half / shininess_factor;
+    float exponent = angle_normal_half / material.shininess_factor;
     exponent = -(exponent * exponent);
     return vec3(exp(exponent));
 }

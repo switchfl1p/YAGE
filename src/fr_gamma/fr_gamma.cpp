@@ -62,6 +62,24 @@ LightManager light_manager;
 float g_gamma = 1.0f/2.2f;
 glm::vec4 g_gamma_vec = glm::vec4(glm::vec3(g_gamma),1.0f);
 
+struct MaterialBlock{
+    glm::vec4 classic_color;
+    glm::vec4 pbr_color;
+    float shininess_factor;
+    float metallic;
+    float roughness;
+    float is_emissive;
+
+    void getMaterialInformation(const Node& node){
+        classic_color = node.material.classic.color;
+        pbr_color = node.material.pbr.color;
+        shininess_factor = node.material.classic.shininess;
+        metallic = node.material.pbr.metallic;
+        roughness = node.material.pbr.roughness;
+        is_emissive = node.material.is_emissive ? 1.0f : 0.0f;
+    }
+};
+
 //=============================================================
 
 void initializePrograms(){
@@ -98,8 +116,10 @@ void initializePrograms(){
 void initializeUBOs(){
     GLuint matrices_uniform_block_index;
     GLuint lights_uniform_block_index;
+    GLuint materials_uniform_block_index;
     constexpr int matrices_binding_index = 0;
     constexpr int lights_binding_index = 1;
+    constexpr int materials_binding_index = 2;
 
     //Matrices UBO
     //Create UBO and bind to binding index
@@ -116,6 +136,12 @@ void initializeUBOs(){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferRange(GL_UNIFORM_BUFFER, lights_binding_index, lights_UBO, 0, sizeof(LightBlock));
 
+    //Materials UBO
+    glGenBuffers(1, &materials_UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(MaterialBlock), NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, materials_binding_index, materials_UBO, 0, sizeof(MaterialBlock));
 
     //handle lit programs
     for(auto& program : lit_programs){
@@ -124,6 +150,9 @@ void initializeUBOs(){
         
         lights_uniform_block_index = glGetUniformBlockIndex(program.program_uint, "Lights");
         glUniformBlockBinding(program.program_uint, lights_uniform_block_index, lights_binding_index);
+
+        materials_uniform_block_index = glGetUniformBlockIndex(program.program_uint, "Materials");
+        glUniformBlockBinding(program.program_uint, materials_uniform_block_index, materials_binding_index);
     }
 
     //handle unlit ones
@@ -318,6 +347,7 @@ void display(GLFWwindow* window){
 
     glm::vec4 bkg = light_manager.getBackgroundColor();
     bkg = glm::pow(bkg, g_gamma_vec); //gamma correction
+
     glfwPollEvents();
 
     //delta time calcs
@@ -335,13 +365,15 @@ void display(GLFWwindow* window){
     PointLight& point_light_2 = light_block.point_lights[1];
     PointLight& point_light_3 = light_block.point_lights[2];
 
+    MaterialBlock material_block;
+
     static int previous_light_model = -1;
     if(light_model != previous_light_model){
 
         switch(light_model){
             case LM_LAMBERTIAN:
                 current_program = &lit_programs[LM_LAMBERTIAN];
-                current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrains
+                current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrain shaders
                 setupClassicLighting();
                 break;
             case LM_PHONG_LIGHTING:
@@ -434,6 +466,11 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //material uniforms
+    material_block.getMaterialInformation(nodes["sphere"]);
+    glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     //non-PBR
     glUniform4fv(current_program->material_diffuse_unif, 1, glm::value_ptr(nodes["sphere"].material.classic.color));
     glUniform1f(current_program->shininess_factor_unif, nodes["sphere"].material.classic.shininess);
@@ -457,6 +494,11 @@ void display(GLFWwindow* window){
     glm::mat4 obelisk_model_mat = nodes["obelisk"].transform.model_mat;
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(obelisk_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    material_block.getMaterialInformation(nodes["obelisk"]);
+    glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //material uniforms
@@ -484,6 +526,11 @@ void display(GLFWwindow* window){
     
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(terrain_model_mat));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    material_block.getMaterialInformation(nodes["terrain"]);
+    glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUniform4fv(current_terrain_program->material_diffuse_unif, 1, glm::value_ptr(nodes["terrain"].material.classic.color));

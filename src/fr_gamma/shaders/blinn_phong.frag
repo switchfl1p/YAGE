@@ -14,9 +14,9 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 half_angle = normalize(light_dir + view_dir);
     float blinn_term = clamp(dot(surface_normal, half_angle), 0.0, 1.0);
     blinn_term = cos_ang_incidence != 0.0 ? blinn_term : 0.0;
-    blinn_term = pow(blinn_term, shininess_factor);
+    blinn_term = pow(blinn_term, material.shininess_factor);
 
-    return (material_diffuse * atten_intensity * cos_ang_incidence) +
+    return (material.classic_color * atten_intensity * cos_ang_incidence) +
            (specular_color * atten_intensity * blinn_term);
 }
 
@@ -28,9 +28,9 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 half_angle = normalize(light_dir + view_dir);
     float blinn_term = clamp(dot(surface_normal, half_angle), 0.0, 1.0);
     blinn_term = cos_ang_incidence != 0.0 ? blinn_term : 0.0;
-    blinn_term = pow(blinn_term, shininess_factor);
+    blinn_term = pow(blinn_term, material.shininess_factor);
 
-    return (material_diffuse * light.intensity * cos_ang_incidence) +
+    return (material.classic_color * light.intensity * cos_ang_incidence) +
            (specular_color * light.intensity * blinn_term);
 }
 
@@ -38,7 +38,7 @@ void main() {
     vec3 surface_normal = normalize(camera_space_normal);
     vec3 view_dir = normalize(-camera_space_position);
 
-    vec4 result = material_diffuse * ambient_intensity;
+    vec4 result = material.classic_color * ambient_intensity;
 
     for(int i = 0; i < point_light_count; i++)
         result += calcPointLight(point_lights[i], surface_normal, view_dir);

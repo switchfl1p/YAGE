@@ -6,8 +6,8 @@ vec3 calcBRDF(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0)
 {
     vec3 H = normalize(V + L);
 
-    float NDF = DistributionGGX(N, H, roughness);
-    float G   = GeometrySmith(N, V, L, roughness);
+    float NDF = DistributionGGX(N, H, material.roughness);
+    float G   = GeometrySmith(N, V, L, material.roughness);
     vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
     vec3 numerator   = NDF * G * F;
@@ -15,10 +15,10 @@ vec3 calcBRDF(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0)
     vec3 specular = numerator / denominator;
 
     vec3 kS = F;
-    vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+    vec3 kD = (vec3(1.0) - kS) * (1.0 - material.metallic);
 
     float NdotL = max(dot(N, L), 0.0);
-    return (kD * base_color.rgb / PI + specular) * radiance * NdotL;
+    return (kD * material.pbr_color.rgb / PI + specular) * radiance * NdotL;
 }
 
 void main()
@@ -26,7 +26,7 @@ void main()
     vec3 N = normalize(camera_space_normal);
     vec3 V = normalize(-camera_space_position);
 
-    vec3 F0 = mix(vec3(0.04), base_color.rgb, metallic);
+    vec3 F0 = mix(vec3(0.04), material.pbr_color.rgb, material.metallic);
 
     vec3 Lo = vec3(0.0);
 
@@ -52,7 +52,7 @@ void main()
     }
 
     // --- Ambient ---
-    vec3 ambient = ambient_intensity.rgb * base_color.rgb;
+    vec3 ambient = ambient_intensity.rgb * material.pbr_color.rgb;
     vec3 final_color = ambient + Lo;
 
     // Tone mapping

@@ -17,7 +17,7 @@ void main()
 
         float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
 
-        total_light += material_diffuse * atten_intensity * cos_ang_incidence;
+        total_light += material.classic_color * atten_intensity * cos_ang_incidence;
     }
 
     // --- Directional Lights ---
@@ -28,11 +28,11 @@ void main()
 
         float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
 
-        total_light += material_diffuse * intensity * cos_ang_incidence;
+        total_light += material.classic_color * intensity * cos_ang_incidence;
     }
 
     // --- Ambient ---
-    vec4 result = (total_light + (material_diffuse * ambient_intensity)) / max_intensity;
+    vec4 result = (total_light + (material.classic_color * ambient_intensity)) / max_intensity;
     vec4 gamma_vec = vec4(gamma);
     gamma_vec.w = 1.0;
     output_color = pow(result, gamma_vec);

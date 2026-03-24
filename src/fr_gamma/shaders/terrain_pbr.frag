@@ -7,8 +7,8 @@ vec3 calcBRDF(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 terrain_color
 {
     vec3 H = normalize(V + L);
 
-    float NDF = DistributionGGX(N, H, roughness);
-    float G   = GeometrySmith(N, V, L, roughness);
+    float NDF = DistributionGGX(N, H, material.roughness);
+    float G   = GeometrySmith(N, V, L, material.roughness);
     vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
     vec3 numerator    = NDF * G * F;
@@ -16,7 +16,7 @@ vec3 calcBRDF(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 terrain_color
     vec3 specular = numerator / denominator;
 
     vec3 kS = F;
-    vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+    vec3 kD = (vec3(1.0) - kS) * (1.0 - material.metallic);
 
     float NdotL = max(dot(N, L), 0.0);
     return (kD * terrain_color / PI + specular) * radiance * NdotL;
@@ -28,7 +28,7 @@ void main()
     vec3 N = normalize(camera_space_normal);
     vec3 V = normalize(-camera_space_position);
 
-    vec3 F0 = mix(vec3(0.04), terrain_color, metallic);
+    vec3 F0 = mix(vec3(0.04), terrain_color, material.metallic);
 
     vec3 Lo = vec3(0.0);
 

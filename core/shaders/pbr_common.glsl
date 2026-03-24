@@ -1,11 +1,6 @@
 in vec3 camera_space_position;
 in vec3 camera_space_normal;
 
-// PBR uniforms
-uniform float metallic;
-uniform float roughness;
-uniform vec4 base_color;
-
 out vec4 output_color;
 
 const float PI = 3.14159265359;
@@ -34,6 +29,14 @@ layout(std140) uniform Lights{
 	float gamma;
 };
 
+layout(std140) uniform Materials{
+	vec4 classic_color;
+	vec4 pbr_color;
+	float shininess_factor;
+	float metallic;
+	float roughness;
+	float is_emissive;
+} material;
 
 // Normal Distribution Function (GGX/Trowbridge-Reitz)
 float DistributionGGX(vec3 N, vec3 H, float roughness) {

@@ -26,7 +26,7 @@ void main()
         float NdotL = max(dot(surface_normal, light_dir), 0.0);
 
         vec3 half_vec = normalize(light_dir + view_dir);
-        float spec = pow(max(dot(surface_normal, half_vec),0.0), shininess_factor);
+        float spec = pow(max(dot(surface_normal, half_vec),0.0), material.shininess_factor);
         spec = NdotL > 0.0 ? spec : 0.0;
 
         diffuse_accum += base_color * point_lights[i].intensity * NdotL * attenuation;
@@ -41,7 +41,7 @@ void main()
         float NdotL = max(dot(surface_normal, light_dir), 0.0);
 
         vec3 half_vec = normalize(light_dir + view_dir);
-        float spec = pow(max(dot(surface_normal, half_vec),0.0), shininess_factor);
+        float spec = pow(max(dot(surface_normal, half_vec),0.0), material.shininess_factor);
         spec = NdotL > 0.0 ? spec : 0.0;
 
         diffuse_accum += base_color * dir_lights[i].intensity * NdotL;

@@ -17,7 +17,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 b
     vec3 reflect_dir = reflect(-light_dir, surface_normal);
     float spec = 0.0;
     if(diff > 0.0) {
-        spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess_factor);
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess_factor);
     }
 
     return (base_color * atten_intensity * diff) +
@@ -34,7 +34,7 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, ve
     vec3 reflect_dir = reflect(-light_dir, surface_normal);
     float spec = 0.0;
     if(diff > 0.0) {
-        spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess_factor);
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess_factor);
     }
 
     return (base_color * light.intensity * diff) +

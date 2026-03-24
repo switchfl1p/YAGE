@@ -16,10 +16,10 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 reflect_dir = reflect(-light_dir, surface_normal);
     float spec = 0.0;
     if(diff > 0.0) {
-        spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess_factor);
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess_factor);
     }
 
-    return (material_diffuse * atten_intensity * diff) +
+    return (material.classic_color * atten_intensity * diff) +
            (specular_color * atten_intensity * spec);
 }
 
@@ -33,10 +33,10 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 reflect_dir = reflect(-light_dir, surface_normal);
     float spec = 0.0;
     if(diff > 0.0) {
-        spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess_factor);
+        spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess_factor);
     }
 
-    return (material_diffuse * light.intensity * diff) +
+    return (material.classic_color * light.intensity * diff) +
            (specular_color * light.intensity * spec);
 }
 
@@ -44,7 +44,7 @@ void main() {
     vec3 N = normalize(camera_space_normal);
     vec3 V = normalize(-camera_space_position);
 
-    vec4 result = material_diffuse * ambient_intensity;
+    vec4 result = material.classic_color * ambient_intensity;
 
     for(int i = 0; i < point_light_count; i++)
         result += calcPointLight(point_lights[i], N, V);
