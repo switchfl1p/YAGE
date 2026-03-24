@@ -10,25 +10,27 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
+#include <shader_util.hpp>
+#include <gltf_util.hpp>
+#include <imgui_util.hpp>
+#include <gl_util.hpp>
+
 #include <Camera.hpp>
 #include <CameraController.hpp>
-#include <gltf_util.hpp>
 #include <Light.hpp>
 #include <LightController.hpp>
 #include <Node.hpp>
-#include <core_util.hpp>
-#include <imgui_util.hpp>
 #include <Terrain.hpp>
 #include <LightManager.hpp>
 
 //=============================================================
 
-std::vector<core_util::LitProgramData> lit_programs;
-core_util::UnlitProgramData unlit_program;
+std::vector<shader_util::LitProgramData> lit_programs;
+shader_util::UnlitProgramData unlit_program;
 
 //for switching between programs
-core_util::LitProgramData* current_program;
-core_util::LitProgramData* current_terrain_program;
+shader_util::LitProgramData* current_program;
+shader_util::LitProgramData* current_terrain_program;
 
 GLuint matrices_UBO;
 GLuint lights_UBO;
@@ -37,12 +39,13 @@ int light_model = LM_PBR_LIGHTING;
 
 std::unordered_map<std::string, Node> nodes;
 std::unique_ptr<TerrainData> terrain = nullptr;
-core_util::ModelData sphere_data;
-core_util::ModelData terrain_data;
-core_util::ModelData obelisk_data;
-core_util::VAOData sphere_vao;
-core_util::VAOData terrain_vao;
-core_util::VAOData obelisk_vao;
+
+gl_util::ModelData sphere_data;
+gl_util::ModelData terrain_data;
+gl_util::ModelData obelisk_data;
+gl_util::VAOData sphere_vao;
+gl_util::VAOData terrain_vao;
+gl_util::VAOData obelisk_vao;
 
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
@@ -53,7 +56,7 @@ bool sun_movement_flag = true;
 float delta_time = 0.0f;
 float last_frame = 0.0f;
 
-std::unique_ptr<core_util::Framebuffer> viewport_fb = nullptr;
+std::unique_ptr<gl_util::Framebuffer> viewport_fb = nullptr;
 
 LightManager light_manager;
 float g_gamma = 1.0f/2.2f;
@@ -62,21 +65,21 @@ glm::vec4 g_gamma_vec = glm::vec4(glm::vec3(g_gamma),1.0f);
 //=============================================================
 
 void initializePrograms(){
-    core_util::LitProgramData lambertian_program = core_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
-    core_util::LitProgramData phong_program = core_util::loadLitProgram("pass_normals.vert", "phong.frag");
-    core_util::LitProgramData blinn_program = core_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
-    core_util::LitProgramData gaussian_program = core_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
-    core_util::LitProgramData pbr_program = core_util::loadLitProgram("pass_normals.vert", "pbr.frag");
+    shader_util::LitProgramData lambertian_program = shader_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
+    shader_util::LitProgramData phong_program = shader_util::loadLitProgram("pass_normals.vert", "phong.frag");
+    shader_util::LitProgramData blinn_program = shader_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
+    shader_util::LitProgramData gaussian_program = shader_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
+    shader_util::LitProgramData pbr_program = shader_util::loadLitProgram("pass_normals.vert", "pbr.frag");
 
     //terrain
-    core_util::LitProgramData terrain_pbr_program = core_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
-    core_util::LitProgramData terrain_lambertian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
-    core_util::LitProgramData terrain_phong_program = core_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
-    core_util::LitProgramData terrain_gaussian_program = core_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
-    core_util::LitProgramData terrain_blinn_program = core_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
+    shader_util::LitProgramData terrain_pbr_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
+    shader_util::LitProgramData terrain_lambertian_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
+    shader_util::LitProgramData terrain_phong_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
+    shader_util::LitProgramData terrain_gaussian_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
+    shader_util::LitProgramData terrain_blinn_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
     
     //No Light
-    unlit_program = core_util::loadUnlitProgram("simple.vert", "no_light.frag");
+    unlit_program = shader_util::loadUnlitProgram("simple.vert", "no_light.frag");
 
     lit_programs.reserve(LM_COUNT * 2);
     lit_programs.push_back(lambertian_program);
@@ -239,19 +242,19 @@ void initializeBuffers(){
     gltf_util::Loader loader;
 
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
-    sphere_data = core_util::loadModelData(sphere);
+    sphere_data = gl_util::loadModelData(sphere);
 
     gltf_util::Model obelisk = loader.loadModel("obelisk.glb");
-    obelisk_data = core_util::loadModelData(obelisk);
+    obelisk_data = gl_util::loadModelData(obelisk);
 
     terrain = std::make_unique<TerrainData>(20, 20, 6.667f , 36, 10.94f , 1, 6, 2.0f, 0.5f);
-    terrain_data = core_util::createTerrainBuffers(*terrain);
+    terrain_data = gl_util::createTerrainBuffers(*terrain);
 }
 
 void initializeVertexArrayObjects(){
-    sphere_vao = core_util::loadVAOData(sphere_data);
-    terrain_vao = core_util::createTerrainVAO(terrain_data);
-    obelisk_vao = core_util::loadVAOData(obelisk_data);
+    sphere_vao = gl_util::loadVAOData(sphere_data);
+    terrain_vao = gl_util::createTerrainVAO(terrain_data);
+    obelisk_vao = gl_util::loadVAOData(obelisk_data);
 }
 
 void initializeCameras(GLFWwindow* window){
@@ -294,7 +297,7 @@ void init(GLFWwindow* window){
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
-    viewport_fb = std::make_unique<core_util::Framebuffer>(width,height);
+    viewport_fb = std::make_unique<gl_util::Framebuffer>(width,height);
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
@@ -386,10 +389,10 @@ void display(GLFWwindow* window){
 
     if(imgui_util::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
-        core_util::cleanupBuffers(terrain_data);
+        gl_util::cleanupBuffers(terrain_data);
         glDeleteVertexArrays(1, &terrain_vao.vao);
-        terrain_data = core_util::createTerrainBuffers(*terrain);
-        terrain_vao = core_util::createTerrainVAO(terrain_data);
+        terrain_data = gl_util::createTerrainBuffers(*terrain);
+        terrain_vao = gl_util::createTerrainVAO(terrain_data);
     }
 
     ImGui::Begin("Viewport");
@@ -693,8 +696,8 @@ void cleanup(){
 
     viewport_fb.reset(); //needs to be here or segfault on exit
 
-    core_util::cleanupBuffers(sphere_data);
-    core_util::cleanupBuffers(terrain_data);
+    gl_util::cleanupBuffers(sphere_data);
+    gl_util::cleanupBuffers(terrain_data);
 
     glDeleteVertexArrays(1, &sphere_vao.vao);
     glDeleteVertexArrays(1, &terrain_vao.vao);

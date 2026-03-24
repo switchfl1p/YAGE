@@ -8,12 +8,13 @@ set(CORE_SOURCES
 	Node.cpp
 	tinygltf_impl.cpp
 	gltf_util.cpp
-	core_util.cpp
+	gl_util.cpp
 	imgui_util.cpp
 	Perlin.cpp
 	Terrain.cpp
 	Timer.cpp
 	LightManager.cpp
+	shader_util.cpp
 )
 
 set(CORE_HEADERS
@@ -25,13 +26,14 @@ set(CORE_HEADERS
 	LightController.hpp
 	Node.hpp
 	gltf_util.hpp
-	core_util.hpp
+	gl_util.hpp
 	imgui_util.hpp
 	Perlin.hpp
 	Terrain.hpp
 	Timer.hpp
 	Interpolators.hpp
 	LightManager.hpp
+	shader_util.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
