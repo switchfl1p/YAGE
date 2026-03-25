@@ -8,7 +8,7 @@
 
 namespace gl_util{
 
-    ModelData loadModelData(const gltf_util::Model &model){
+    ModelData createBuffers(const gltf_util::Model &model){
         ModelData model_data;
 
         // VBO
@@ -27,7 +27,7 @@ namespace gl_util{
         return model_data;
     }
 
-    VAOData loadVAOData(ModelData &model_data){
+    VAOData createVAO(ModelData &model_data){
         VAOData data;
         glGenVertexArrays(1, &data.vao);
         glBindVertexArray(data.vao);

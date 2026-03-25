@@ -34,3 +34,14 @@ struct Node{
     Material material;
     Transform transform;
 };
+
+struct MaterialBlock{
+    glm::vec4 classic_color;
+    glm::vec4 pbr_color;
+    float shininess_factor;
+    float metallic;
+    float roughness;
+    float is_emissive;
+
+    void getMaterialInformation(const Node& node);
+};

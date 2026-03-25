@@ -4,23 +4,20 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> 
-#include <memory>
 #include <tiny_gltf.h>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
+#include <memory>
 
 #include <shader_util.hpp>
 #include <gltf_util.hpp>
 #include <imgui_util.hpp>
 #include <gl_util.hpp>
 
-#include <Camera.hpp>
 #include <CameraController.hpp>
-#include <Light.hpp>
-#include <Node.hpp>
-#include <Terrain.hpp>
 #include <LightManager.hpp>
+#include <Node.hpp>
 
 //=============================================================
 
@@ -61,24 +58,6 @@ std::unique_ptr<gl_util::Framebuffer> viewport_fb = nullptr;
 LightManager light_manager;
 float g_gamma = 1.0f/2.2f;
 glm::vec4 g_gamma_vec = glm::vec4(glm::vec3(g_gamma),1.0f);
-
-struct MaterialBlock{
-    glm::vec4 classic_color;
-    glm::vec4 pbr_color;
-    float shininess_factor;
-    float metallic;
-    float roughness;
-    float is_emissive;
-
-    void getMaterialInformation(const Node& node){
-        classic_color = node.material.classic.color;
-        pbr_color = node.material.pbr.color;
-        shininess_factor = node.material.classic.shininess;
-        metallic = node.material.pbr.metallic;
-        roughness = node.material.pbr.roughness;
-        is_emissive = node.material.is_emissive ? 1.0f : 0.0f;
-    }
-};
 
 //=============================================================
 
@@ -234,9 +213,10 @@ void setupClassicLighting(){
 
     light_manager.setSunlightValues(values);
 
-    glm::vec4 p_light_color_1 = glm::pow(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), g_gamma_vec);
-    glm::vec4 p_light_color_2 = glm::pow(glm::vec4(0.0f, 0.0f, 0.6f, 1.0f), g_gamma_vec);
-    glm::vec4 p_light_color_3 = glm::pow(glm::vec4(0.6f, 0.0f, 0.f, 1.0f), g_gamma_vec);
+    glm::vec4 p_light_color_1 = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+    glm::vec4 p_light_color_2 = glm::vec4(0.0f, 0.0f, 0.6f, 1.0f);
+    glm::vec4 p_light_color_3 = glm::vec4(0.6f, 0.0f, 0.f, 1.0f);
+
 
     light_manager.setPointLightIntensity(0, p_light_color_1);
     light_manager.setPointLightIntensity(1, p_light_color_2);
@@ -271,19 +251,19 @@ void initializeBuffers(){
     gltf_util::Loader loader;
 
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
-    sphere_data = gl_util::loadModelData(sphere);
+    sphere_data = gl_util::createBuffers(sphere);
 
     gltf_util::Model obelisk = loader.loadModel("obelisk.glb");
-    obelisk_data = gl_util::loadModelData(obelisk);
+    obelisk_data = gl_util::createBuffers(obelisk);
 
     terrain = std::make_unique<TerrainData>(20, 20, 6.667f , 36, 10.94f , 1, 6, 2.0f, 0.5f);
     terrain_data = gl_util::createTerrainBuffers(*terrain);
 }
 
 void initializeVertexArrayObjects(){
-    sphere_vao = gl_util::loadVAOData(sphere_data);
+    sphere_vao = gl_util::createVAO(sphere_data);
     terrain_vao = gl_util::createTerrainVAO(terrain_data);
-    obelisk_vao = gl_util::loadVAOData(obelisk_data);
+    obelisk_vao = gl_util::createVAO(obelisk_data);
 }
 
 void initializeCameras(GLFWwindow* window){
@@ -419,6 +399,7 @@ void display(GLFWwindow* window){
     imgui_util::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
     imgui_util::renderStatusOverlay(light_model, sun_movement_flag, point_light_movement_flag, camera_movement_flag);
 
+    //if terrain parameters changed
     if(imgui_util::renderTerrainWindow(*terrain)){
         terrain->generateTerrain();
         gl_util::cleanupBuffers(terrain_data);
@@ -534,7 +515,7 @@ void display(GLFWwindow* window){
     //1
     glUseProgram(unlit_program.program_uint);
 
-    nodes["bulb_1"].material.classic.color = point_light.intensity;
+    nodes["bulb_1"].material.classic.color = glm::pow(point_light.intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_1"].material.classic.color));
 
     nodes["bulb_1"].transform.translation_component = light_manager.getWorldLightPosition(0);
@@ -551,7 +532,7 @@ void display(GLFWwindow* window){
     glBindVertexArray(0);
 
     //2
-    nodes["bulb_2"].material.classic.color = point_light_2.intensity;
+    nodes["bulb_2"].material.classic.color = glm::pow(point_light_2.intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_2"].material.classic.color));
 
     nodes["bulb_2"].transform.translation_component = light_manager.getWorldLightPosition(1);
@@ -568,7 +549,7 @@ void display(GLFWwindow* window){
     glBindVertexArray(0);
 
     //3
-    nodes["bulb_3"].material.classic.color = point_light_3.intensity;
+    nodes["bulb_3"].material.classic.color = glm::pow(point_light_3.intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_3"].material.classic.color));
 
     nodes["bulb_3"].transform.translation_component = light_manager.getWorldLightPosition(2);
@@ -588,7 +569,7 @@ void display(GLFWwindow* window){
     //RENDER SUN
     //==========
     glUseProgram(unlit_program.program_uint);
-    nodes["sun"].material.classic.color = light_block.dir_lights[0].intensity;
+    nodes["sun"].material.classic.color = glm::pow(light_block.dir_lights[0].intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["sun"].material.classic.color));
 
     nodes["sun"].transform.translation_component = glm::vec3(light_manager.getSunlightDirection()) * 16.0f;
@@ -610,7 +591,7 @@ void display(GLFWwindow* window){
     //RENDER MOON
     //===========
     glUseProgram(unlit_program.program_uint);
-    nodes["moon"].material.classic.color = light_block.dir_lights[1].intensity;
+    nodes["moon"].material.classic.color = glm::pow(light_block.dir_lights[1].intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["moon"].material.classic.color));
 
     nodes["moon"].transform.translation_component = -glm::vec3(light_manager.getSunlightDirection()) * 16.0f;

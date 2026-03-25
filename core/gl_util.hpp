@@ -14,7 +14,7 @@ namespace gl_util{
         int index_count = 0;
     };
 
-    ModelData loadModelData(const gltf_util::Model& model);
+    ModelData createBuffers(const gltf_util::Model& model);
 
     void cleanupBuffers(ModelData& model_data);
 
@@ -23,7 +23,7 @@ namespace gl_util{
         int index_count = 0;
     };
 
-    VAOData loadVAOData(ModelData& model_data);
+    VAOData createVAO(ModelData& model_data);
 
     class Framebuffer {
         public:

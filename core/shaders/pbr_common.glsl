@@ -1,9 +1,7 @@
-in vec3 camera_space_position;
-in vec3 camera_space_normal;
+#define MAX_POINT_LIGHTS 3
+#define MAX_DIR_LIGHTS 2
 
-out vec4 output_color;
-
-const float PI = 3.14159265359;
+layout(std140) uniform;
 
 struct PointLight{
 	vec4 position;
@@ -16,10 +14,7 @@ struct DirectionalLight{
 	vec4 intensity;
 };
 
-#define MAX_POINT_LIGHTS 3
-#define MAX_DIR_LIGHTS 2
-
-layout(std140) uniform Lights{
+uniform Lights{
 	PointLight point_lights[MAX_POINT_LIGHTS];
 	DirectionalLight dir_lights[MAX_DIR_LIGHTS];
     vec4 ambient_intensity;
@@ -29,7 +24,7 @@ layout(std140) uniform Lights{
 	float gamma;
 };
 
-layout(std140) uniform Materials{
+uniform Materials{
 	vec4 classic_color;
 	vec4 pbr_color;
 	float shininess_factor;
@@ -37,6 +32,13 @@ layout(std140) uniform Materials{
 	float roughness;
 	float is_emissive;
 } material;
+
+in vec3 camera_space_position;
+in vec3 camera_space_normal;
+
+out vec4 output_color;
+
+const float PI = 3.14159265359;
 
 // Normal Distribution Function (GGX/Trowbridge-Reitz)
 float DistributionGGX(vec3 N, vec3 H, float roughness) {

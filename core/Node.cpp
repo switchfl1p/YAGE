@@ -19,3 +19,12 @@ glm::mat4 Transform::calc_model_mat(){
 
     return model_mat;
 }
+
+void MaterialBlock::getMaterialInformation(const Node& node){
+    classic_color = node.material.classic.color;
+    pbr_color = node.material.pbr.color;
+    shininess_factor = node.material.classic.shininess;
+    metallic = node.material.pbr.metallic;
+    roughness = node.material.pbr.roughness;
+    is_emissive = node.material.is_emissive ? 1.0f : 0.0f;
+}
