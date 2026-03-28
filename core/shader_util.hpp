@@ -11,7 +11,7 @@ namespace shader_util{
         GLuint program_uint;
 
         //terrain
-        GLuint amplitutde_unif;
+        GLuint amplitude_unif;
     };
 
     struct UnlitProgramData{

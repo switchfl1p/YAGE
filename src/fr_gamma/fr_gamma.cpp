@@ -501,7 +501,7 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //terrain properties
-    glUniform1f(current_terrain_program->amplitutde_unif, terrain->amplitude);
+    glUniform1f(current_terrain_program->amplitude_unif, terrain->amplitude);
 
     glBindVertexArray(terrain_vao.vao);
     glDrawElements(GL_TRIANGLES, terrain_vao.index_count, GL_UNSIGNED_INT, 0);

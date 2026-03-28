@@ -20,7 +20,7 @@ namespace shader_util{
         data.program_uint = the_program.getProgramUint();
 
         //terrain gen
-        data.amplitutde_unif = glGetUniformLocation(data.program_uint, "amplitude");
+        data.amplitude_unif = glGetUniformLocation(data.program_uint, "amplitude");
 
         return data;
     }
