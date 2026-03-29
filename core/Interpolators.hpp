@@ -1,205 +1,196 @@
+/* switchfl1p 2025-2026 */
+//see https://github.com/switchfl1p/tween
+
 #pragma once
 
-#include <math.h>
 #include <vector>
-#include <glm/glm.hpp>
 
-// forward declare some functions needed by instantiations
-// FIXME this is certainly the wrong place for them
-typedef std::pair<float, float> MaxIntensityData;
-typedef std::vector<MaxIntensityData> MaxIntensityVector;
-typedef std::pair<glm::vec4, float> LightVectorData;
-typedef std::vector<LightVectorData> LightVector;
-float distance(const glm::vec3 &lhs, const glm::vec3 &rhs);
-glm::vec4 GetValue(const LightVectorData &data);
-float GetTime(const LightVectorData &data);
-float GetValue(const MaxIntensityData &data);
-float GetTime(const MaxIntensityData &data);
+/* 
+To use TimedLinearInterpolator with your type T, you must provide:
+    YourValueType getValue(const T &data);
+    float getTime(const T &data);
 
-namespace Framework
-{
-	template<typename ValueType>
-	class WeightedLinearInterpolator
-	{
-	public:
-		typedef ValueType value_type;
+To use ConstVelLinearInterpolator with your type T, you must provide:
+    float distance(const YourValueType &a, const YourValueType &b); 
 
-		size_t NumSegments() const {return m_values.empty() ? 0 : m_values.size() - 1;}
+see https://github.com/switchfl1p/tween for examples
+*/
 
-		ValueType Interpolate(float fAlpha) const
-		{
-			if(m_values.empty())
-				return ValueType();
-			if(m_values.size() == 1)
-				return m_values[0].data;
+template<typename ValueType>
+class WeightedLinearInterpolator {
+public:
+    size_t numSegments() const {
+        return values.empty() ? 0 : values.size() - 1;
+    }
 
-			//Find which segment we are within.
-			size_t segment = 1;
-			for(; segment < m_values.size(); ++segment)
-			{
-				if(fAlpha < m_values[segment].weight)
-					break;
-			}
+    ValueType interpolate(float alpha) const {
+        if (values.empty())
+            return ValueType();
+        if (values.size() == 1)
+            return values[0].data;
 
-			if(segment == m_values.size())
-				return m_values.back().data;
+        //Find which segment we are within
+        size_t segment = 1;
+        for (; segment < values.size(); segment++) {
+            if (alpha < values[segment].weight)
+                break;
+        }
+        
+        //if alpha >= than 1
+        if (segment == values.size())
+            return values.back().data;
 
-			float sectionAlpha = fAlpha - m_values[segment - 1].weight;
-			sectionAlpha /= m_values[segment].weight - m_values[segment - 1].weight;
+        float section_alpha = alpha - values[segment - 1].weight; //how far into the specific segment
+        section_alpha /= values[segment].weight - values[segment - 1].weight; //normalize it to [0,1]
 
-			float invSecAlpha = 1.0f - sectionAlpha;
+        float inv_sec_alpha = 1.0f - section_alpha;
 
-			return m_values[segment - 1].data * invSecAlpha + m_values[segment].data * sectionAlpha;
-		}
+        return values[segment - 1].data * inv_sec_alpha + values[segment].data * section_alpha;
+    }
 
-	protected:
-		WeightedLinearInterpolator() {}
+protected:
+    WeightedLinearInterpolator() {}
 
-		struct Data
-		{
-			ValueType data;
-			float weight;
-		};
+    struct Data {
+        ValueType data;
+        float weight;
+    };
 
-		std::vector<Data> m_values;
-	};
+    std::vector<Data> values;
+};
 
-	template<typename ValueType>
-	class TimedLinearInterpolator : public WeightedLinearInterpolator<ValueType>
-	{
-	public:
+/* 
+Loads a set of (value, time) pairs into the interpolator
+Times must be in [0, 1] and in ascending order
+If looping, the first value is appended at the end to allow smooth wraparound 
+*/
+template<typename ValueType>
+class TimedLinearInterpolator : public WeightedLinearInterpolator<ValueType> {
+public:
 
-		template<typename BidirectionalRange>
-		void SetValues(const BidirectionalRange &data, bool isLooping = true)
-		{
-			this->m_values.clear();
-			typename BidirectionalRange::const_iterator curr = data.begin();
-			typename BidirectionalRange::const_iterator final = data.end();
-			for(; curr != final; ++curr)
-			{
-				typename WeightedLinearInterpolator<ValueType>::Data currData;
-				currData.data = GetValue(*curr);
-				currData.weight = GetTime(*curr);
+    template<typename BidirectionalRange>
+    void setValues(const BidirectionalRange &data, bool is_looping = true) {
+        this->values.clear();
+        typename BidirectionalRange::const_iterator curr = data.begin();
+        typename BidirectionalRange::const_iterator final = data.end();
 
-				assert(0.0f <= currData.weight && currData.weight <= 1.0f);
-				this->m_values.push_back(currData);
-			}
+        for (; curr != final; curr++) {
+            typename WeightedLinearInterpolator<ValueType>::Data curr_data;
+            curr_data.data = getValue(*curr);
+            curr_data.weight = getTime(*curr);
 
-			if(isLooping && !this->m_values.empty())
-				this->m_values.push_back(this->m_values[0]);
+            assert(0.0f <= curr_data.weight && curr_data.weight <= 1.0f);
+            this->values.push_back(curr_data);
+        }
 
-			//Ensure first is weight 0, and last is weight 1.
-			if(!this->m_values.empty())
-			{
-				this->m_values.front().weight = 0.0f;
-				this->m_values.back().weight = 1.0f;
-			}
-		}
-	protected:
-	};
+        if (is_looping && !this->values.empty())
+            this->values.push_back(this->values[0]);
 
+        
+        //Ensure first is weight 0, and last is weight 1
+        if (!this->values.empty()) {
+            this->values.front().weight = 0.0f;
+            this->values.back().weight = 1.0f;
+        }
+    }
+protected:
+};
 
-	template<typename ValueType>
-	class LinearInterpolator : public WeightedLinearInterpolator<ValueType>
-	{
-	public:
-		typedef ValueType value_type;
+/*
+Loads a set of values and automatically distributes them evenly across [0, 1]
+Unlike TimedLinearInterpolator, no timestamps are required in the input
+If looping, the last value is duplicated at the end to pad the cycle boundary 
+*/
+template<typename ValueType>
+class LinearInterpolator : public WeightedLinearInterpolator<ValueType> {
+public:
+    //typedef ValueType value_type;
 
-		template<typename BidirectionalRange>
-		void SetValues(const BidirectionalRange &data, bool isLooping = true)
-		{
-			this->m_values.clear();
-			int iNumValues = 0;
-			typename BidirectionalRange::const_iterator curr = data.begin();
-			typename BidirectionalRange::const_iterator final = data.end();
-			for(; curr != final; ++curr)
-			{
-				typename WeightedLinearInterpolator<ValueType>::Data currData;
-				currData.data = *curr;
-				currData.weight = 0.0f;
-				this->m_values.push_back(currData);
+    template<typename BidirectionalRange>
+    void setValues(const BidirectionalRange &data, bool is_looping = true) {
+        this->values.clear();
+        int i_num_values = 0;
+        typename BidirectionalRange::const_iterator curr = data.begin();
+        typename BidirectionalRange::const_iterator final = data.end();
 
-				iNumValues++;
-			}
+        for (; curr != final; curr++) {
+            typename WeightedLinearInterpolator<ValueType>::Data curr_data;
+            curr_data.data = *curr;
+            curr_data.weight = 0.0f;
+            this->values.push_back(curr_data);
 
-			if(isLooping && !this->m_values.empty())
-			{
-				this->m_values.push_back(this->m_values.back());
-				++iNumValues;
-			}
+            i_num_values++;
+        }
+        
+        //provides a pause between loops
+        if (is_looping && !this->values.empty()) {
+            this->values.push_back(this->values.back());
+            i_num_values++;
+        }
 
-			//Compute weights.
-			for(size_t valIx = 0; valIx < this->m_values.size(); ++valIx)
-			{
-				this->m_values[valIx].weight = valIx / (float)(iNumValues - 1);
-			}
-		}
-	private:
-	};
+        //Compute weights
+        for (size_t val_ix = 0; val_ix < this->values.size(); val_ix++) {
+            this->values[val_ix].weight = val_ix / (float)(i_num_values - 1);
+        }
+    }
+private:
+};
 
-	/**
-	\brief Interpolates with a constant velocity between positions.
+/*
+Interpolates with a constant velocity between positions.
 
-	This interpolator maps a range of [0, 1) onto a set of values. However, it takes the distance
-	between these values. There must be a free function called "distance" which takes two ValueType's and
-	returns a float distance between them.
+This interpolator maps a range of [0, 1) onto a set of values. However, it takes the distance
+between these values. There must be a free function called "distance" which takes two ValueType's and
+returns a float distance between them.
 
-	The idea is that, if you add 0.1 to your alpha value, you will always get a movement of the same distance.
-	Not necessarily between the initial and final points, but the object will have moved at the same
-	speed along the path.
-	**/
-	template<typename ValueType>
-	class ConstVelLinearInterpolator : public WeightedLinearInterpolator<ValueType>
-	{
-	public:
-		typedef ValueType value_type;
+The idea is that, if you add 0.1 to your alpha value, you will always get a movement of the same distance.
+Not necessarily between the initial and final points, but the object will have moved at the same
+speed along the path.
+*/
+template<typename ValueType>
+class ConstVelLinearInterpolator : public WeightedLinearInterpolator<ValueType> {
+public:
+    //typedef ValueType value_type;
 
-		explicit ConstVelLinearInterpolator()
-			: m_totalDist(0.0f)
-		{}
+    ConstVelLinearInterpolator()
+    : total_dist(0.0f) {}
+    
+    template<typename BidirectionalRange>
+    void setValues(const BidirectionalRange &data, bool is_looping = true){
+        this->values.clear();
 
-		template<typename BidirectionalRange>
-		void SetValues(const BidirectionalRange &data, bool isLoop = true)
-		{
-			this->m_values.clear();
+        typename BidirectionalRange::const_iterator curr = data.begin();
+        typename BidirectionalRange::const_iterator last = data.end();
 
-			typename BidirectionalRange::const_iterator curr = data.begin();
-			typename BidirectionalRange::const_iterator last = data.end();
-			for(; curr != last; ++curr)
-			{
-				typename WeightedLinearInterpolator<ValueType>::Data currData;
-				currData.data = *curr;
-				currData.weight = 0.0f;
-				this->m_values.push_back(currData);
-			}
+        for (; curr!= last; curr++) {
+            typename WeightedLinearInterpolator<ValueType>::Data curr_data;
+            curr_data.data = *curr;
+            curr_data.weight = 0.0f;
+            this->values.push_back(curr_data);
+        }
 
-			if(isLoop)
-			{
-				typename WeightedLinearInterpolator<ValueType>::Data currData;
-				currData.data = *data.begin();
-				currData.weight = 0.0f;
-				this->m_values.push_back(currData);
-			}
+        if (is_looping) {
+            typename WeightedLinearInterpolator<ValueType>::Data curr_data;
+            curr_data.data = *data.begin();
+            curr_data.weight = 0.0f;
+            this->values.push_back(curr_data);
+        }
 
-			//Compute the distances of each segment.
-			m_totalDist = 0.0f;
-			for(size_t iLoop = 1; iLoop < this->m_values.size(); ++iLoop)
-			{
-				m_totalDist += distance(this->m_values[iLoop - 1].data,
-				    this->m_values[iLoop].data);
-				this->m_values[iLoop].weight = m_totalDist;
-			}
+        //Compute the distances of each segment
+        total_dist = 0.0f;
+        for (size_t i_loop = 1; i_loop < this->values.size(); i_loop++) {
+            total_dist += distance(this->values[i_loop - 1].data, this->values[i_loop].data);
+            this->values[i_loop].weight = total_dist;
+        }
 
-			//Compute the alpha value that represents when to use this segment.
-			for(size_t iLoop = 1; iLoop < this->m_values.size(); ++iLoop)
-			{
-				this->m_values[iLoop].weight /= m_totalDist;
-			}
-		}
+        //Compute the alpha value that represents when to use this segment
+        for (size_t i_loop = 1; i_loop < this->values.size(); i_loop++) {
+            this->values[i_loop].weight /= total_dist;
+        }
+    }
 
-		float Distance() const {return m_totalDist;}
+    float getDistance() const {return total_dist;}
 
-	private:
-		float m_totalDist;
-	};
-}
+private:
+    float total_dist;
+};

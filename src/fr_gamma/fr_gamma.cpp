@@ -431,7 +431,7 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //=============
-    //RENDER SPHERE 
+    //RENDER SPHERE
     //=============
     glUseProgram(current_program->program_uint);
 

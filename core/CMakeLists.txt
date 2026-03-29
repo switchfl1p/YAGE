@@ -4,7 +4,6 @@ set(CORE_SOURCES
 	renderer.cpp
 	CameraController.cpp
 	Camera.cpp
-	LightController.cpp
 	Node.cpp
 	tinygltf_impl.cpp
 	gltf_util.cpp
@@ -15,6 +14,7 @@ set(CORE_SOURCES
 	Timer.cpp
 	LightManager.cpp
 	shader_util.cpp
+	LightTypes.hpp
 )
 
 set(CORE_HEADERS
@@ -23,7 +23,6 @@ set(CORE_HEADERS
 	CameraController.hpp
 	Camera.hpp
 	Light.hpp
-	LightController.hpp
 	Node.hpp
 	gltf_util.hpp
 	gl_util.hpp

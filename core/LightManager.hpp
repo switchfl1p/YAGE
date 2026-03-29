@@ -3,6 +3,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <Light.hpp>
+#include <LightTypes.hpp>
 #include <Timer.hpp>
 #include <Interpolators.hpp>
 #include <string>
@@ -74,19 +75,19 @@ class LightManager{
         void setPointLightIntensity(int light_index, const glm::vec4 &intensity);
         glm::vec4 getPointLightIntensity(int light_index) const;
 
-        void CreateTimer(const std::string &timer_name, Framework::Timer::Type type, float duration);
+        void CreateTimer(const std::string &timer_name, Timer::Type type, float duration);
 	    float GetTimerValue(const std::string &timer_name) const;
 	    float GetSunTime() const;
     
     private:
-        Framework::Timer sun_timer;
-        Framework::TimedLinearInterpolator<glm::vec4> ambient_interpolator;
-	    Framework::TimedLinearInterpolator<glm::vec4> background_interpolator;
-	    Framework::TimedLinearInterpolator<glm::vec4> sunlight_interpolator;
-	    Framework::TimedLinearInterpolator<float> max_intensity_interpolator;
+        Timer sun_timer;
+        TimedLinearInterpolator<glm::vec4> ambient_interpolator;
+	    TimedLinearInterpolator<glm::vec4> background_interpolator;
+	    TimedLinearInterpolator<glm::vec4> sunlight_interpolator;
+	    TimedLinearInterpolator<float> max_intensity_interpolator;
 
-        std::vector<Framework::ConstVelLinearInterpolator<glm::vec3>> light_pos_interpolators;
+        std::vector<ConstVelLinearInterpolator<glm::vec3>> light_pos_interpolators;
         std::vector<glm::vec4> light_intensities;
-        std::vector<Framework::Timer> light_timers;
-        std::map<std::string, Framework::Timer> extra_timers;
+        std::vector<Timer> light_timers;
+        std::map<std::string, Timer> extra_timers;
 };

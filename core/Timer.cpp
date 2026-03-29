@@ -1,110 +1,107 @@
-//taken from https://github.com/paroj/gltut/blob/master/framework/Timer.cpp and adapted for GLFW
+/* switchfl1p 2025-2026 */
+//see https://github.com/switchfl1p/tween
 
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include <Timer.hpp>
 
-namespace Framework
+Timer::Timer(Type t_type, float duration)
+    :etype(t_type),
+     sec_duration(duration),
+     has_updated(false),
+     is_paused(false),
+     abs_prev_time(0.0f),
+     sec_accum_time(0.0f)
 {
-	Timer::Timer( Type eType, float fDuration )
-		: m_eType(eType)
-		, m_secDuration(fDuration)
-		, m_hasUpdated(false)
-		, m_isPaused(false)
-		, m_absPrevTime(0.0f)
-		, m_secAccumTime(0.0f)
-	{
-		if(m_eType != TT_INFINITE)
-			assert(m_secDuration > 0.0f);
-	}
+    if(etype != TT_INFINITE)
+        assert(sec_duration > 0.0f);
+}
 
-	void Timer::Reset()
-	{
-		m_hasUpdated = false;
-		m_secAccumTime = 0.0f;
-	}
+void Timer::reset(){
+    has_updated = false;
+    sec_accum_time = 0.0f;
+}
 
-	bool Timer::TogglePause()
-	{
-		m_isPaused = !m_isPaused;
-		return m_isPaused;
-	}
+bool Timer::togglePause(){
+    is_paused = !is_paused;
+    return is_paused;
+}
 
-	bool Timer::IsPaused() const
-	{
-		return m_isPaused;
-	}
+bool Timer::isPaused() const
+{
+    return is_paused;
+}
 
-	void Timer::SetPause( bool pause )
-	{
-		m_isPaused = pause;
-	}
+void Timer::setPause(bool pause){
+    is_paused = pause;
+}
 
-	bool Timer::Update()
-	{
-		float absCurrTime = glfwGetTime();
-		if(!m_hasUpdated)
-		{
-			m_absPrevTime = absCurrTime;
-			m_hasUpdated = true;
-		}
+bool Timer::update(){
+    float abs_curr_time = glfwGetTime();
 
-		if(m_isPaused)
-		{
-			m_absPrevTime = absCurrTime;
-			return false;
-		}
+    //for the first timestamp
+    if(!has_updated){
+        abs_prev_time = abs_curr_time;
+        has_updated = true;
+    }
 
-		float fDeltaTime = absCurrTime - m_absPrevTime;
-		m_secAccumTime += fDeltaTime;
+    if(is_paused){
+        abs_prev_time = abs_curr_time;
+        return false;
+    }
 
-		m_absPrevTime = absCurrTime;
-		if(m_eType == TT_SINGLE)
-			return m_secAccumTime > m_secDuration;
+    float delta_time = abs_curr_time - abs_prev_time;
+    sec_accum_time += delta_time;
 
-		return false;
-	}
+    abs_prev_time = abs_curr_time;
 
-	void Timer::Rewind( float secRewind )
-	{
-		m_secAccumTime -= secRewind;
-		if(m_secAccumTime < 0.0f)
-			m_secAccumTime = 0.0f;
-	}
+    if(etype == TT_SINGLE)
+        return sec_accum_time > sec_duration;
 
-	void Timer::Fastforward( float secFF )
-	{
-		m_secAccumTime += secFF;
-	}
+    return false;
+}
 
-	float Timer::GetAlpha() const
-	{
-		switch(m_eType)
-		{
-		case TT_LOOP:
-			return fmodf(m_secAccumTime, m_secDuration) / m_secDuration;
-		case TT_SINGLE:
-			return glm::clamp(m_secAccumTime / m_secDuration, 0.0f, 1.0f);
-		}
+void Timer::rewind(float sec_rewind){
+    sec_accum_time -= sec_rewind;
 
-		return -1.0f;	//Garbage.
-	}
+    if(sec_accum_time < 0.0f)
+        sec_accum_time = 0.0f;
+}
 
-	float Timer::GetProgression() const
-	{
-		switch(m_eType)
-		{
-		case TT_LOOP:
-			return fmodf(m_secAccumTime, m_secDuration);
-		case TT_SINGLE:
-			return glm::clamp(m_secAccumTime, 0.0f, m_secDuration);
-		}
+void Timer::fastForward(float sec_ff){
+    sec_accum_time += sec_ff;
+}
 
-		return -1.0f;	//Garbage.
-	}
+float Timer::getAlpha() const{
+    switch(etype){
+        case TT_LOOP:
+            return fmodf(sec_accum_time, sec_duration) / sec_duration;
+        case TT_SINGLE:
+            return glm::clamp(sec_accum_time / sec_duration, 0.0f, 1.0f);
+        case TT_INFINITE:
+        case TIMER_TYPES_COUNT:
+            return -1; //garbage
+    }
+    return -1; //garbage
+}
 
-	float Timer::GetTimeSinceStart() const
-	{
-		return m_secAccumTime;
-	}
+float Timer::getProgression() const{
+    switch(etype){
+        case TT_LOOP:
+            return fmodf(sec_accum_time, sec_duration);
+        case TT_SINGLE:
+            return glm::clamp(sec_accum_time, 0.0f, sec_duration);
+        case TT_INFINITE: 
+        case TIMER_TYPES_COUNT:
+            return -1; //garbage
+    }
+    return -1; //garbage
+}
+
+float Timer::getTimeSinceStart() const{
+    return sec_accum_time;
+}
+
+float Timer::getDuration() const{
+    return sec_duration;
 }

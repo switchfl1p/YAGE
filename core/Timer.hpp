@@ -1,78 +1,61 @@
-//taken from https://github.com/paroj/gltut/blob/master/framework/Timer.h
+/* switchfl1p 2025-2026 */
+//see https://github.com/switchfl1p/tween
 
 #pragma once
 
-namespace Framework
-{
-	class Timer
-	{
-	public:
-		enum Type
-		{
-			TT_LOOP,
-			TT_SINGLE,
-			TT_INFINITE,
+class Timer{
+public:
+    enum Type{
+        TT_LOOP,
+        TT_SINGLE,
+        TT_INFINITE,
 
-			NUM_TIMER_TYPES,
-		};
+        TIMER_TYPES_COUNT
+    };
 
-		/**
-		Creates a timer with the given type.
+    //Infinite timers ignore the duration
+    Timer(Type t_type = TT_INFINITE, float duration = 1.0f);
 
-		LOOP and SINGLE timers need an explicit duration. This represents the time in seconds
-		through a loop, or the time in seconds until the timer expires.
+    void reset();
 
-		INFINITE timers ignore the duration.
+    //returns true if the timer is paused after toggling
+    bool togglePause();
 
-		It is legal to create these statically.
-		**/
-		Timer(Type eType = TT_INFINITE, float fDuration = 1.0f);
+    void setPause(bool pause = true);
 
-		//Resets the timer, as though the user just created the object with the original parameters.
-		void Reset();
+    bool isPaused() const;
 
-		//Pauses/unpauses. Returns true if the timer is paused after the toggling.
-		bool TogglePause();
+    //Updates the time for the timer. Returns true if the timer has reached the end
+    //Will only return true for single timers
+    bool update();
 
-		//Sets the pause state to the given value.
-		void SetPause(bool pause = true);
+    //subtracts sec_rewind from current time and continues from there
+    void rewind(float sec_rewind);
 
-		//Returns true if the timer is paused.
-		bool IsPaused() const;
+    //adds sec_ff to the current time and continues from there
+    void fastForward(float sec_ff);
 
-		//Updates the time for the timer. Returns true if the timer has reached the end.
-		//Will only return true for SINGLE timers that have reached their duration.
-		bool Update();
+    //returns a value between [0, 1] representing progress through the duration.
+    //Only used for SINGLE and LOOP timers.
+    float getAlpha() const;
 
-		//Subtracts secRewind from the current time and continues from there.
-		void Rewind(float secRewind);
+    //returns a number between [0, duration] reprenseting the progress through the timer in seconds
+    //Only for SINGLE and LOOP timers
+    float getProgression() const;
 
-		//Adds secRewind to the current time and continues from there.
-		void Fastforward(float secFF);
+    //returns the time in seconds since the timer started, excluding time spent paused
+    float getTimeSinceStart() const;
 
-		//Returns a number [0, 1], representing progress through the duration. Only used
-		//for SINGLE and LOOP timers.
-		float GetAlpha() const;
+    //returns the timer's duration that was passed in
+    float getDuration() const;
 
-		//Returns a number [0, duration], representing the progress through the timer in 
-		//seconds. Only for SINGLE and LOOP timers.
-		float GetProgression() const;
+private:
+    Type etype;
+    float sec_duration;
 
-		//Returns the time in seconds since the timer was started, excluding
-		//time for pausing.
-		float GetTimeSinceStart() const;
+    bool has_updated;
+    bool is_paused;
 
-		//Returns the timer's duration that was passed in.
-		float GetDuration() const {return m_secDuration;}
-
-	private:
-		Type m_eType;
-		float m_secDuration;
-
-		bool m_hasUpdated;
-		bool m_isPaused;
-
-		float m_absPrevTime;
-		float m_secAccumTime;
-	};
-}
+    float abs_prev_time;
+    float sec_accum_time;
+};

@@ -1,12 +1,38 @@
-#include "glm/ext/matrix_transform.hpp"
+/* switchfl1p 2025-2026 */
+
+#include <glm/ext/matrix_transform.hpp>
 #include <LightManager.hpp>
 
+/* 
+Required functions for Interpolators.hpp template to work
+These functions are forward declared in LightTypes.hpp which is included in LightManager.hpp before Interpolators.hpp
+*/
+float distance(const glm::vec3 &lhs, const glm::vec3 &rhs) {
+    return glm::length(rhs - lhs);
+}
+
+glm::vec4 getValue(const std::pair<glm::vec4, float> &light_vector_data) {
+    return light_vector_data.first;
+}
+
+float getTime(const std::pair<glm::vec4, float> &light_vector_data) {
+    return light_vector_data.second;
+}
+
+float getValue(const std::pair<float, float> &max_intensity_data) {
+    return max_intensity_data.first;
+}
+
+float getTime(const std::pair<float, float> &max_intensity_data) {
+    return max_intensity_data.second;
+}
+
 LightManager::LightManager()
-    : sun_timer(Framework::Timer::TT_LOOP, 30.0f)
+    : sun_timer(Timer::TT_LOOP, 30.0f)
 {
     light_timers.reserve(NUMBER_OF_POINT_LIGHTS);
 
-    light_pos_interpolators.resize(NUMBER_OF_POINT_LIGHTS, Framework::ConstVelLinearInterpolator<glm::vec3>());
+    light_pos_interpolators.resize(NUMBER_OF_POINT_LIGHTS, ConstVelLinearInterpolator<glm::vec3>());
     light_intensities.resize(NUMBER_OF_POINT_LIGHTS, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
 
     std::vector<glm::vec3> pos_values;
@@ -24,8 +50,8 @@ LightManager::LightManager()
 	pos_values.push_back(glm::vec3(8.0f,  1.0f,  3.0f));  // back to edge
 	pos_values.push_back(glm::vec3(2.0f,  4.0f,  6.0f));  // cuts inward, high
 	pos_values.push_back(glm::vec3(7.0f,  1.0f,  8.0f));  // back to edge, low
-	light_pos_interpolators[0].SetValues(pos_values);
-	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 15.0f));
+	light_pos_interpolators[0].setValues(pos_values);
+	light_timers.push_back(Timer(Timer::TT_LOOP, 15.0f));
 
 	// Light 1 - erratic, tight direction changes, big height variance
 	pos_values.clear();
@@ -41,10 +67,9 @@ LightManager::LightManager()
 	pos_values.push_back(glm::vec3( 2.0f, 5.0f,  8.0f));  // peaks high near edge
 	pos_values.push_back(glm::vec3(-1.0f, 1.0f,  3.0f));  // drops to near center
 	pos_values.push_back(glm::vec3( 6.0f, 3.0f,  1.0f));  // swings out
-	light_pos_interpolators[1].SetValues(pos_values);
-	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 25.0f));
+	light_pos_interpolators[1].setValues(pos_values);
+	light_timers.push_back(Timer(Timer::TT_LOOP, 25.0f));
 
-	// Light 2 - slow creeping, tight area, unsettling
 	// Light 2 - figure-8, crosses center, medium height
 	pos_values.clear();
 	pos_values.push_back(glm::vec3( 7.0f, 2.0f,  5.0f));
@@ -59,17 +84,8 @@ LightManager::LightManager()
 	pos_values.push_back(glm::vec3( 7.0f, 2.5f, -8.0f));
 	pos_values.push_back(glm::vec3( 8.0f, 2.0f,  0.0f));
 	pos_values.push_back(glm::vec3( 5.0f, 1.5f,  6.0f));
-	light_pos_interpolators[2].SetValues(pos_values);
-	light_timers.push_back(Framework::Timer(Framework::Timer::TT_LOOP, 35.0f));
-}
-
-glm::vec4 GetValue(const LightVectorData &data) {return data.first;}
-float GetTime(const LightVectorData &data) {return data.second;}
-float GetValue(const MaxIntensityData &data) {return data.first;}
-float GetTime(const MaxIntensityData &data) {return data.second;}
-float distance(const glm::vec3 &lhs, const glm::vec3 &rhs)
-{
-	return glm::length(rhs - lhs);
+	light_pos_interpolators[2].setValues(pos_values);
+	light_timers.push_back(Timer(Timer::TT_LOOP, 35.0f));
 }
 
 void LightManager::setSunlightValues(std::span<SunlightValue> sun_values){
@@ -85,36 +101,36 @@ void LightManager::setSunlightValues(std::span<SunlightValue> sun_values){
 		max_intensity.push_back(std::pair<float, float>(value.max_intensity, value.norm_time));
 	}
 
-	ambient_interpolator.SetValues(ambient);
-	sunlight_interpolator.SetValues(light);
-	background_interpolator.SetValues(background);
-	max_intensity_interpolator.SetValues(max_intensity);
+	ambient_interpolator.setValues(ambient);
+	sunlight_interpolator.setValues(light);
+	background_interpolator.setValues(background);
+	max_intensity_interpolator.setValues(max_intensity);
 }
 
 void LightManager::updateTime(){
-	sun_timer.Update();
+	sun_timer.update();
 
 	for(auto& timer : light_timers){
-		timer.Update();
+		timer.update();
 	}
 	for(auto& [name, timer] : extra_timers){
-		timer.Update();
+		timer.update();
 	}
 }
 
 void LightManager::setPause(TimerTypes timer, bool pause){
 	if(timer == TIMER_ALL || timer == TIMER_LIGHTS){
 		for(auto& timer : light_timers){
-			timer.SetPause(pause);
+			timer.setPause(pause);
 		}
 		
 		for(auto& [name, timer] : extra_timers){
-			timer.SetPause(pause);
+			timer.setPause(pause);
 		}
 	}
 
 	if(timer == TIMER_ALL || timer == TIMER_SUN){
-		sun_timer.TogglePause();
+		sun_timer.togglePause();
 	}
 }
 
@@ -124,39 +140,39 @@ void LightManager::togglePause(TimerTypes timer){
 
 bool LightManager::isPaused(TimerTypes timer) const{
 	if(timer == TIMER_ALL || timer == TIMER_SUN){
-		return sun_timer.IsPaused();
+		return sun_timer.isPaused();
 	}
-	return light_timers.front().IsPaused();
+	return light_timers.front().isPaused();
 }
 
 void LightManager::rewindTime(TimerTypes timer, float sec_rewind){
 	if(timer == TIMER_ALL || timer == TIMER_SUN){
-		sun_timer.Rewind(sec_rewind);
+		sun_timer.rewind(sec_rewind);
 	}
 
 	if(timer == TIMER_ALL || timer == TIMER_LIGHTS){
 		for(auto& timer : light_timers){
-			timer.Rewind(sec_rewind);
+			timer.rewind(sec_rewind);
 		}
 
 		for(auto& [name, timer] : extra_timers){
-			timer.Rewind(sec_rewind);
+			timer.rewind(sec_rewind);
 		}
 	}
 }
 
 void LightManager::fastForwardTime(TimerTypes timer, float secFF){
 	if(timer == TIMER_ALL || timer == TIMER_SUN){
-		sun_timer.Fastforward(secFF);
+		sun_timer.fastForward(secFF);
 	}
 
 	if(timer == TIMER_ALL || timer == TIMER_LIGHTS){
 		for(auto& timer : light_timers){
-			timer.Fastforward(secFF);
+			timer.fastForward(secFF);
 		}
 
 		for(auto& [name, timer] : extra_timers){
-			timer.Fastforward(secFF);
+			timer.fastForward(secFF);
 		}
 	}
 }
@@ -167,19 +183,19 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
 	light_data.point_light_count = NUMBER_OF_POINT_LIGHTS;
     light_data.dir_light_count = NUMBER_OF_DIR_LIGHTS;  
 
-	light_data.ambient_light.intensity = ambient_interpolator.Interpolate(sun_timer.GetAlpha());
-	light_data.max_intensity = max_intensity_interpolator.Interpolate(sun_timer.GetAlpha());
+	light_data.ambient_light.intensity = ambient_interpolator.interpolate(sun_timer.getAlpha());
+	light_data.max_intensity = max_intensity_interpolator.interpolate(sun_timer.getAlpha());
 
 	light_data.dir_lights[0].direction = world_to_camera_mat * getSunlightDirection();
-	light_data.dir_lights[0].intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+	light_data.dir_lights[0].intensity = sunlight_interpolator.interpolate(sun_timer.getAlpha());
 
-	glm::vec4 sun_intensity = sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+	glm::vec4 sun_intensity = sunlight_interpolator.interpolate(sun_timer.getAlpha());
 	light_data.dir_lights[1].direction = world_to_camera_mat * -getSunlightDirection();
 	light_data.dir_lights[1].intensity = (glm::vec4(1.0f) - sun_intensity) * glm::vec4(0.15f, 0.15f, 0.25f, 1.0f);
 	light_data.dir_lights[1].intensity.w = 1.0f;
 
 	for(int i = 0; i < light_data.point_light_count; i++){
-		glm::vec4 world_light_pos = glm::vec4(light_pos_interpolators[i].Interpolate(light_timers[i].GetAlpha()), 1.0f);
+		glm::vec4 world_light_pos = glm::vec4(light_pos_interpolators[i].interpolate(light_timers[i].getAlpha()), 1.0f);
 		glm::vec4 light_pos_cam_space = world_to_camera_mat * world_light_pos;
 
 		light_data.point_lights[i].position = light_pos_cam_space;
@@ -190,7 +206,7 @@ LightBlock LightManager::getLightInformation(const glm::mat4 &world_to_camera_ma
 
 //rotates sunlight and returns it
 glm::vec4 LightManager::getSunlightDirection() const{
-	float angle = 2.0f * 3.14159f * sun_timer.GetAlpha();
+	float angle = 2.0f * 3.14159f * sun_timer.getAlpha();
 	glm::vec4 sun_direction(0.0f);
 
 	//sun starts straight up, at noon
@@ -205,7 +221,7 @@ glm::vec4 LightManager::getSunlightDirection() const{
 }
 
 glm::vec4 LightManager::getSunlightIntensity() const{
-	return sunlight_interpolator.Interpolate(sun_timer.GetAlpha());
+	return sunlight_interpolator.interpolate(sun_timer.getAlpha());
 }
 
 void LightManager::setPointLightIntensity(int light_index, const glm::vec4 &intensity){
@@ -213,9 +229,9 @@ void LightManager::setPointLightIntensity(int light_index, const glm::vec4 &inte
 }
 
 glm::vec4 LightManager::getBackgroundColor() const{
-	return background_interpolator.Interpolate(sun_timer.GetAlpha());
+	return background_interpolator.interpolate(sun_timer.getAlpha());
 }
 
 glm::vec3 LightManager::getWorldLightPosition(int light_index) const{
-	return light_pos_interpolators[light_index].Interpolate(light_timers[light_index].GetAlpha());
+	return light_pos_interpolators[light_index].interpolate(light_timers[light_index].getAlpha());
 }
