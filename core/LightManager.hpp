@@ -3,7 +3,6 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <Light.hpp>
-#include <LightTypes.hpp>
 #include <Timer.hpp>
 #include <Interpolators.hpp>
 #include <string>
@@ -85,8 +84,8 @@ class LightManager{
 	    TimedLinearInterpolator<glm::vec4> background_interpolator;
 	    TimedLinearInterpolator<glm::vec4> sunlight_interpolator;
 	    TimedLinearInterpolator<float> max_intensity_interpolator;
-
         std::vector<ConstVelLinearInterpolator<glm::vec3>> light_pos_interpolators;
+        
         std::vector<glm::vec4> light_intensities;
         std::vector<Timer> light_timers;
         std::map<std::string, Timer> extra_timers;

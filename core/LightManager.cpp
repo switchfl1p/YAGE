@@ -2,30 +2,7 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <LightManager.hpp>
-
-/* 
-Required functions for Interpolators.hpp template to work
-These functions are forward declared in LightTypes.hpp which is included in LightManager.hpp before Interpolators.hpp
-*/
-float distance(const glm::vec3 &lhs, const glm::vec3 &rhs) {
-    return glm::length(rhs - lhs);
-}
-
-glm::vec4 getValue(const std::pair<glm::vec4, float> &light_vector_data) {
-    return light_vector_data.first;
-}
-
-float getTime(const std::pair<glm::vec4, float> &light_vector_data) {
-    return light_vector_data.second;
-}
-
-float getValue(const std::pair<float, float> &max_intensity_data) {
-    return max_intensity_data.first;
-}
-
-float getTime(const std::pair<float, float> &max_intensity_data) {
-    return max_intensity_data.second;
-}
+#include <InterpolatorTraits.hpp>
 
 LightManager::LightManager()
     : sun_timer(Timer::TT_LOOP, 30.0f)

@@ -1,17 +1,28 @@
 /* switchfl1p 2025-2026 */
+
 //see https://github.com/switchfl1p/tween
 
 #pragma once
 
 #include <vector>
 
-/* 
-To use TimedLinearInterpolator with your type T, you must provide:
-    YourValueType getValue(const T &data);
-    float getTime(const T &data);
+//Traits class, fixes previous usage of free functions
+template<typename T>
+struct InterpolatorTraits;
 
-To use ConstVelLinearInterpolator with your type T, you must provide:
-    float distance(const YourValueType &a, const YourValueType &b); 
+/* 
+To use TimedLinearInterpolator with your type T, you must specialize InterpolatorTraits:
+    template<>
+    struct InterpolatorTraits<T> {
+        static YourValueType getValue(const T &data);
+        static float getTime(const T &data);
+    };
+
+To use ConstVelLinearInterpolator with your type T, you must specialize InterpolatorTraits:
+    template<>
+    struct InterpolatorTraits<T> {
+        static float distance(const T &a, const T &b);
+    };
 
 see https://github.com/switchfl1p/tween for examples
 */
@@ -36,7 +47,7 @@ public:
                 break;
         }
         
-        //if alpha >= than 1
+        //if alpha >= 1
         if (segment == values.size())
             return values.back().data;
 
@@ -76,8 +87,8 @@ public:
 
         for (; curr != final; curr++) {
             typename WeightedLinearInterpolator<ValueType>::Data curr_data;
-            curr_data.data = getValue(*curr);
-            curr_data.weight = getTime(*curr);
+            curr_data.data = InterpolatorTraits<typename BidirectionalRange::value_type>::getValue(*curr);
+            curr_data.weight = InterpolatorTraits<typename BidirectionalRange::value_type>::getTime(*curr);
 
             assert(0.0f <= curr_data.weight && curr_data.weight <= 1.0f);
             this->values.push_back(curr_data);
@@ -104,8 +115,6 @@ If looping, the last value is duplicated at the end to pad the cycle boundary
 template<typename ValueType>
 class LinearInterpolator : public WeightedLinearInterpolator<ValueType> {
 public:
-    //typedef ValueType value_type;
-
     template<typename BidirectionalRange>
     void setValues(const BidirectionalRange &data, bool is_looping = true) {
         this->values.clear();
@@ -140,8 +149,7 @@ private:
 Interpolates with a constant velocity between positions.
 
 This interpolator maps a range of [0, 1) onto a set of values. However, it takes the distance
-between these values. There must be a free function called "distance" which takes two ValueType's and
-returns a float distance between them.
+between these values.
 
 The idea is that, if you add 0.1 to your alpha value, you will always get a movement of the same distance.
 Not necessarily between the initial and final points, but the object will have moved at the same
@@ -150,8 +158,6 @@ speed along the path.
 template<typename ValueType>
 class ConstVelLinearInterpolator : public WeightedLinearInterpolator<ValueType> {
 public:
-    //typedef ValueType value_type;
-
     ConstVelLinearInterpolator()
     : total_dist(0.0f) {}
     
@@ -179,7 +185,7 @@ public:
         //Compute the distances of each segment
         total_dist = 0.0f;
         for (size_t i_loop = 1; i_loop < this->values.size(); i_loop++) {
-            total_dist += distance(this->values[i_loop - 1].data, this->values[i_loop].data);
+            total_dist += InterpolatorTraits<ValueType>::distance(this->values[i_loop - 1].data, this->values[i_loop].data);
             this->values[i_loop].weight = total_dist;
         }
 

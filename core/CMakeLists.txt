@@ -14,7 +14,6 @@ set(CORE_SOURCES
 	Timer.cpp
 	LightManager.cpp
 	shader_util.cpp
-	LightTypes.hpp
 )
 
 set(CORE_HEADERS
@@ -33,6 +32,7 @@ set(CORE_HEADERS
 	Interpolators.hpp
 	LightManager.hpp
 	shader_util.hpp
+	InterpolatorTraits.hpp
 )
 
 add_library(core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

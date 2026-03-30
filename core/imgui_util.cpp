@@ -1,3 +1,5 @@
+/* switchfl1p 2025-2026 */
+
 #include <imgui_util.hpp>
 #include "LightManager.hpp"
 #include "glm/gtc/type_ptr.hpp"
