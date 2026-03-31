@@ -4,65 +4,13 @@
 #include <LightManager.hpp>
 #include <InterpolatorTraits.hpp>
 
-LightManager::LightManager()
+LightManager::LightManager(std::span<ConstVelLinearInterpolator<glm::vec3>> interpolators, std::span<Timer> timers)
     : sun_timer(Timer::TT_LOOP, 30.0f)
+
 {
-    light_timers.reserve(NUMBER_OF_POINT_LIGHTS);
-
-    light_pos_interpolators.resize(NUMBER_OF_POINT_LIGHTS, ConstVelLinearInterpolator<glm::vec3>());
+	light_pos_interpolators.assign(interpolators.begin(), interpolators.end());
+	light_timers.assign(timers.begin(), timers.end());
     light_intensities.resize(NUMBER_OF_POINT_LIGHTS, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
-
-    std::vector<glm::vec3> pos_values;
-    pos_values.reserve(60);
-
-	// Light 0 - zigzags and cuts inward, varying heights
-	pos_values.push_back(glm::vec3(-5.0f, 1.5f, 8.0f));
-	pos_values.push_back(glm::vec3(-2.0f, 3.0f, 5.0f));   // cuts inward, rises
-	pos_values.push_back(glm::vec3(-8.0f, 1.0f, 2.0f));   // swings back out, dips
-	pos_values.push_back(glm::vec3(-4.0f, 4.0f, -3.0f));  // cuts inward again, peaks
-	pos_values.push_back(glm::vec3(-8.0f, 1.0f, -7.0f));  // back to edge, low
-	pos_values.push_back(glm::vec3(0.0f,  2.5f, -4.0f));  // cuts across center
-	pos_values.push_back(glm::vec3(7.0f,  1.0f, -8.0f));  // swings to far corner
-	pos_values.push_back(glm::vec3(4.0f,  3.5f, -2.0f));  // cuts inward, rises
-	pos_values.push_back(glm::vec3(8.0f,  1.0f,  3.0f));  // back to edge
-	pos_values.push_back(glm::vec3(2.0f,  4.0f,  6.0f));  // cuts inward, high
-	pos_values.push_back(glm::vec3(7.0f,  1.0f,  8.0f));  // back to edge, low
-	light_pos_interpolators[0].setValues(pos_values);
-	light_timers.push_back(Timer(Timer::TT_LOOP, 15.0f));
-
-	// Light 1 - erratic, tight direction changes, big height variance
-	pos_values.clear();
-	pos_values.push_back(glm::vec3( 3.0f, 4.5f,  2.0f));  // starts high near center
-	pos_values.push_back(glm::vec3( 8.0f, 1.0f,  5.0f));  // dives to edge
-	pos_values.push_back(glm::vec3( 4.0f, 2.0f, -1.0f));  // cuts back
-	pos_values.push_back(glm::vec3( 7.0f, 4.0f, -7.0f));  // far corner, rises
-	pos_values.push_back(glm::vec3( 1.0f, 1.0f, -5.0f));  // cuts inward, low
-	pos_values.push_back(glm::vec3(-4.0f, 3.5f, -8.0f));  // swings to edge, rises
-	pos_values.push_back(glm::vec3(-2.0f, 1.0f, -2.0f));  // cuts to center, dips
-	pos_values.push_back(glm::vec3(-8.0f, 4.0f,  1.0f));  // far edge, high
-	pos_values.push_back(glm::vec3(-3.0f, 1.5f,  5.0f));  // cuts inward
-	pos_values.push_back(glm::vec3( 2.0f, 5.0f,  8.0f));  // peaks high near edge
-	pos_values.push_back(glm::vec3(-1.0f, 1.0f,  3.0f));  // drops to near center
-	pos_values.push_back(glm::vec3( 6.0f, 3.0f,  1.0f));  // swings out
-	light_pos_interpolators[1].setValues(pos_values);
-	light_timers.push_back(Timer(Timer::TT_LOOP, 25.0f));
-
-	// Light 2 - figure-8, crosses center, medium height
-	pos_values.clear();
-	pos_values.push_back(glm::vec3( 7.0f, 2.0f,  5.0f));
-	pos_values.push_back(glm::vec3( 4.0f, 2.5f,  8.0f));
-	pos_values.push_back(glm::vec3(-1.0f, 2.0f,  5.0f));
-	pos_values.push_back(glm::vec3( 0.0f, 1.5f,  0.0f));  // crosses center
-	pos_values.push_back(glm::vec3(-1.0f, 2.0f, -5.0f));
-	pos_values.push_back(glm::vec3(-4.0f, 2.5f, -8.0f));
-	pos_values.push_back(glm::vec3(-7.0f, 2.0f, -5.0f));
-	pos_values.push_back(glm::vec3(-4.0f, 1.5f,  0.0f));  // crosses center again
-	pos_values.push_back(glm::vec3( 4.0f, 2.0f, -5.0f));
-	pos_values.push_back(glm::vec3( 7.0f, 2.5f, -8.0f));
-	pos_values.push_back(glm::vec3( 8.0f, 2.0f,  0.0f));
-	pos_values.push_back(glm::vec3( 5.0f, 1.5f,  6.0f));
-	light_pos_interpolators[2].setValues(pos_values);
-	light_timers.push_back(Timer(Timer::TT_LOOP, 35.0f));
 }
 
 void LightManager::setSunlightValues(std::span<SunlightValue> sun_values){

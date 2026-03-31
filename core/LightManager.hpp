@@ -51,7 +51,7 @@ enum TimerTypes
 
 class LightManager{
     public:
-        LightManager();
+        LightManager(std::span<ConstVelLinearInterpolator<glm::vec3>> interpolators, std::span<Timer> timers);
         void setSunlightValues(std::span<SunlightValue> sun_values);
 
         void updateTime();

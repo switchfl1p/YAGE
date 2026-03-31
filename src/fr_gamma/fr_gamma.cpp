@@ -18,6 +18,7 @@
 #include <CameraController.hpp>
 #include <LightManager.hpp>
 #include <Node.hpp>
+#include <light_config.hpp>
 
 //=============================================================
 
@@ -55,7 +56,8 @@ float last_frame = 0.0f;
 
 std::unique_ptr<gl_util::Framebuffer> viewport_fb = nullptr;
 
-LightManager light_manager;
+std::unique_ptr<LightManager> light_manager = nullptr;
+
 float g_gamma = 1.0f/2.2f;
 glm::vec4 g_gamma_vec = glm::vec4(glm::vec3(g_gamma),1.0f);
 
@@ -211,16 +213,15 @@ void setupClassicLighting(){
 		{20.5f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
 	};
 
-    light_manager.setSunlightValues(values);
+    light_manager->setSunlightValues(values);
 
     glm::vec4 p_light_color_1 = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
     glm::vec4 p_light_color_2 = glm::vec4(0.0f, 0.0f, 0.6f, 1.0f);
     glm::vec4 p_light_color_3 = glm::vec4(0.6f, 0.0f, 0.f, 1.0f);
 
-
-    light_manager.setPointLightIntensity(0, p_light_color_1);
-    light_manager.setPointLightIntensity(1, p_light_color_2);
-    light_manager.setPointLightIntensity(2, p_light_color_3);
+    light_manager->setPointLightIntensity(0, p_light_color_1);
+    light_manager->setPointLightIntensity(1, p_light_color_2);
+    light_manager->setPointLightIntensity(2, p_light_color_3);
 }
 
 //sets up light values for PBR Lighting
@@ -236,14 +237,17 @@ void setupPBRLighting(){
         {19.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
         {20.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f,  1.0f), sky_day_light_color, 3.0f},
     };
-    light_manager.setSunlightValues(values);
+    light_manager->setSunlightValues(values);
 
-    light_manager.setPointLightIntensity(0, glm::vec4(1.5f, 1.5f, 1.5f, 1.0f));
-    light_manager.setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 1.5f, 1.0f));
-    light_manager.setPointLightIntensity(2, glm::vec4(1.5f, 0.0f, 0.0f, 1.0f));
+    light_manager->setPointLightIntensity(0, glm::vec4(1.5f, 1.5f, 1.5f, 1.0f));
+    light_manager->setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 1.5f, 1.0f));
+    light_manager->setPointLightIntensity(2, glm::vec4(1.5f, 0.0f, 0.0f, 1.0f));
 }
 
 void initializeLights(){
+    light_config::PointLightsData pl_data = light_config::initPointLights();
+    light_manager = std::make_unique<LightManager>(pl_data.pl_interpolators, pl_data.pl_timers);
+
     setupPBRLighting();
 }
 
@@ -321,11 +325,11 @@ void init(GLFWwindow* window){
 
 // Called every frame
 void display(GLFWwindow* window){
-    light_manager.updateTime();
-    LightBlock light_block = light_manager.getLightInformation(cam->getViewMat());
+    light_manager->updateTime();
+    LightBlock light_block = light_manager->getLightInformation(cam->getViewMat());
     light_block.gamma = g_gamma;
 
-    glm::vec4 bkg = light_manager.getBackgroundColor();
+    glm::vec4 bkg = light_manager->getBackgroundColor();
     bkg = glm::pow(bkg, g_gamma_vec); //gamma correction
 
     glfwPollEvents();
@@ -518,7 +522,7 @@ void display(GLFWwindow* window){
     nodes["bulb_1"].material.classic.color = glm::pow(point_light.intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_1"].material.classic.color));
 
-    nodes["bulb_1"].transform.translation_component = light_manager.getWorldLightPosition(0);
+    nodes["bulb_1"].transform.translation_component = light_manager->getWorldLightPosition(0);
     nodes["bulb_1"].transform.calc_model_mat();
 
     glm::mat4 bulb_model_mat = nodes["bulb_1"].transform.model_mat;
@@ -535,7 +539,7 @@ void display(GLFWwindow* window){
     nodes["bulb_2"].material.classic.color = glm::pow(point_light_2.intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_2"].material.classic.color));
 
-    nodes["bulb_2"].transform.translation_component = light_manager.getWorldLightPosition(1);
+    nodes["bulb_2"].transform.translation_component = light_manager->getWorldLightPosition(1);
     nodes["bulb_2"].transform.calc_model_mat();
 
     glm::mat4 bulb2_model_mat = nodes["bulb_2"].transform.model_mat;
@@ -552,7 +556,7 @@ void display(GLFWwindow* window){
     nodes["bulb_3"].material.classic.color = glm::pow(point_light_3.intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["bulb_3"].material.classic.color));
 
-    nodes["bulb_3"].transform.translation_component = light_manager.getWorldLightPosition(2);
+    nodes["bulb_3"].transform.translation_component = light_manager->getWorldLightPosition(2);
     nodes["bulb_3"].transform.calc_model_mat();
 
     glm::mat4 bulb3_model_mat = nodes["bulb_3"].transform.model_mat;
@@ -572,7 +576,7 @@ void display(GLFWwindow* window){
     nodes["sun"].material.classic.color = glm::pow(light_block.dir_lights[0].intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["sun"].material.classic.color));
 
-    nodes["sun"].transform.translation_component = glm::vec3(light_manager.getSunlightDirection()) * 16.0f;
+    nodes["sun"].transform.translation_component = glm::vec3(light_manager->getSunlightDirection()) * 16.0f;
     nodes["sun"].transform.calc_model_mat();
 
     glm::mat4 sun_model_mat = nodes["sun"].transform.model_mat;
@@ -594,7 +598,7 @@ void display(GLFWwindow* window){
     nodes["moon"].material.classic.color = glm::pow(light_block.dir_lights[1].intensity, g_gamma_vec);
     glUniform4fv(unlit_program.material_diffuse_unif, 1, glm::value_ptr(nodes["moon"].material.classic.color));
 
-    nodes["moon"].transform.translation_component = -glm::vec3(light_manager.getSunlightDirection()) * 16.0f;
+    nodes["moon"].transform.translation_component = -glm::vec3(light_manager->getSunlightDirection()) * 16.0f;
     nodes["moon"].transform.calc_model_mat();
 
     glm::mat4 moon_model_mat = nodes["moon"].transform.model_mat;
@@ -662,13 +666,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     //Toggle Point Light movement On/Off
     if(key == GLFW_KEY_R && action == GLFW_PRESS){
-        light_manager.togglePause(TIMER_LIGHTS);
+        light_manager->togglePause(TIMER_LIGHTS);
         point_light_movement_flag = !point_light_movement_flag;
     }
 
     //Toggle sunlight timer pause on/off
     if(key == GLFW_KEY_T && action == GLFW_PRESS){
-        light_manager.togglePause(TIMER_SUN);
+        light_manager->togglePause(TIMER_SUN);
         sun_movement_flag = !sun_movement_flag;
     }
 
