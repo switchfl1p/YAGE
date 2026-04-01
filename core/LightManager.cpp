@@ -4,26 +4,25 @@
 #include <LightManager.hpp>
 #include <InterpolatorTraits.hpp>
 
-LightManager::LightManager(std::span<ConstVelLinearInterpolator<glm::vec3>> interpolators, std::span<Timer> timers)
-    : sun_timer(Timer::TT_LOOP, 30.0f)
-
-{
-	light_pos_interpolators.assign(interpolators.begin(), interpolators.end());
-	light_timers.assign(timers.begin(), timers.end());
-    light_intensities.resize(NUMBER_OF_POINT_LIGHTS, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
+//sun timer no longer passed on initalization
+LightManager::LightManager(std::span<ConstVelLinearInterpolator<glm::vec3>> interpolators, std::span<Timer> timers) {
+	pl_interpolators.assign(interpolators.begin(), interpolators.end());
+	pl_timers.assign(timers.begin(), timers.end());
+    pl_intensities.resize(NUMBER_OF_POINT_LIGHTS, glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
 }
 
-void LightManager::setSunlightValues(std::span<SunlightValue> sun_values){
+void LightManager::setDirLightValues(std::span<DirLightValue> dl_values){
 	std::vector<std::pair<glm::vec4, float>> ambient;
 	std::vector<std::pair<glm::vec4, float>> light;
 	std::vector<std::pair<glm::vec4, float>> background;
 	std::vector<std::pair<float, float>> max_intensity;
 
-	for(auto& value : sun_values){
+	for(int i = 0; i < dl_values.size(); i++) {
 		ambient.push_back(std::pair<glm::vec4, float>(value.ambient, value.norm_time));
-		light.push_back(std::pair<glm::vec4, float>(value.sunlightIntensity, value.norm_time));
-		background.push_back(std::pair<glm::vec4, float>(value.backgroundColor, value.norm_time));
+		light.push_back(std::pair<glm::vec4, float>(value.dl_intensity, value.norm_time));
+		background.push_back(std::pair<glm::vec4, float>(value.background_color, value.norm_time));
 		max_intensity.push_back(std::pair<float, float>(value.max_intensity, value.norm_time));
+		dl_interpolators[0].setValues(light);
 	}
 
 	ambient_interpolator.setValues(ambient);
