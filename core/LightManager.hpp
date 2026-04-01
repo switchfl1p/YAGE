@@ -26,10 +26,13 @@ constexpr int NUMBER_OF_DIR_LIGHTS = 2;
 struct LightBlock{
     PointLight point_lights[NUMBER_OF_POINT_LIGHTS];
     DirectionalLight dir_lights[NUMBER_OF_DIR_LIGHTS];
+
     AmbientLight ambient_light;
+    float max_intensity;
+
     int point_light_count;
     int dir_light_count;
-    float max_intensity;
+
     float gamma;
 };
 
@@ -43,8 +46,8 @@ struct DirLightValue{
 
 enum TimerTypes
 {
-	TIMER_SUN,
-	TIMER_LIGHTS,
+	TIMER_DIR_LIGHTS,
+	TIMER_POINT_LIGHTS,
 	TIMER_ALL,
 	NUM_TIMER_TYPES,
 };
@@ -54,7 +57,7 @@ class LightManager{
     public:
         LightManager(std::span<ConstVelLinearInterpolator<glm::vec3>> interpolators, std::span<Timer> timers);
 
-        void setDirLightValues(std::span<DirLightValue> dir_light_values);
+        void setDirLightValues(std::span<std::span<DirLightValue>> dir_light_values);
         glm::vec4 getDirLightDirection() const;
         glm::vec4 getDirLightIntensity() const;
         int getNumberOfDirLights() const;
