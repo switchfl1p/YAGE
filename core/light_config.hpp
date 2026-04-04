@@ -1,5 +1,6 @@
 #pragma once
 
+#include <LightManager.hpp>
 #include <Timer.hpp>
 #include <Interpolators.hpp>
 #include <InterpolatorTraits.hpp>
@@ -15,8 +16,12 @@ namespace light_config {
         std::array<Timer, NUMBER_OF_POINT_LIGHTS> pl_timers;
     };
 
-    //std::array<Timer, NUMBER_OF_DIR_LIGHTS> dir_timers;
-    //std::array<glm::vec4, NUMBER_OF_POINT_LIGHTS> pl_intensities;
+    enum LightModels {
+        LIGHT_CLASSIC,
+        LIGHT_PBR
+    };
 
     PointLightsData initPointLights();
+
+    void setupLighValues(LightManager& light_manager, LightModels type);
 }

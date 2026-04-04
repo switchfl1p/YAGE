@@ -198,57 +198,10 @@ void initializeNodes(){
     nodes["obelisk"] = obelisk;
 }
 
-//sets up light values for "classic" light models aka Lambertian, Phong, etc...
-void setupClassicLighting(){
-    const glm::vec4 sky_day_light_color = glm::vec4(0.65f, 0.65f, 1.0f, 1.0f);
-
-    SunlightValue values[] =
-	{
-		{ 0.0f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
-		{ 4.5f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
-		{ 6.5f/24.0f, glm::vec4(0.225f, 0.075f, 0.075f, 1.0f), glm::vec4(0.45f, 0.15f, 0.15f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
-		{ 8.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
-		{18.0f/24.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
-		{19.5f/24.0f, glm::vec4(0.225f, 0.075f, 0.075f, 1.0f), glm::vec4(0.45f, 0.15f, 0.15f, 1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
-		{20.5f/24.0f, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(1.8f, 1.8f, 1.8f, 1.0f), sky_day_light_color, 3.0f},
-	};
-
-    light_manager->setSunlightValues(values);
-
-    glm::vec4 p_light_color_1 = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
-    glm::vec4 p_light_color_2 = glm::vec4(0.0f, 0.0f, 0.6f, 1.0f);
-    glm::vec4 p_light_color_3 = glm::vec4(0.6f, 0.0f, 0.f, 1.0f);
-
-    light_manager->setPointLightIntensity(0, p_light_color_1);
-    light_manager->setPointLightIntensity(1, p_light_color_2);
-    light_manager->setPointLightIntensity(2, p_light_color_3);
-}
-
-//sets up light values for PBR Lighting
-void setupPBRLighting(){
-    const glm::vec4 sky_day_light_color = glm::vec4(0.65f, 0.65f, 1.0f, 1.0f);
-    SunlightValue values[] =
-    {
-        { 0.0f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color, 3.0f},
-        { 4.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f, 1.0f), sky_day_light_color, 3.0f},
-        { 6.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
-        { 8.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
-        {18.0f/24.0f, glm::vec4(0.0f,  0.0f,  0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f,  1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 1.0f},
-        {19.5f/24.0f, glm::vec4(0.02f, 0.01f, 0.01f, 1.0f), glm::vec4(0.8f, 0.3f, 0.1f,  1.0f), glm::vec4(0.5f, 0.1f, 0.1f, 1.0f), 1.5f},
-        {20.5f/24.0f, glm::vec4(0.05f, 0.05f, 0.05f, 1.0f), glm::vec4(1.2f, 1.2f, 1.2f,  1.0f), sky_day_light_color, 3.0f},
-    };
-    light_manager->setSunlightValues(values);
-
-    light_manager->setPointLightIntensity(0, glm::vec4(1.5f, 1.5f, 1.5f, 1.0f));
-    light_manager->setPointLightIntensity(1, glm::vec4(0.0f, 0.0f, 1.5f, 1.0f));
-    light_manager->setPointLightIntensity(2, glm::vec4(1.5f, 0.0f, 0.0f, 1.0f));
-}
-
 void initializeLights(){
     light_config::PointLightsData pl_data = light_config::initPointLights();
     light_manager = std::make_unique<LightManager>(pl_data.pl_interpolators, pl_data.pl_timers);
-
-    setupPBRLighting();
+    light_config::setupLighValues(*light_manager, light_config::LIGHT_PBR);
 }
 
 void initializeBuffers(){
@@ -358,7 +311,7 @@ void display(GLFWwindow* window){
             case LM_LAMBERTIAN:
                 current_program = &lit_programs[LM_LAMBERTIAN];
                 current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrain shaders
-                setupClassicLighting();
+                light_config::setupLighValues(*light_manager, light_config::LIGHT_CLASSIC);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &lit_programs[LM_PHONG_LIGHTING];
@@ -384,7 +337,7 @@ void display(GLFWwindow* window){
             case LM_PBR_LIGHTING:
                 current_program = &lit_programs[LM_PBR_LIGHTING];
                 current_terrain_program = &lit_programs[LM_PBR_LIGHTING + LM_COUNT];
-                setupPBRLighting();
+                light_config::setupLighValues(*light_manager, light_config::LIGHT_PBR);
                 break;
         }
         previous_light_model = light_model;
