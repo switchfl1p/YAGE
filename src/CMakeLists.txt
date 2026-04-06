@@ -121,3 +121,4 @@ endfunction()
 #add_scene("gamma" "gamma" "gamma.cpp")
 add_scene("fr_gamma" "fr_gamma" "fr_gamma.cpp")
 
+add_scene("imposters" "imposters" "imposters.cpp")

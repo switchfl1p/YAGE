@@ -265,9 +265,9 @@ void init(GLFWwindow* window){
     glfwGetFramebufferSize(window, &width, &height);
     viewport_fb = std::make_unique<gl_util::Framebuffer>(width,height);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    /* glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0); */
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -373,6 +373,11 @@ void display(GLFWwindow* window){
     cam->viewport_h = (int)viewport_size.y;
     cam->updatePerspMat();
 
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getViewMat()));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     viewport_fb->Bind();
 
     //==========
@@ -380,13 +385,6 @@ void display(GLFWwindow* window){
     //==========
     glClearColor(bkg[0], bkg[1], bkg[2], bkg[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //pass view and perspective matrix to UBO
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getViewMat()));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
     //=============
     //RENDER SPHERE
     //=============
@@ -592,7 +590,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     cam->updatePerspMat();
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4) * 2, glm::value_ptr(cam->getPerspMat()));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glViewport(0, 0, width, height);
