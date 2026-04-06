@@ -265,10 +265,6 @@ void init(GLFWwindow* window){
     glfwGetFramebufferSize(window, &width, &height);
     viewport_fb = std::make_unique<gl_util::Framebuffer>(width,height);
 
-    /* glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0); */
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
@@ -666,6 +662,7 @@ void cleanup(){
 
     glDeleteBuffers(1, &matrices_UBO);
     glDeleteBuffers(1, &lights_UBO);
+    glDeleteBuffers(1, &materials_UBO);
 }
 
 
