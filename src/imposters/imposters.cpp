@@ -43,7 +43,7 @@ std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
 bool camera_movement_flag = true;
 bool point_light_movement_flag = true;
-bool sun_movement_flag = true;
+bool sun_movement_flag = false;
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
@@ -125,10 +125,13 @@ void initializeUBOs(){
 void initializeNodes(){
     Node plane;
     plane.material.classic.shininess = 64.0f;
-    plane.material.classic.color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); //silver TO DO
-    plane.material.pbr.color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); //silver TO DO
+    plane.material.classic.color = glm::vec4(0.75f, 0.75f, 0.75f, 1.0f);
+    plane.material.pbr.color = glm::vec4(0.972f, 0.960f, 0.915f, 1.0f);
     plane.material.pbr.metallic = 0.0f;
     plane.material.pbr.roughness = 0.7f;
+    plane.transform.translation_component = glm::vec3(0.0f, -2.0f, 0.0f);
+    plane.transform.scale_component = glm::vec3(25.0f, 1.0f, 25.0f);
+
     plane.transform.calc_model_mat();
     nodes["plane"] = plane;
 }
@@ -137,12 +140,12 @@ void initializeLights(){
     light_config::PointLightsData pl_data = light_config::initPointLights();
     light_manager = std::make_unique<LightManager>(pl_data.pl_interpolators, pl_data.pl_timers);
     light_config::setupLighValues(*light_manager, light_config::LIGHT_PBR);
+    light_manager->togglePause(TIMER_SUN);
 }
 
 void initializeBuffers(){
     gltf_util::Loader loader;
-
-    gltf_util::Model plane = loader.loadModel("plane04.glb");
+    gltf_util::Model plane = loader.loadModel("plane.glb");
     plane_data = gl_util::createBuffers(plane);
 }
 
@@ -191,10 +194,6 @@ void init(GLFWwindow* window){
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     viewport_fb = std::make_unique<gl_util::Framebuffer>(width,height);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -276,6 +275,11 @@ void display(GLFWwindow* window){
     cam->viewport_h = (int)viewport_size.y;
     cam->updatePerspMat();
 
+    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getViewMat()));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     viewport_fb->Bind();
 
     //==========
@@ -283,12 +287,6 @@ void display(GLFWwindow* window){
     //==========
     glClearColor(bkg[0], bkg[1], bkg[2], bkg[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //pass view and perspective matrix to UBO
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getViewMat()));
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //=============
     //RENDER PLANE
@@ -345,7 +343,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     cam->updatePerspMat();
 
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(cam->getPerspMat()));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glViewport(0, 0, width, height);
