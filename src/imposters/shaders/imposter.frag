@@ -44,3 +44,43 @@ vec4 computeLighting(in PointLight light, in vec3 camera_space_pos, in vec3 cam_
 
     return lighting;
 }
+
+void impostor(out vec3 camera_pos, out vec3 camera_normal) {
+    float len_sqr = dot(mapping, mapping);
+
+    if (len_sqr > 1.0)
+        discard;
+    
+    camera_normal = vec3(mapping, sqrt(1.0 - len_sqr));
+    camera_pos = (camera_normal * sphere_radius) + camera_sphere_pos;
+}
+
+void main() {
+    vec3 camera_pos;
+    vec3 camera_normal;
+
+    impostor(camera_pos, camera_normal);
+
+    vec4 accum_lighting = material.classic_color * ambient_intensity;
+
+    for (int light = 0; light)
+}
+
+uniform Lights{
+	PointLight point_lights[MAX_POINT_LIGHTS];
+	DirectionalLight dir_lights[MAX_DIR_LIGHTS];
+	vec4 ambient_intensity;
+	int point_light_count;
+	int dir_light_count;
+	float max_intensity;
+	float gamma;
+};
+
+uniform Materials{
+	vec4 classic_color;
+	vec4 pbr_color;
+	float shininess_factor;
+	float metallic;
+	float roughness;
+	float is_emissive;
+} material;
