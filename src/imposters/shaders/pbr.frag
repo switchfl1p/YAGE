@@ -21,47 +21,48 @@ vec3 calcBRDF(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0)
     return (kD * material.pbr_color.rgb / PI + specular) * radiance * NdotL;
 }
 
-void main()
-{
-    vec3 N = normalize(camera_space_normal);
-    vec3 V = normalize(-camera_space_position);
+vec3 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec3 F0) {
+    vec3 light_vec = light.position.xyz - camera_space_position;
+    float distance = length(light_vec);
+    vec3 L = light_vec / distance;
+    float attenuation = 1.0 / (1.0 + light.attenuation * distance * distance);
+    vec3 radiance = light.intensity.rgb * attenuation;
 
+    return calcBRDF(surface_normal, view_dir, L, radiance, F0);
+}
+
+vec3 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, vec3 F0) {
+    vec3 L = normalize(light.direction.xyz);
+    vec3 radiance = light.intensity.rgb; //no attenuation
+
+    return calcBRDF(surface_normal, view_dir, L, radiance, F0);
+}
+
+void main() {
+    vec3 surface_normal = normalize(camera_space_normal);
+    vec3 view_dir = normalize(-camera_space_position);
     vec3 F0 = mix(vec3(0.04), material.pbr_color.rgb, material.metallic);
+    vec3 total_light = ambient_intensity.rgb * material.pbr_color.rgb;
 
-    vec3 Lo = vec3(0.0);
-
-    // --- Point Lights ---
-    for (int i = 0; i < point_light_count; i++)
-    {
-        vec3 light_vec = point_lights[i].position.xyz - camera_space_position;
-        float distance = length(light_vec);
-        vec3 L = light_vec / distance;
-        float attenuation = 1.0 / (1.0 + point_lights[i].attenuation * distance * distance);
-        vec3 radiance = point_lights[i].intensity.rgb * attenuation;
-
-        Lo += calcBRDF(N, V, L, radiance, F0);
+    for (int i = 0; i < point_light_count; i++) {
+        total_light += calcPointLight(point_lights[i], surface_normal, view_dir, F0);
     }
 
-    // --- Directional Lights ---
-    for (int i = 0; i < dir_light_count; i++)
-    {
-        vec3 L = normalize(dir_lights[i].direction.xyz);
-        vec3 radiance = dir_lights[i].intensity.rgb; // no attenuation
-
-        Lo += calcBRDF(N, V, L, radiance, F0);
+    for (int i = 0; i < dir_light_count; i++) {
+        total_light += calcDirLight(dir_lights[i], surface_normal, view_dir, F0);
     }
 
-    // --- Ambient ---
-    vec3 ambient = ambient_intensity.rgb * material.pbr_color.rgb;
-    vec3 final_color = ambient + Lo;
+    //tone mapping
+    total_light /= (total_light + vec3(1.0));
 
-    // Tone mapping
-    final_color = final_color / (final_color + vec3(1.0));
-    // Gamma correction
-    final_color = pow(final_color, vec3(1.0/2.2));
-    // Dithering
+    //gamma correction
+    vec3 gamma_vec = vec3(gamma);
+    total_light = pow(total_light, gamma_vec);
+
+    //dithering
     float dither = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
-    final_color += dither;
+    total_light += dither;
 
-    output_color = vec4(final_color, 1.0);
+    output_color = vec4(total_light, 1.0);
+
 }
