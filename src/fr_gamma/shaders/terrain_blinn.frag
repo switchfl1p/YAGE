@@ -6,51 +6,50 @@
 
 const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
 
-void main()
-{
+vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
+    vec3 light_dir;
+    float attenuation = calcAttenuation(light, light_dir);
+    vec4 atten_intensity = attenuation * light.intensity;
+
+    float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
+
+    vec3 half_angle = normalize(light_dir + view_dir);
+    float blinn_term = clamp(dot(surface_normal, half_angle), 0.0, 1.0);
+    blinn_term = cos_ang_incidence != 0.0 ? blinn_term : 0.0;
+    blinn_term = pow(blinn_term, material.shininess_factor);
+
+    return (base_color * atten_intensity * cos_ang_incidence) +
+           (specular_color * atten_intensity * blinn_term);
+}
+
+vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
+    vec3 light_dir = normalize(light.direction.xyz);
+
+    float cos_ang_incidence = clamp(dot(surface_normal, light_dir), 0.0, 1.0);
+
+    vec3 half_angle = normalize(light_dir + view_dir);
+    float blinn_term = clamp(dot(surface_normal, half_angle), 0.0, 1.0);
+    blinn_term = cos_ang_incidence != 0.0 ? blinn_term : 0.0;
+    blinn_term = pow(blinn_term, material.shininess_factor);
+
+    return (base_color * light.intensity * cos_ang_incidence) +
+           (specular_color * light.intensity * blinn_term);
+}
+
+void main() {
+    vec4 base_color = vec4(getColor(), 1.0);
     vec3 surface_normal = normalize(camera_space_normal);
     vec3 view_dir = normalize(-camera_space_position);
 
-    vec4 base_color = vec4(getColor(),1.0);
+    vec4 result = base_color * ambient_intensity;
 
-    vec4 diffuse_accum = vec4(0.0);
-    vec4 spec_accum = vec4(0.0);
-
-    // POINT LIGHTS
     for(int i = 0; i < point_light_count; i++)
-    {
-        vec3 light_dir;
-        float attenuation = calcAttenuation(point_lights[i], light_dir);
-        vec4 atten_intensity = attenuation * point_lights[i].intensity;
+        result += calcPointLight(point_lights[i], surface_normal, view_dir, base_color);
 
-        float NdotL = max(dot(surface_normal, light_dir), 0.0);
-
-        vec3 half_vec = normalize(light_dir + view_dir);
-        float spec = pow(max(dot(surface_normal, half_vec),0.0), material.shininess_factor);
-        spec = NdotL > 0.0 ? spec : 0.0;
-
-        diffuse_accum += base_color * point_lights[i].intensity * NdotL * attenuation;
-        spec_accum += specular_color * point_lights[i].intensity * spec * attenuation;
-    }
-
-    // DIRECTIONAL LIGHTS
     for(int i = 0; i < dir_light_count; i++)
-    {
-        vec3 light_dir = normalize(dir_lights[i].direction.xyz);
+        result += calcDirLight(dir_lights[i], surface_normal, view_dir, base_color);
 
-        float NdotL = max(dot(surface_normal, light_dir), 0.0);
-
-        vec3 half_vec = normalize(light_dir + view_dir);
-        float spec = pow(max(dot(surface_normal, half_vec),0.0), material.shininess_factor);
-        spec = NdotL > 0.0 ? spec : 0.0;
-
-        diffuse_accum += base_color * dir_lights[i].intensity * NdotL;
-        spec_accum += specular_color * dir_lights[i].intensity * spec;
-    }
-
-    vec4 ambient = base_color * ambient_intensity;
-
-    vec4 result = (diffuse_accum + spec_accum + ambient) / max_intensity;
+    result = result / max_intensity;
     vec4 gamma_vec = vec4(gamma);
     gamma_vec.w = 1.0;
     output_color = pow(result, gamma_vec);
