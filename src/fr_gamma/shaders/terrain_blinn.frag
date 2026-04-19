@@ -4,8 +4,6 @@
 #include "light_common.glsl"
 #include "terrain_common.glsl"
 
-const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
-
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
     vec3 light_dir;
     float attenuation = calcAttenuation(light, light_dir);
@@ -19,7 +17,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 b
     blinn_term = pow(blinn_term, material.shininess_factor);
 
     return (base_color * atten_intensity * cos_ang_incidence) +
-           (specular_color * atten_intensity * blinn_term);
+           (material.specular_color * atten_intensity * blinn_term);
 }
 
 vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
@@ -33,7 +31,7 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, ve
     blinn_term = pow(blinn_term, material.shininess_factor);
 
     return (base_color * light.intensity * cos_ang_incidence) +
-           (specular_color * light.intensity * blinn_term);
+           (material.specular_color * light.intensity * blinn_term);
 }
 
 void main() {

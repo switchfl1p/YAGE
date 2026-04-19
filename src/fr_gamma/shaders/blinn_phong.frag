@@ -2,7 +2,6 @@
 
 #include "light_common.glsl"
 
-const vec4 specular_color = vec4(0.25, 0.25, 0.25, 1.0);
 
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 light_dir;
@@ -17,7 +16,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     blinn_term = pow(blinn_term, material.shininess_factor);
 
     return (material.classic_color * atten_intensity * cos_ang_incidence) +
-           (specular_color * atten_intensity * blinn_term);
+           (material.specular_color * atten_intensity * blinn_term);
 }
 
 vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
@@ -31,7 +30,7 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
     blinn_term = pow(blinn_term, material.shininess_factor);
 
     return (material.classic_color * light.intensity * cos_ang_incidence) +
-           (specular_color * light.intensity * blinn_term);
+           (material.specular_color * light.intensity * blinn_term);
 }
 
 void main() {

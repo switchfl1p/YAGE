@@ -3,8 +3,6 @@
 #include "light_common.glsl"
 #include "terrain_common.glsl"
 
-const vec4 specular_color = vec4(0.02, 0.02, 0.02, 1.0);
-
 vec3 calcGaussianSpecular(vec3 light_dir, vec3 surface_normal, vec3 view_dir)
 {
     vec3 half_angle = normalize(light_dir + view_dir);
@@ -28,7 +26,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir, vec4 b
     }
 
     return (base_color * atten_intensity * cos_ang_incidence)
-    + (specular_color * atten_intensity * gaussian_term);
+    + (material.specular_color * atten_intensity * gaussian_term);
 }
 
 vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, vec4 base_color) {
@@ -43,7 +41,7 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir, ve
     }
 
     return (base_color * light.intensity * cos_ang_incidence)
-    + (specular_color * light.intensity * gaussian_term);
+    + (material.specular_color * light.intensity * gaussian_term);
 }
 
 void main() {

@@ -15,6 +15,7 @@ struct Transform{
 //for Lambertian, Phong, Blinn-Phong and Gaussian
 struct ClassicProperties{
     glm::vec4 color;
+    glm::vec4 specular_color;
     float shininess;
 };
 
@@ -38,6 +39,7 @@ struct Node{
 struct MaterialBlock{
     glm::vec4 classic_color;
     glm::vec4 pbr_color;
+    glm::vec4 specular_color;
     float shininess_factor;
     float metallic;
     float roughness;

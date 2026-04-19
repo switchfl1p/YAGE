@@ -27,6 +27,7 @@ uniform Lights{
 uniform Materials{
 	vec4 classic_color;
 	vec4 pbr_color;
+    vec4 specular_color;
 	float shininess_factor;
 	float metallic;
 	float roughness;

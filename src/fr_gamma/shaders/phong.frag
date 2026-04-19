@@ -2,8 +2,6 @@
 
 #include "light_common.glsl"
 
-const vec4 specular_color = vec4(0.25, 0.25, 0.25, 1.0);
-
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 light_dir;
     float attenuation = calcAttenuation(light, light_dir);
@@ -20,7 +18,7 @@ vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     }
 
     return (material.classic_color * atten_intensity * diff) +
-           (specular_color * atten_intensity * spec);
+           (material.specular_color * atten_intensity * spec);
 }
 
 vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
@@ -37,7 +35,7 @@ vec4 calcDirLight(DirectionalLight light, vec3 surface_normal, vec3 view_dir) {
     }
 
     return (material.classic_color * light.intensity * diff) +
-           (specular_color * light.intensity * spec);
+           (material.specular_color * light.intensity * spec);
 }
 
 void main() {

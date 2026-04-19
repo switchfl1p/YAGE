@@ -169,6 +169,7 @@ void initializeNodes(){
 
     Node sphere;
     sphere.material.classic.color = glm::vec4(0.5f, 0.1f, 0.8f, 1.0f);
+    sphere.material.classic.specular_color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
     sphere.material.classic.shininess = 64.0f;
     sphere.material.pbr.color = glm::vec4(0.3f, 0.0f, 0.7f, 1.0f);
     sphere.material.pbr.metallic = 0.0f;
@@ -180,6 +181,7 @@ void initializeNodes(){
 
     Node terrain;
     terrain.material.classic.shininess = 64.0f;
+    terrain.material.classic.specular_color = glm::vec4(0.02f, 0.02f, 0.02f, 1.0f);
     terrain.material.pbr.metallic = 0.0f;
     terrain.material.pbr.roughness = 0.7f;
     terrain.transform.translation_component = glm::vec3(-10.0f,0.0,-10.0f);
@@ -188,8 +190,9 @@ void initializeNodes(){
 
     Node obelisk;
     obelisk.material.classic.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
-    obelisk.material.pbr.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
+    obelisk.material.classic.specular_color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
     obelisk.material.classic.shininess = 64.0f;
+    obelisk.material.pbr.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
     obelisk.material.pbr.metallic = 0.0f;
     obelisk.material.pbr.roughness = 0.15f;
     obelisk.transform.scale_component = glm::vec3(0.4);
