@@ -6,11 +6,11 @@
 
 namespace shader_util{
 
-    LitProgramData loadLitProgram(const std::string &vert_shader, const std::string &frag_shader){
+    LitProgramData loadLitProgram(const std::string &vert_shader, const std::string &frag_shader, const std::unordered_map<std::string, std::string>& defines){
         std::vector<GLuint> shaders;
 
-        Shader vertex_shader(vert_shader);
-        Shader fragment_shader(frag_shader);
+        Shader vertex_shader(vert_shader, defines);
+        Shader fragment_shader(frag_shader, defines);
         shaders.push_back(vertex_shader.getShaderUint());
         shaders.push_back(fragment_shader.getShaderUint());
 

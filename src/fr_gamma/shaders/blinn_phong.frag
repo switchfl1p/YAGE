@@ -1,7 +1,5 @@
 #version 330
-
 #include "light_common.glsl"
-
 
 vec4 calcPointLight(PointLight light, vec3 surface_normal, vec3 view_dir) {
     vec3 light_dir;

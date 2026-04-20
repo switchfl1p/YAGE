@@ -6,15 +6,16 @@ https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf#page=109
 #include "Shader.hpp"
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 namespace fs = std::filesystem;
 
-Shader::Shader(const std::string& filename){
+Shader::Shader(const std::string& filename, const std::unordered_map<std::string, std::string>& defines){
     //find file needs to throw
     fs::path shader_path = findFile(filename);
     GLenum type = getShaderType(filename);
     shader_object = glCreateShader(type);
-    std::string shader_data = getShaderData(shader_path);
+    std::string shader_data = getShaderData(shader_path, defines);
 
     //string formatting for expected parameters
     const GLchar* data_ptr = shader_data.c_str();
@@ -29,8 +30,8 @@ Shader::Shader(const std::string& filename){
         GLint info_log_length;
         glGetShaderiv(shader_object, GL_INFO_LOG_LENGTH, &info_log_length);
 
-        GLchar *str_info_log = new GLchar[info_log_length + 1];
-        glGetShaderInfoLog(shader_object, info_log_length, NULL, str_info_log);
+        std::vector<GLchar> str_info_log(info_log_length + 1);
+        glGetShaderInfoLog(shader_object, info_log_length, NULL, str_info_log.data());
 
         std::string shader_type_str;
 		switch(type)
@@ -39,7 +40,7 @@ Shader::Shader(const std::string& filename){
 		case GL_FRAGMENT_SHADER: shader_type_str = "fragment"; break;
 		}
         
-        std::cerr << "Compile failure in " << shader_type_str << " shader:\n" << str_info_log << "\n";
+        std::cerr << "Compile failure in " << shader_type_str << " shader:\n" << str_info_log.data() << "\n";
     }
 }
 
@@ -88,19 +89,24 @@ std::filesystem::path Shader::findFile(const std::string& filename){
     return {};
 }
 
-std::string Shader::getShaderData(const std::filesystem::path& filepath){
+std::string Shader::getShaderData(const std::filesystem::path& filepath, const std::unordered_map<std::string, std::string>& defines){
     std::unordered_set<std::string> included;
-    return processIncludes(filepath, included);
+    return processIncludes(filepath, included, defines);
 }
 
-std::string Shader::processIncludes(const std::filesystem::path& filepath, std::unordered_set<std::string>& included){
+std::string Shader::processIncludes(const std::filesystem::path& filepath, std::unordered_set<std::string>& included, const std::unordered_map<std::string, std::string>& defines){
     std::ifstream file(filepath);
-
     std::string line;
     std::string result;
 
     while(std::getline(file, line)){
-        if (line.find("#include") != std::string::npos){
+        if(line.find("#version") != std::string::npos){
+            result += line + "\n";
+            for(auto& [key, value] : defines){
+                result += "#define " + key + " " + value + "\n";
+            }
+        }
+        else if (line.find("#include") != std::string::npos){
             //extract the filename between the quotes
             size_t start = line.find('"') + 1;
             size_t end = line.find('"', start);

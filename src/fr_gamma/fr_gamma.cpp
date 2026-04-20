@@ -64,18 +64,23 @@ glm::vec4 g_gamma_vec = glm::vec4(glm::vec3(g_gamma),1.0f);
 //=============================================================
 
 void initializePrograms(){
-    shader_util::LitProgramData lambertian_program = shader_util::loadLitProgram("pass_normals.vert", "lambertian.frag");
-    shader_util::LitProgramData phong_program = shader_util::loadLitProgram("pass_normals.vert", "phong.frag");
-    shader_util::LitProgramData blinn_program = shader_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag");
-    shader_util::LitProgramData gaussian_program = shader_util::loadLitProgram("pass_normals.vert", "gaussian.frag");
-    shader_util::LitProgramData pbr_program = shader_util::loadLitProgram("pass_normals.vert", "pbr.frag");
+    std::unordered_map<std::string, std::string> defines = {
+    {"MAX_POINT_LIGHTS", std::to_string(light_config::NUMBER_OF_POINT_LIGHTS)},
+    {"MAX_DIR_LIGHTS", std::to_string(light_config::NUMBER_OF_DIR_LIGHTS)}
+    };
+
+    shader_util::LitProgramData lambertian_program = shader_util::loadLitProgram("pass_normals.vert", "lambertian.frag", defines);
+    shader_util::LitProgramData phong_program = shader_util::loadLitProgram("pass_normals.vert", "phong.frag", defines);
+    shader_util::LitProgramData blinn_program = shader_util::loadLitProgram("pass_normals.vert", "blinn_phong.frag", defines);
+    shader_util::LitProgramData gaussian_program = shader_util::loadLitProgram("pass_normals.vert", "gaussian.frag", defines);
+    shader_util::LitProgramData pbr_program = shader_util::loadLitProgram("pass_normals.vert", "pbr.frag", defines);
 
     //terrain
-    shader_util::LitProgramData terrain_pbr_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag");
-    shader_util::LitProgramData terrain_lambertian_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag");
-    shader_util::LitProgramData terrain_phong_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag");
-    shader_util::LitProgramData terrain_gaussian_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag");
-    shader_util::LitProgramData terrain_blinn_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag");
+    shader_util::LitProgramData terrain_pbr_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_pbr.frag", defines);
+    shader_util::LitProgramData terrain_lambertian_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_lambertian.frag", defines);
+    shader_util::LitProgramData terrain_phong_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_phong.frag", defines);
+    shader_util::LitProgramData terrain_gaussian_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_gaussian.frag", defines);
+    shader_util::LitProgramData terrain_blinn_program = shader_util::loadLitProgram("pass_heights.vert", "terrain_blinn.frag", defines);
     
     //No Light
     unlit_program = shader_util::loadUnlitProgram("simple.vert", "no_light.frag");

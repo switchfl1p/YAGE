@@ -1,6 +1,4 @@
-// Blinn-Phong Terrain
 #version 330
-
 #include "light_common.glsl"
 #include "terrain_common.glsl"
 

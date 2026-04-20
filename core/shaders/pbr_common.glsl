@@ -1,6 +1,3 @@
-#define MAX_POINT_LIGHTS 3
-#define MAX_DIR_LIGHTS 2
-
 layout(std140) uniform;
 
 struct PointLight{

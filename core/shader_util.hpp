@@ -4,6 +4,7 @@
 
 #include <glad/gl.h>
 #include <string>
+#include <unordered_map>
 
 namespace shader_util{
 
@@ -20,6 +21,6 @@ namespace shader_util{
         GLuint material_diffuse_unif;
     };
 
-    LitProgramData loadLitProgram(const std::string &vert_shader, const std::string &frag_shader);
+    LitProgramData loadLitProgram(const std::string &vert_shader, const std::string &frag_shader, const std::unordered_map<std::string, std::string>& defines = {});
     UnlitProgramData loadUnlitProgram(const std::string &vert_shader, const std::string &frag_shader);
 }

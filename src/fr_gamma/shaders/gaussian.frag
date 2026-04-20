@@ -1,4 +1,3 @@
-//Gaussian
 #version 330
 #include "light_common.glsl"
 

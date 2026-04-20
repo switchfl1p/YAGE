@@ -7,10 +7,10 @@ vec3 calcBRDF(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0)
     vec3 H = normalize(V + L);
 
     float NDF = DistributionGGX(N, H, material.roughness);
-    float G   = GeometrySmith(N, V, L, material.roughness);
-    vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
+    float G = GeometrySmith(N, V, L, material.roughness);
+    vec3  F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
-    vec3 numerator   = NDF * G * F;
+    vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
     vec3 specular = numerator / denominator;
 
