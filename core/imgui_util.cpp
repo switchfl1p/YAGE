@@ -42,8 +42,10 @@ namespace imgui_util{
                             if(ImGui::TreeNode(("Material Properties##" + name).c_str())){
                                 std::string base_color_label = "color##" + name;
                                 std::string shininess_label = "shininess##" + name;
+                                std::string specular_label = "specular##" + name;
                                 
                                 ImGui::ColorEdit4(base_color_label.c_str(), glm::value_ptr(node.material.classic.color), ImGuiColorEditFlags_Float);
+                                ImGui::ColorEdit4(specular_label.c_str(), glm::value_ptr(node.material.classic.specular_color), ImGuiColorEditFlags_Float);
                                 ImGui::DragFloat(shininess_label.c_str(), &node.material.classic.shininess, 1.0f, 0.0f, 1000.0f);
                                 
                                 ImGui::TreePop();
