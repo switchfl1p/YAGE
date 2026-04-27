@@ -1,4 +1,4 @@
-#include <light_config.hpp>
+#include "light_config.hpp"
 
 namespace light_config {
     PointLightsData initPointLights() {
