@@ -33,17 +33,15 @@ GLuint matrices_UBO;
 GLuint lights_UBO;
 GLuint materials_UBO;
 
-int light_model = LM_PBR_LIGHTING;
+int light_model = LM_GAUSSIAN_LIGHTING;
 
 std::unordered_map<std::string, Node> nodes;
 std::unique_ptr<TerrainData> terrain = nullptr;
 
+gl_util::ModelData plane_data;
+gl_util::VAOData plane_vao;
 gl_util::ModelData sphere_data;
-gl_util::ModelData terrain_data;
-gl_util::ModelData obelisk_data;
 gl_util::VAOData sphere_vao;
-gl_util::VAOData terrain_vao;
-gl_util::VAOData obelisk_vao;
 
 std::unique_ptr<Camera> cam = nullptr;
 std::unique_ptr<CameraController> cam_controller = nullptr;
@@ -172,63 +170,40 @@ void initializeNodes(){
     moon.material.is_emissive = true;
     nodes["moon"] = moon;
 
-    Node sphere;
-    sphere.material.classic.color = glm::vec4(0.5f, 0.1f, 0.8f, 1.0f);
-    sphere.material.classic.specular_color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
-    sphere.material.classic.shininess = 64.0f;
-    sphere.material.pbr.color = glm::vec4(0.3f, 0.0f, 0.7f, 1.0f);
-    sphere.material.pbr.metallic = 0.0f;
-    sphere.material.pbr.roughness = 0.30f;
-    sphere.transform.scale_component = glm::vec3(0.5f, 0.5f, 0.5f);
-    sphere.transform.translation_component = glm::vec3(2.47f, -0.210f, -5.85f);
-    sphere.transform.calc_model_mat(); //called on init since it won't be called every frame, i.e static object
-    nodes["sphere"] = sphere;
+    Node plane;
+    plane.material.classic.shininess = 64.0f;
+    plane.material.classic.color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+    plane.material.classic.specular_color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
+    plane.material.pbr.color = glm::vec4(0.972f, 0.960f, 0.915f, 1.0f);
+    plane.material.pbr.metallic = 0.0f;
+    plane.material.pbr.roughness = 0.7f;
+    plane.transform.translation_component = glm::vec3(0.0f, -2.0f, 0.0f);
+    plane.transform.scale_component = glm::vec3(25.0f, 1.0f, 25.0f);
 
-    Node terrain;
-    terrain.material.classic.shininess = 64.0f;
-    terrain.material.classic.specular_color = glm::vec4(0.02f, 0.02f, 0.02f, 1.0f);
-    terrain.material.pbr.metallic = 0.0f;
-    terrain.material.pbr.roughness = 0.7f;
-    terrain.transform.translation_component = glm::vec3(-10.0f,0.0,-10.0f);
-    terrain.transform.calc_model_mat();
-    nodes["terrain"] = terrain;
-
-    Node obelisk;
-    obelisk.material.classic.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
-    obelisk.material.classic.specular_color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
-    obelisk.material.classic.shininess = 64.0f;
-    obelisk.material.pbr.color = glm::vec4(0.184f, 0.192f, 0.251f, 1.0f);
-    obelisk.material.pbr.metallic = 0.0f;
-    obelisk.material.pbr.roughness = 0.15f;
-    obelisk.transform.scale_component = glm::vec3(0.4);
-    obelisk.transform.translation_component = glm::vec3(-4.52f, 2.15f, 4.5f);
-    obelisk.transform.calc_model_mat();
-    nodes["obelisk"] = obelisk;
+    plane.transform.calc_model_mat();
+    nodes["plane"] = plane;
 }
 
 void initializeLights(){
     light_config::PointLightsData pl_data = light_config::initPointLights();
     light_manager = std::make_unique<LightManager>(pl_data.pl_interpolators, pl_data.pl_timers);
     light_config::setupLighValues(*light_manager, light_config::LIGHT_PBR);
+    light_manager->togglePause(TIMER_SUN);
 }
 
 void initializeBuffers(){
     gltf_util::Loader loader;
 
+    gltf_util::Model plane = loader.loadModel("plane.glb");
+    plane_data = gl_util::createBuffers(plane);
+
     gltf_util::Model sphere = loader.loadModel("sphere_smooth.glb");
     sphere_data = gl_util::createBuffers(sphere);
-
-    gltf_util::Model obelisk = loader.loadModel("obelisk.glb");
-    obelisk_data = gl_util::createBuffers(obelisk);
-
-    terrain = std::make_unique<TerrainData>(20, 20, 6.667f , 36, 10.94f , 1, 6, 2.0f, 0.5f);
-    terrain_data = gl_util::createTerrainBuffers(*terrain);
 }
 
 void initializeVertexArrayObjects(){
+    plane_vao = gl_util::createVAO(plane_data);
     sphere_vao = gl_util::createVAO(sphere_data);
-    terrain_vao = gl_util::createTerrainVAO(terrain_data);
-    obelisk_vao = gl_util::createVAO(obelisk_data);
 }
 
 void initializeCameras(GLFWwindow* window){
@@ -314,33 +289,22 @@ void display(GLFWwindow* window){
         switch(light_model){
             case LM_LAMBERTIAN:
                 current_program = &lit_programs[LM_LAMBERTIAN];
-                current_terrain_program = &lit_programs[LM_LAMBERTIAN + LM_COUNT]; //lit programs contains terrain shaders
                 light_config::setupLighValues(*light_manager, light_config::LIGHT_CLASSIC);
                 break;
             case LM_PHONG_LIGHTING:
                 current_program = &lit_programs[LM_PHONG_LIGHTING];
-                current_terrain_program = &lit_programs[LM_PHONG_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.classic.shininess = 32.0f;
-                nodes["terrain"].material.classic.shininess = 16.0f;
-                nodes["obelisk"].material.classic.shininess = 128.0f;
+                nodes["plane"].material.classic.shininess = 16.0f;
                 break;
             case LM_BLINN_LIGHTING:
                 current_program = &lit_programs[LM_BLINN_LIGHTING];
-                current_terrain_program = &lit_programs[LM_BLINN_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.classic.shininess = 128.0f;
-                nodes["terrain"].material.classic.shininess = 64.0f;
-                nodes["obelisk"].material.classic.shininess = 512.0f;
+                nodes["plane"].material.classic.shininess = 64.0f;
                 break;
             case LM_GAUSSIAN_LIGHTING:
                 current_program = &lit_programs[LM_GAUSSIAN_LIGHTING];
-                current_terrain_program = &lit_programs[LM_GAUSSIAN_LIGHTING + LM_COUNT];
-                nodes["sphere"].material.classic.shininess = 0.15f;
-                nodes["terrain"].material.classic.shininess = 0.4f;
-                nodes["obelisk"].material.classic.shininess = 0.09f;
+                nodes["plane"].material.classic.shininess = 0.4f;
                 break;
             case LM_PBR_LIGHTING:
                 current_program = &lit_programs[LM_PBR_LIGHTING];
-                current_terrain_program = &lit_programs[LM_PBR_LIGHTING + LM_COUNT];
                 light_config::setupLighValues(*light_manager, light_config::LIGHT_PBR);
                 break;
         }
@@ -359,15 +323,6 @@ void display(GLFWwindow* window){
     imgui_util::renderNodeWindow(nodes, light_model);
     imgui_util::renderLightWindow(light_block.ambient_light, light_block.point_lights, light_block.dir_lights);
     imgui_util::renderStatusOverlay(light_model, sun_movement_flag, point_light_movement_flag, camera_movement_flag);
-
-    //if terrain parameters changed
-    if(imgui_util::renderTerrainWindow(*terrain)){
-        terrain->generateTerrain();
-        gl_util::cleanupBuffers(terrain_data);
-        glDeleteVertexArrays(1, &terrain_vao.vao);
-        terrain_data = gl_util::createTerrainBuffers(*terrain);
-        terrain_vao = gl_util::createTerrainVAO(terrain_data);
-    }
 
     ImGui::Begin("Viewport");
     // Get the size of the content region
@@ -389,8 +344,9 @@ void display(GLFWwindow* window){
     //==========
     glClearColor(bkg[0], bkg[1], bkg[2], bkg[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     //=============
-    //RENDER SPHERE
+    //RENDER PLANE
     //=============
     glUseProgram(current_program->program_uint);
 
@@ -400,72 +356,22 @@ void display(GLFWwindow* window){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //modelToWorld Matrix
-    glm::mat4 sphere_model_mat = nodes["sphere"].transform.model_mat;
+    glm::mat4 plane_model_mat = nodes["plane"].transform.model_mat;
     glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(sphere_model_mat));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(plane_model_mat));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //material properties
-    material_block.getMaterialInformation(nodes["sphere"]);
+    material_block.getMaterialInformation(nodes["plane"]);
     glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //draw
-    glBindVertexArray(sphere_vao.vao);
-	glDrawElements(GL_TRIANGLES, sphere_vao.index_count, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(plane_vao.vao);
+	glDrawElements(GL_TRIANGLES, plane_vao.index_count, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
     
-    glUseProgram(0);
-    
-    //==============
-    //RENDER OBELISK
-    //==============
-    glUseProgram(current_program->program_uint);
-
-    //modelToWorld Matrix
-    glm::mat4 obelisk_model_mat = nodes["obelisk"].transform.model_mat;
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(obelisk_model_mat));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //material properties
-    material_block.getMaterialInformation(nodes["obelisk"]);
-    glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //draw
-    glBindVertexArray(obelisk_vao.vao);
-	glDrawElements(GL_TRIANGLES, obelisk_vao.index_count, GL_UNSIGNED_SHORT, 0);
-    glBindVertexArray(0);
-    
-    glUseProgram(0);
-
-    //==============
-    //RENDER TERRAIN 
-    //==============
-    glUseProgram(current_terrain_program->program_uint);
-
-    //modelToWorld Matrix
-    glm::mat4 terrain_model_mat = nodes["terrain"].transform.model_mat;
-    glBindBuffer(GL_UNIFORM_BUFFER, matrices_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(terrain_model_mat));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //material properties
-    material_block.getMaterialInformation(nodes["terrain"]);
-    glBindBuffer(GL_UNIFORM_BUFFER, materials_UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MaterialBlock), &material_block);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //terrain properties
-    glUniform1f(current_terrain_program->amplitude_unif, terrain->amplitude);
-
-    glBindVertexArray(terrain_vao.vao);
-    glDrawElements(GL_TRIANGLES, terrain_vao.index_count, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-
     glUseProgram(0);
 
     //============
@@ -660,13 +566,8 @@ void cleanup(){
 
     viewport_fb.reset(); //needs to be here or segfault on exit
 
-    gl_util::cleanupBuffers(sphere_data);
-    gl_util::cleanupBuffers(terrain_data);
-    gl_util::cleanupBuffers(obelisk_data);
-
-    glDeleteVertexArrays(1, &sphere_vao.vao);
-    glDeleteVertexArrays(1, &terrain_vao.vao);
-    glDeleteVertexArrays(1, &obelisk_vao.vao);
+    gl_util::cleanupBuffers(plane_data);
+    glDeleteVertexArrays(1, &plane_vao.vao);
 
     glDeleteBuffers(1, &matrices_UBO);
     glDeleteBuffers(1, &lights_UBO);
